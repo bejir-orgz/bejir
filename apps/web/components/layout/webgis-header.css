@@ -1,0 +1,33 @@
+.gis-header { display: flex; height: 64px; border-bottom: 1px solid var(--border); align-items: stretch; position: relative; z-index: 10; background: white; }
+.gis-brand { flex: 0 0 382px; display: flex; align-items: center; gap: 11px; padding-left: 32px; }
+.gis-brand-placeholder { width: 40px; height: 40px; background: #d9d9d9; border-radius: 8px; }
+.gis-brand strong { display: block; font-size: 16px; line-height: 24px; font-weight: 600; }
+.gis-brand small { display: block; font-size: 12px; line-height: 16px; }
+.gis-header nav { display: flex; overflow-x: auto; scrollbar-width: none; }
+.gis-header .gis-nav-link { height: 100%; border-radius: 0; flex-shrink: 0; padding: 20px 24px; border-right: 1px solid var(--border); font-size: 16px; font-weight: 400; line-height: 24px; cursor: pointer; }
+.gis-header .gis-nav-link:first-child { border-left: 1px solid var(--border); }
+.gis-header .gis-nav-active { color: #fafafa; background: var(--primary); }
+.gis-dummy-label { align-self: center; margin: 0 16px 0 auto; padding: 4px 8px; border: 1px solid #dbeafe; border-radius: 8px; font-size: 10px; line-height: 16px; white-space: nowrap; color: #155dfc; background: #eff6ff; }
+
+.gis-header a:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
+@media (max-width: 1199px) and (min-width: 1000px) {
+  .gis-brand { flex-basis: 264px; padding-left: 16px; }
+  .gis-header .gis-nav-link { padding-inline: 16px; }
+}
+@media (max-width: 999px) {
+  .gis-header { height: 112px; flex-wrap: wrap; }
+  .gis-brand { flex: 1; height: 64px; padding-left: 16px; }
+  .gis-header nav { order: 3; width: 100%; height: 48px; border-top: 1px solid var(--border); }
+  .gis-header .gis-nav-link { flex: 1; padding: 12px 16px; font-size: 14px; }
+}
+@media (max-width: 639px) {
+  .gis-header .gis-nav-link { padding: 12px 8px; font-size: 12px; }
+}
+
+@media (min-width: 1200px) {
+  .gis-header[data-canvas=true] .gis-brand { flex-basis: 358px; }
+  .gis-header[data-canvas=true] .gis-nav-link:nth-child(1) { width: 155px; }
+  .gis-header[data-canvas=true] .gis-nav-link:nth-child(2) { width: 143px; }
+  .gis-header[data-canvas=true] .gis-nav-link:nth-child(3) { width: 139px; }
+  .gis-header[data-canvas=true] .gis-nav-link:nth-child(4) { width: 102px; }
+}

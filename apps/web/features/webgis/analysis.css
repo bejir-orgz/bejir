@@ -1,0 +1,81 @@
+.analysis-page { min-height: 100dvh; background: #fff; color: #171717; }
+.analysis-page [data-slot=card] { border: 0; box-shadow: inset 0 0 0 1px #d4d4d4; }
+.analysis-content { width: min(1200px, calc(100% - 32px)); margin-inline: auto; padding-block: 16px; }
+.analysis-heading { min-height: 40px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.analysis-heading-scope { display: flex; align-items: center; gap: 8px; }
+.analysis-heading h1 { font-size: 36px; line-height: 40px; font-weight: 500; }
+.analysis-heading-divider { height: 40px; width: 16px; position: relative; }
+.analysis-heading-divider::after { content: ""; position: absolute; inset-block: 0; left: 8px; width: 1px; background: #d4d4d4; }
+.analysis-province { color: #2b7fff; font-size: 20px; line-height: 28px; white-space: nowrap; }
+.analysis-region-icon { width: 24px; height: 32px; padding: 0; color: #737373; border-radius: 4px; }
+.analysis-region-icon[data-active=true] { color: #2b7fff; background: #dbeafe; }
+.analysis-year { height: 40px; padding: 8px 16px; gap: 24px; border-radius: 16px; font-size: 14px; font-weight: 400; }
+.analysis-divider { height: 16px; margin-block: 16px; display: flex; align-items: center; }
+.analysis-divider::after { content: ""; height: 1px; background: #d4d4d4; width: 100%; }
+.analysis-summary { display: grid; gap: 16px; }
+.analysis-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.analysis-metric { height: 110px; padding: 16px; }
+.analysis-metric h2 { font-size: 14px; line-height: 20px; font-weight: 400; }
+.analysis-metric strong { display: block; font-size: 24px; line-height: 32px; font-weight: 500; }
+.analysis-metric > span { display: block; color: #2bb600; font-size: 12px; line-height: 16px; margin-top: 8px; }
+.analysis-metric > span[data-trend=decrease] { color: #ff0000; }
+.analysis-panels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.analysis-panels > [data-slot=card] { padding: 16px; min-width: 0; }
+.analysis-panels h2 { font-size: 16px; line-height: 24px; font-weight: 500; margin-bottom: 16px; }
+.analysis-frequency, .analysis-susceptibility { height: 330px; }
+.analysis-annual, .analysis-facilities { height: 314px; }
+.analysis-page [data-slot=chart] .recharts-cartesian-axis-tick-value { fill: #a1a1a1; font-size: 12px; }
+.analysis-frequency [data-slot=chart] .recharts-yAxis-tick-labels text, .analysis-susceptibility [data-slot=chart] .recharts-yAxis-tick-labels text { fill: #171717; }
+.analysis-facilities { display: flex; flex-direction: column; --facility-education-background: #bedbff; }
+.analysis-facility-list { flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
+.analysis-facilities .gis-facility-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; font-size: 14px; line-height: 20px; }
+.analysis-facilities .gis-facility-label { display: flex; align-items: center; gap: 16px; }
+.analysis-facilities .gis-facility-icon { display: grid; place-items: center; width: 40px; height: 40px; flex-shrink: 0; border-radius: 8px; }
+.analysis-facilities .gis-facility-row strong { font-weight: 600; }
+.analysis-table-card { padding: 16px; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.analysis-table-title { display: flex; align-items: center; justify-content: space-between; min-height: 28px; }
+.analysis-table-title h2 { font-size: 20px; line-height: 28px; font-weight: 500; }
+.analysis-filters { display: flex; gap: 16px; }
+.analysis-filter { height: 42px; border-radius: 16px; padding: 8px 16px; gap: 8px; font-size: 14px; font-weight: 400; color: #a1a1a1; background: #fff; box-shadow: none; }
+.analysis-filter[data-active=true] { color: #2b7fff; border-color: #2b7fff; }
+.analysis-search { position: relative; flex: 1; min-width: 180px; }
+.analysis-search > svg { position: absolute; top: 9px; left: 16px; color: #a1a1a1; }
+.analysis-search input { height: 42px; border-radius: 16px; padding-left: 48px; background: #fff; box-shadow: none; }
+.analysis-search input::placeholder { color: #a1a1a1; }
+.analysis-table [data-slot=data-table-frame] { border: 0; border-radius: 0; }
+.analysis-table table { table-layout: fixed; min-width: 1168px; }
+.analysis-table tr { height: 64px; border: 0; }
+.analysis-table thead tr { border-bottom: 1px solid #d4d4d4; }
+.analysis-table th, .analysis-table td { padding: 8px 0; font-size: 14px; line-height: 20px; font-weight: 400; text-align: left; }
+.analysis-table th { color: #2b7fff; font-weight: 500; width: calc(100% / 6); }
+.analysis-sort { padding: 0; height: auto; gap: 8px; color: inherit; font-size: 14px; font-weight: 500; text-align: left; }
+.analysis-sort:hover { color: #155dfc; background: transparent; }
+.analysis-table-footer { border-top: 1px solid #d4d4d4; padding-top: 16px; display: flex; align-items: center; justify-content: space-between; gap: 16px; font-size: 14px; line-height: 20px; }
+.analysis-table-footer nav { display: flex; align-items: center; gap: 8px; }
+.analysis-page-arrow, .analysis-page-number { height: 40px; min-width: 40px; padding: 8px; border-radius: 8px; color: #2b7fff; font-size: 14px; font-weight: 400; }
+.analysis-page-arrow { background: #dbeafe; }
+.analysis-page-number[aria-current=page] { border: 1px solid #2b7fff; }
+.analysis-page-dots { display: grid; place-items: center; width: 32px; color: #2b7fff; }
+.analysis-data-note { margin-top: 16px; font-size: 12px; line-height: 16px; color: #737373; }
+@media (max-width: 1000px) {
+  .analysis-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .analysis-panels { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 700px) {
+  .analysis-heading { align-items: flex-start; flex-wrap: wrap; }
+  .analysis-heading h1 { font-size: 28px; line-height: 36px; }
+  .analysis-heading-divider { height: 28px; width: 8px; }
+  .analysis-heading-divider::after { left: 4px; }
+  .analysis-province { font-size: 16px; }
+  .analysis-metrics { gap: 8px; }
+  .analysis-metric { padding: 12px; }
+  .analysis-metric h2 { font-size: 12px; }
+  .analysis-metric strong { font-size: 20px; }
+  .analysis-panels > [data-slot=card] { padding-inline: 12px; }
+  .analysis-filters { flex-wrap: wrap; gap: 8px; }
+  .analysis-search { flex-basis: 100%; }
+  .analysis-filter { padding-inline: 12px; }
+  .analysis-table-footer { flex-wrap: wrap; }
+  .analysis-table-footer nav { gap: 4px; }
+  .analysis-page-number, .analysis-page-arrow { min-width: 32px; width: 32px; height: 36px; }
+}

@@ -1,0 +1,43 @@
+"use client";
+
+import { useState } from "react";
+import { getCoreRowModel, getPaginationRowModel, getSortedRowModel, useReactTable, type Column, type ColumnDef, type SortingState } from "@tanstack/react-table";
+import { IconChevronLeft, IconChevronRight, IconDots, IconSelector } from "@tabler/icons-react";
+import { Button } from "@/components/ui/button";
+import { DataTable } from "@/components/shared/data-table";
+import { getPageItems } from "@/lib/pagination";
+import type { RainfallClass, RainfallRow } from "../types";
+
+const periodFormatter = new Intl.DateTimeFormat("id-ID", { month: "long", year: "numeric" });
+const integerFormatter = new Intl.NumberFormat("id-ID");
+const decimalFormatter = new Intl.NumberFormat("id-ID", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const classOrder: RainfallClass[] = ["Sangat Rendah", "Rendah", "Sedang", "Tinggi", "Sangat Tinggi"];
+
+function SortHeader({ column, title }: { column: Column<RainfallRow>; title: string }) {
+  return <Button variant="ghost" className="rainfall-sort" aria-label={`Urutkan ${title}`} onClick={column.getToggleSortingHandler()}><span>{title}</span><IconSelector className="size-6" aria-hidden="true" /></Button>;
+}
+const columns: ColumnDef<RainfallRow>[] = [
+  { accessorKey: "period", header: ({ column }) => <SortHeader column={column} title="Tanggal" />, cell: ({ row }) => periodFormatter.format(new Date(`${row.original.period}-01T12:00:00`)) },
+  { accessorKey: "region", header: "Kota/Kabupaten", enableSorting: false },
+  { accessorKey: "classification", header: ({ column }) => <SortHeader column={column} title="Klasifikasi" />, sortingFn: (a, b) => classOrder.indexOf(a.original.classification) - classOrder.indexOf(b.original.classification) },
+  { accessorKey: "rainfallMm", header: ({ column }) => <SortHeader column={column} title="Curah Hujan" />, cell: ({ row }) => `${integerFormatter.format(row.original.rainfallMm)} mm` },
+  { accessorKey: "averageMm", header: ({ column }) => <SortHeader column={column} title="Rata-Rata" />, cell: ({ row }) => `${decimalFormatter.format(row.original.averageMm)} mm` },
+  { accessorKey: "minimumMm", header: ({ column }) => <SortHeader column={column} title="Minimum" />, cell: ({ row }) => `${integerFormatter.format(row.original.minimumMm)} mm` },
+  { accessorKey: "maximumMm", header: ({ column }) => <SortHeader column={column} title="Maksimum" />, cell: ({ row }) => `${integerFormatter.format(row.original.maximumMm)} mm` },
+];
+
+export function RainfallTable({ rows }: { rows: RainfallRow[] }) {
+  const [sorting, setSorting] = useState<SortingState>([]);
+  // TanStack resets pagination whenever local filtering changes the supplied row collection.
+  // eslint-disable-next-line react-hooks/incompatible-library
+  const table = useReactTable({ data: rows, columns, state: { sorting }, onSortingChange: setSorting, getCoreRowModel: getCoreRowModel(), getSortedRowModel: getSortedRowModel(), getPaginationRowModel: getPaginationRowModel(), initialState: { pagination: { pageSize: 10 } }, getRowId: (row) => row.id });
+  const { pageIndex } = table.getState().pagination;
+  return <DataTable table={table} caption="Curah hujan Jawa Barat — data dummy" captionClassName="sr-only" className="rainfall-table" footer={<div className="rainfall-table-footer">
+    <span aria-live="polite">Menampilkan {table.getRowModel().rows.length} dari {rows.length}</span>
+    <nav aria-label="Halaman curah hujan">
+      <Button variant="ghost" className="rainfall-page-arrow" aria-label="Halaman sebelumnya" disabled={!table.getCanPreviousPage()} onClick={() => table.previousPage()}><IconChevronLeft className="size-6" /></Button>
+      {getPageItems(table.getPageCount(), pageIndex).map((page, index) => page === "ellipsis" ? <span className="rainfall-page-dots" key={`dots-${index}`}><IconDots className="size-4" aria-label="Halaman lainnya" /></span> : <Button variant="ghost" className="rainfall-page-number" key={page} aria-label={`Halaman ${page}`} aria-current={pageIndex + 1 === page ? "page" : undefined} onClick={() => table.setPageIndex(page - 1)}>{page}</Button>)}
+      <Button variant="ghost" className="rainfall-page-arrow" aria-label="Halaman berikutnya" disabled={!table.getCanNextPage()} onClick={() => table.nextPage()}><IconChevronRight className="size-6" /></Button>
+    </nav>
+  </div>} />;
+}
