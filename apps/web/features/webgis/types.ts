@@ -5,6 +5,8 @@ export interface WorkspaceFilters {
   view: WorkspaceView;
   period: PeriodPreset;
   date: string;
+  /** Optional inclusive end date; `date` remains the start or a single selected day. */
+  dateTo?: string;
   regionIds: string[];
   layerIds: string[];
   legendIds: string[];

@@ -18,6 +18,8 @@ Use shared components and semantic design tokens so the map, dashboard, tables, 
 
 This is a design specification, not a record of completed GIS functionality. The frontend uses Next.js, Tailwind, Google Sans Flex, Tabler Icons, and local shadcn primitives, including chart and table foundations. Feature-specific charts/tables and real GIS integration are added as their features are developed. Keep demo values in typed fixtures; this setup introduces no API or live data connections.
 
+Write page and feature styles directly in JSX `className` using Tailwind utilities and variants, including responsive, interaction, scrollbar, and starting-state styles. Do not add feature-specific CSS files. Shared components under `apps/web/components/` retain their existing styling conventions. Keep Tailwind imports, theme tokens, global foundations, and shared component rules in the existing CSS files; Leaflet still requires its vendor stylesheet. Use React `style` only for values supplied dynamically, such as data-driven colors and chart configuration.
+
 ## 2. Source of Truth and Visual Direction
 
 The visual source is [Bejir Design System, Figma node 315:375](https://www.figma.com/design/cKKKtUTxA7QyU4ko0HU1ru/BEJIR--Bencana-Banjir-?node-id=315-375), inspected on 20 October 2026. Use its foundation tokens and component variants across the landing page and WebGIS. GIS/data requirements in AGENTS.md remain authoritative for methodology and data meaning.
@@ -106,6 +108,7 @@ Use flat surfaces throughout the frontend. Do not add decorative box shadows, in
 - Standard icon: 24 px; compact: 16 px; stroke 2. Give icon-only actions accessible names and ensure adequate hit targets. Do not force all nested SVGs to one size.
 - Button variants: filled Blue, outlined Neutral, ghost/quiet, disabled. Figma sizes: small 32 px / radius 8 px / icon 16 px; medium 40 px / radius 10 px / icon 24 px; large 48 px / radius 12 px / icon 24 px. Labels use 12/16 px semibold; icon-label gap 8 px. Width follows content or container, not the specimen's fixed 337 px width.
 - Use shadcn Input, Textarea, Label, Checkbox, Select, Calendar/Popover, Tabs, Badge, Card, Sheet, Tooltip, Dropdown Menu, Pagination, and Skeleton as needed. Preserve keyboard/focus behavior from their underlying primitives. Disabled components must be semantically disabled.
+- Calendar follows Figma node `306:8829`: 16 px padding, 8 px corners, blue navigation buttons, and 48 px day cells on desktop. Range mode shows two consecutive months, stacked on narrow screens, with blue endpoints and a pale blue interval. Keep single-date mode available and derive valid dates from the calendar library. Timeline range drafts are committed with Apply, can be cleared, and remain local presentation filters without backend connections.
 - Overview/AI selection uses shadcn Tabs; feature state and callbacks stay outside generic UI primitives.
 - Every data component needs loading, empty, error, unavailable, and selected states appropriate to its feature.
 
