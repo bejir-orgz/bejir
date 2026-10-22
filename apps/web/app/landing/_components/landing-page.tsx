@@ -38,7 +38,7 @@ export function LandingPage() {
               </h1>
               <p className="mt-8 max-w-[430px] text-[16px] leading-[1.8] text-neutral-500">Satu ruang untuk menjelajahi informasi banjir dan kondisi geografis Jawa Barat. Mulai dari peta, temukan konteks yang berarti.</p>
               <div className="mt-8 flex flex-wrap items-center gap-4">
-                <Button asChild size="lg" className="shadow-[0_4px_12px_#2563eb25]"><Link href="/map">Jelajahi WebGIS <IconArrowUpRight aria-hidden="true" /></Link></Button>
+                <Button asChild size="lg"><Link href="/map">Jelajahi WebGIS <IconArrowUpRight aria-hidden="true" /></Link></Button>
                 <a href="#tentang" className="inline-flex h-12 items-center gap-2 rounded-lg p-2 text-sm font-medium text-neutral-600 hover:text-blue-600 focus-visible:outline-2 focus-visible:outline-blue-600">Kenali Bejir <IconArrowRight size={17} aria-hidden="true" /></a>
               </div>
               <div className="mt-8 flex items-center gap-2 text-xs text-neutral-500"><IconMapPin size={15} stroke={1.7} aria-hidden="true" /><span>Berfokus pada wilayah Provinsi Jawa Barat</span></div>

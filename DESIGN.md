@@ -95,7 +95,7 @@ Figma spacing scale: **0, 1, 2, 4, 6, 8, 10, 12, 14, 16, 20, 24 px**. These corr
 
 Use Tailwind radius utilities: none, xs (2), sm (4), md (6), lg (8), xl (12), 2xl (16), 3xl (24), full. Figma's legacy labels contain duplicates; follow actual geometry and Tailwind v4 tokens. Controls may use the explicit 10 px medium-button radius. Shared shadcn `--radius` is 8 px with explicit derived radii to preserve those values.
 
-Figma includes shadow-none, shadow-2xs, shadow-xs, shadow-sm, shadow-md, shadow-lg, shadow-xl, shadow-2xl and inset-shadow-2xs/xs/sm. Use the existing Tailwind v4 effects; default panels use a subtle border, overlays may use shadow-md/lg. Blur samples are available from blur-none through blur-3xl; keep data, text, and controls sharp. Avoid decorative blur over map information.
+Use flat surfaces throughout the frontend. Do not add decorative box shadows, inset shadows, text shadows, or drop shadows to components, sidebars, top bars, cards, charts, tooltips, or overlays. Use subtle borders or inset outlines for separation. Keyboard focus indicators remain visible. Blur samples are available from blur-none through blur-3xl; keep data, text, and controls sharp. Avoid decorative blur over map information.
 
 ## 8. Components and Icons
 

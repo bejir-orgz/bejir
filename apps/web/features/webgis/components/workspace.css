@@ -15,6 +15,9 @@
 .gis-layout { --regions-width: 264px; --overview-width: 456px; position: relative; height: calc(100% - 64px); isolation: isolate; }
 .gis-layout[data-left-open=false] { --regions-width: 0px; }
 .gis-left { position: absolute; z-index: 2; inset: 0 auto 0 0; width: 264px; min-height: 104px; padding: 8px 16px; border: 0; border-radius: 0 16px 16px 0; background: white; overflow-y: auto; scrollbar-width: thin; }
+/* Clip native scrollbars to the same rounded silhouette as their panel. */
+.gis-left { clip-path: inset(0 round 0 16px 16px 0); }
+.gis-right { clip-path: inset(0 round 16px 0 0 16px); scrollbar-gutter: stable; }
 .gis-left, .gis-right { transform: translateX(0); transition: transform var(--gis-slide-duration) var(--gis-slide-easing), display var(--gis-slide-duration) allow-discrete; }
 .gis-left[hidden] { display: none; transform: translateX(-100%); }
 .gis-right[hidden] { display: none; transform: translateX(100%); }
@@ -39,6 +42,8 @@
 .gis-map { position: absolute; inset: 0; overflow: hidden; background: #e8eee6; }
 .gis-leaflet-map { position: absolute; inset: 0; z-index: 0; font-family: inherit; }
 .gis-map .leaflet-control-attribution { font: 10px/16px var(--font-google-sans-flex), Arial, sans-serif; background: #fffffff2; }
+.gis-map :is(.leaflet-bar, .leaflet-control-layers, .leaflet-popup-content-wrapper, .leaflet-popup-tip, .leaflet-tooltip) { box-shadow: none; }
+.gis-map .leaflet-control-scale-line { text-shadow: none; }
 .gis-map-controls { position: absolute; z-index: 1; bottom: 16px; right: 16px; display: flex; flex-direction: column; gap: 8px; color: var(--gis-blue); }
 .gis-zoom-controls { display: flex; flex-direction: column; gap: 8px; padding: 6px; border-radius: 8px; background: white; }
 .gis-map-controls button { width: 24px; height: 24px; padding: 0; border-radius: 4px; cursor: pointer; }
@@ -62,7 +67,7 @@
 .gis-panel-tabs [data-state=active] { color: #fafafa; background: var(--gis-blue); }
 .gis-overview-content { display: flex; flex-direction: column; gap: 16px; }
 .gis-metric-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-.gis-card { border: 0; box-shadow: inset 0 0 0 1px var(--gis-border); padding: 16px; border-radius: 16px; }
+.gis-card { border: 0; outline: 1px solid var(--gis-border); outline-offset: -1px; padding: 16px; border-radius: 16px; }
 .gis-card h2 { font-size: 16px; line-height: 24px; font-weight: 500; }
 .gis-metric-card { min-height: 108px; }
 .gis-metric-card strong { display: block; font-weight: 500; font-size: 24px; line-height: 32px; }
@@ -86,15 +91,8 @@
 .gis-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
 .gis-inline-card { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .gis-data-note { color: var(--gis-muted); font-size: 11px; line-height: 16px; margin-top: 16px; }
-.gis-demo-assistant { padding: 16px; border: 1px solid var(--gis-border); border-radius: 16px; }
-.gis-demo-assistant h2 { font-size: 20px; line-height: 28px; font-weight: 600; }
-.gis-demo-assistant p { margin-top: 8px; }
-.gis-demo-assistant form { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
-.gis-demo-assistant textarea { width: 100%; border: 1px solid var(--gis-border); border-radius: 8px; padding: 8px; resize: vertical; }
-.gis-demo-messages { padding: 8px; margin-top: 16px; border-radius: 8px; background: #eff6ff; }
-.gis-demo-send { background: var(--gis-blue); }
 
-.webgis-screen button:focus-visible, .gis-brand:focus-visible, .gis-demo-assistant textarea:focus-visible { outline: 2px solid var(--gis-blue); outline-offset: -2px; }
+.webgis-screen button:focus-visible, .gis-brand:focus-visible { outline: 2px solid var(--gis-blue); outline-offset: -2px; }
 @media (min-width: 1000px) {
   .gis-layout[data-overview-open=true] .gis-map .leaflet-bottom.leaflet-right { right: var(--overview-width); }
 }
@@ -125,12 +123,12 @@
 
 .gis-options-sidebar { bottom: auto; min-height: 0; padding: 16px; max-height: calc(100% - 24px); }
 .gis-timeline-sidebar { bottom: 0; min-height: 0; max-height: none; padding: 16px; }
-.gis-timeline-sidebar, .gis-right { --sb-track-color: #fff; --sb-thumb-color: #2b7fff; --sb-size: 8px; scrollbar-width: auto; }
-.gis-timeline-sidebar::-webkit-scrollbar, .gis-right::-webkit-scrollbar { width: var(--sb-size); }
-.gis-timeline-sidebar::-webkit-scrollbar-track, .gis-right::-webkit-scrollbar-track { background: var(--sb-track-color); border-radius: 16px; }
-.gis-timeline-sidebar::-webkit-scrollbar-thumb, .gis-right::-webkit-scrollbar-thumb { background: var(--sb-thumb-color); border-radius: 16px; }
+.gis-left, .gis-right { --sb-track-color: #fff; --sb-thumb-color: #8EC5FF; --sb-size: 4px; scrollbar-width: auto; }
+.gis-left::-webkit-scrollbar, .gis-right::-webkit-scrollbar { width: var(--sb-size); }
+.gis-left::-webkit-scrollbar-track, .gis-right::-webkit-scrollbar-track { background: var(--sb-track-color); border-radius: 16px; margin-block: 16px; }
+.gis-left::-webkit-scrollbar-thumb, .gis-right::-webkit-scrollbar-thumb { background: var(--sb-thumb-color); border-radius: 16px; }
 @supports not selector(::-webkit-scrollbar) {
-  .gis-timeline-sidebar, .gis-right { scrollbar-color: var(--sb-thumb-color) var(--sb-track-color); }
+  .gis-left, .gis-right { scrollbar-color: var(--sb-thumb-color) var(--sb-track-color); }
 }
 @media (prefers-reduced-motion: reduce) {
   .gis-left, .gis-right, .gis-left-toolbar .gis-panel-toggle, .gis-overview-trigger { transition: none; }
@@ -140,7 +138,7 @@
 .gis-option-label { display: flex; align-items: center; gap: 8px; min-height: 24px; font-size: 14px; line-height: 20px; font-weight: 400; cursor: pointer; }
 .gis-time-picker { display: flex; width: 100%; height: 38px; justify-content: flex-start; gap: 8px; padding: 8px 16px; margin-top: 8px; border: 1px solid #a1a1a1; border-radius: 16px; box-shadow: none; color: #737373; font-size: 14px; line-height: 20px; font-weight: 400; }
 .gis-timeline-months { display: flex; flex-direction: column; gap: 16px; margin-top: 8px; }
-.gis-timeline-months h3 { font-size: 14px; line-height: 20px; font-weight: 400; margin-bottom: 8px; }
+.gis-timeline-months h3 { color: var(--gis-blue); font-size: 16px; line-height: 24px; font-weight: 400; margin-bottom: 8px; }
 .gis-day-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0 8px; }
 .gis-day-grid button { height: 28px; padding: 4px 0; border-radius: 8px; font-size: 14px; line-height: 20px; font-weight: 400; }
 .gis-day-grid .gis-day-selected { background: var(--gis-blue); color: white; }

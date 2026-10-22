@@ -80,7 +80,7 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
               <TabsTrigger value="ai"><IconBrandGithubCopilot className="size-4" aria-hidden="true" />AI</TabsTrigger>
             </TabsList>
             <TabsContent value="overview"><OverviewPanel overview={data.overview} /></TabsContent>
-            <TabsContent value="ai"><DemoAssistant /></TabsContent>
+            <TabsContent value="ai" className="gis-ai-tab" forceMount><DemoAssistant /></TabsContent>
           </Tabs>
           <p className="gis-data-note">{data.source === "dummy" ? `Contoh tampilan ${data.year}. Pilihan daerah hanya demonstrasi; statistik dan analisis ini adalah dummy.` : "Informasi disediakan oleh backend."}</p>
         </aside>

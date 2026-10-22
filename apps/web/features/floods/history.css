@@ -1,5 +1,5 @@
 .history-page { min-height: 100dvh; background: #fff; color: #171717; }
-.history-page [data-slot=card] { border: 0; box-shadow: inset 0 0 0 1px #d4d4d4; }
+.history-page [data-slot=card] { border: 0; outline: 1px solid #d4d4d4; outline-offset: -1px; }
 .history-content { width: min(1200px, calc(100% - 32px)); margin-inline: auto; padding-block: 16px; }
 .history-heading { min-height: 40px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .history-heading-scope { display: flex; align-items: center; gap: 16px; }
