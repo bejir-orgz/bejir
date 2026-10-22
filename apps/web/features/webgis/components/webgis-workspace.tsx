@@ -19,7 +19,7 @@ const leftTools = [
   { id: "regions", label: "daerah", icon: IconMap },
   { id: "layers", label: "layer", icon: IconStackFront },
   { id: "legends", label: "legenda", icon: IconList },
-  { id: "timeline", label: "waktu", icon: IconCalendarWeek },
+  { id: "timeline", label: "timeline", icon: IconCalendarWeek },
 ] as const;
 
 const narrowQuery = "(max-width: 999px)";
@@ -68,9 +68,11 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
         <OptionsSidebar mode="legends" hidden={panels.left !== "legends"} data={data} filters={filters} onChange={updateFilters} />
         <TimelineSidebar year={data.year} hidden={panels.left !== "timeline"} filters={filters} onChange={updateFilters} />
         <div className="gis-left-toolbar" role="group" aria-label="Alat peta">{leftTools.map(({ id, label, icon: Icon }) => (
-          <Button key={id} variant="ghost" size="icon" className="gis-panel-toggle" title={label} aria-label={`${panels.left === id ? "Tutup" : "Buka"} panel ${label}`} aria-expanded={panels.left === id} aria-controls={`gis-${id}-panel`} onClick={(event) => toggleLeft(id, event.currentTarget)}><Icon className="size-10" stroke={2} aria-hidden="true" /></Button>
+          <Button key={id} variant="ghost" size="icon" className="gis-panel-toggle" title={label} inert={leftOpen && panels.left !== id} aria-label={`${panels.left === id ? "Tutup" : "Buka"} panel ${label}`} aria-expanded={panels.left === id} aria-controls={`gis-${id}-panel`} onClick={(event) => toggleLeft(id, event.currentTarget)}><Icon className="size-10" stroke={2} aria-hidden="true" /></Button>
         ))}</div>
-        <Button variant="ghost" size="icon" className="gis-panel-toggle gis-overview-toggle" aria-label={overviewOpen ? "Tutup panel overview" : "Buka panel overview"} aria-expanded={overviewOpen} aria-controls="gis-overview-panel" onClick={(event) => { lastTrigger.current = event.currentTarget; dispatch({ type: "toggle-overview", narrow }); }}><IconLayoutNavbarCollapse className={`size-10 ${overviewOpen ? "rotate-90" : "-rotate-90"}`} aria-hidden="true" /></Button>
+        <div className="gis-overview-trigger">
+          <Button variant="ghost" size="icon" className="gis-panel-toggle gis-overview-toggle" aria-label={overviewOpen ? "Tutup panel overview" : "Buka panel overview"} aria-expanded={overviewOpen} aria-controls="gis-overview-panel" onClick={(event) => { lastTrigger.current = event.currentTarget; dispatch({ type: "toggle-overview", narrow }); }}><IconLayoutNavbarCollapse className={`size-10 ${overviewOpen ? "rotate-90" : "-rotate-90"}`} aria-hidden="true" /></Button>
+        </div>
         <aside id="gis-overview-panel" hidden={!overviewOpen} className="gis-right" aria-label="Ringkasan dan asisten">
           <Tabs defaultValue="overview" className="gis-tabs">
             <TabsList className="gis-panel-tabs" aria-label="Panel informasi">

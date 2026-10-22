@@ -1,13 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { IconCalendarWeek } from "@tabler/icons-react";
 import { id } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { getTimelineMonths } from "../timeline";
+import { getCurrentTimelinePeriod, getTimelineMonths } from "../timeline";
 import type { WorkspaceFilters } from "../types";
+
+function subscribeToMonthChange(callback: () => void) {
+  const timer = window.setInterval(callback, 60_000);
+  return () => window.clearInterval(timer);
+}
+const getServerPeriod = () => null;
 
 export function TimelineSidebar({ year, filters, hidden, onChange }: {
   year: number;
@@ -16,7 +22,9 @@ export function TimelineSidebar({ year, filters, hidden, onChange }: {
   onChange: (patch: Partial<WorkspaceFilters>) => void;
 }) {
   const [pickerOpen, setPickerOpen] = useState(false);
-  const months = getTimelineMonths(year);
+  const period = useSyncExternalStore(subscribeToMonthChange, getCurrentTimelinePeriod, getServerPeriod);
+  const [currentYear, currentMonth] = period ? period.split("-").map(Number) : [year, 1];
+  const months = getTimelineMonths(currentYear, currentMonth - 1);
   const selectedDate = filters.date ? new Date(`${filters.date}T00:00:00`) : undefined;
 
   function selectDate(date: string) {
@@ -25,12 +33,12 @@ export function TimelineSidebar({ year, filters, hidden, onChange }: {
   }
 
   return (
-    <aside id="gis-timeline-panel" hidden={hidden} className="gis-left gis-timeline-sidebar" aria-label="Waktu">
-      <h2>Waktu</h2>
+    <aside id="gis-timeline-panel" hidden={hidden} className="gis-left gis-timeline-sidebar" aria-label="Timeline">
+      <h2>Timeline</h2>
       <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
         <PopoverTrigger asChild><Button variant="outline" className="gis-time-picker"><IconCalendarWeek className="size-4" aria-hidden="true" />{filters.date || "Pilih waktu"}</Button></PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
-          <Calendar mode="single" locale={id} selected={selectedDate} defaultMonth={selectedDate ?? new Date(year, 9, 1)} onSelect={(date) => { if (date) selectDate(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`); }} />
+          <Calendar mode="single" locale={id} selected={selectedDate} defaultMonth={selectedDate ?? new Date(currentYear, currentMonth - 1, 1)} onSelect={(date) => { if (date) selectDate(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`); }} />
         </PopoverContent>
       </Popover>
       <div className="gis-timeline-months">{months.map((month) => (
