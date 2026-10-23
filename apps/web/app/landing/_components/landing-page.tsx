@@ -106,7 +106,7 @@ export function LandingPage() {
           <div className="cta-panel p-[48px_32px] [&::after]:content-[''] [&::after]:absolute [&::after]:w-100 [&::after]:h-100 [&::after]:[border:1px_solid_#ffffff15] [&::after]:rounded-[50%] [&::after]:right-[-160px] [&::after]:top-[-180px] max-[640.01px]:p-[32px_16px] relative overflow-hidden rounded-[24px] bg-blue-600 p-4 text-white">
             <div className="relative z-10 flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
               <div><p className="text-[10px] font-medium tracking-[.14em] text-blue-200">PERSPEKTIF BARU UNTUK JAWA BARAT</p><h2 className="mt-4 text-[28px] leading-tight font-semibold tracking-[-1px] sm:text-[34px]">Kenali wilayahmu lebih dekat.</h2><p className="mt-4 text-sm leading-6 text-blue-100">Masuk ke ruang WebGIS dan mulai mengenal Bejir.</p></div>
-              <Button asChild size="lg" className="bg-white text-blue-700 hover:bg-blue-50"><Link href="/map">Buka WebGIS <IconArrowUpRight aria-hidden="true" /></Link></Button>
+              <Button asChild size="lg"><Link href="/map">Buka WebGIS <IconArrowUpRight aria-hidden="true" /></Link></Button>
             </div>
           </div>
         </section>

@@ -72,7 +72,7 @@ export function DemoAssistant() {
           <Textarea id="gis-question" className="focus-visible:ring-0" value={question} onChange={(event) => setQuestion(event.target.value)} placeholder="Tanya Aji" rows={1} maxLength={1000} aria-describedby="gis-ai-demo-note" onKeyDown={(event) => {
             if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); submitQuestion(); }
           }} />
-          <div className="gis-ai-composer-actions flex items-center justify-between gap-2 mt-2 [&_button]:h-10 [&_button]:p-2 [&_button]:rounded-lg [&_button]:bg-[#e5e5e5] [&_button]:text-[#737373] [&_button:hover]:bg-[#d4d4d4] [&_.gis-ai-layer-trigger:is([data-has-sources=true],[data-state=open])]:bg-[#dbeafe] [&_.gis-ai-layer-trigger:is([data-has-sources=true],[data-state=open])]:text-[var(--gis-blue)] [&_.gis-ai-send]:w-10 [&_.gis-ai-send:not(:disabled)]:bg-[var(--gis-blue)] [&_.gis-ai-send:not(:disabled)]:text-[white] [&_.gis-ai-send:disabled]:[opacity:1] [&_.gis-ai-send:disabled]:text-[#a1a1a1]">
+          <div className="gis-ai-composer-actions flex items-center justify-between gap-2 mt-2 [&_button]:h-10 [&_button]:p-2 [&_button]:rounded-[10px] [&_button]:bg-[#e5e5e5] [&_button]:text-[#737373] [&_button:hover]:bg-[#d4d4d4] [&_.gis-ai-layer-trigger:is([data-has-sources=true],[data-state=open])]:bg-[#dbeafe] [&_.gis-ai-layer-trigger:is([data-has-sources=true],[data-state=open])]:text-[var(--gis-blue)] [&_.gis-ai-send]:w-10 [&_.gis-ai-send:not(:disabled)]:bg-[var(--gis-blue)] [&_.gis-ai-send:not(:disabled)]:text-[white]">
             <DropdownMenu onOpenChange={(open) => {
               if (open && composer.current && sourceTrigger.current) {
                 // Keep the menu above the whole composer, including multiline drafts.
@@ -89,7 +89,7 @@ export function DemoAssistant() {
                 {assistantLayers.map((layer) => <DropdownMenuCheckboxItem className="gis-ai-source-item min-h-6 p-[0_24px_0_0] gap-4 rounded-sm text-[12px] leading-[16px] cursor-pointer [&[data-state=checked]]:text-[#000] [&[data-state=unchecked]]:text-[#a1a1a1] [&_>_span:first-child]:left-auto [&_>_span:first-child]:right-0 [&_>_span:first-child]:w-6 [&_>_span:first-child]:h-6 [&_>_span:first-child_svg]:w-6 [&_>_span:first-child_svg]:h-6" key={layer.id} checked={layerIds.includes(layer.id)} onSelect={(event) => event.preventDefault()} onCheckedChange={(checked) => setLayerIds((previous) => checked ? [...previous, layer.id] : previous.filter((id) => id !== layer.id))}><IconBoxMultiple className="size-6" aria-hidden="true" /><span>{layer.label}</span></DropdownMenuCheckboxItem>)}
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button type="submit" variant="secondary" size="icon" className="gis-ai-send" disabled={!question.trim()} aria-label="Kirim pertanyaan demo"><IconBrandTelegram className="size-6" aria-hidden="true" /></Button>
+            <Button type="submit" size="icon" className="gis-ai-send" disabled={!question.trim()} aria-label="Kirim pertanyaan demo"><IconBrandTelegram className="size-6" aria-hidden="true" /></Button>
           </div>
         </form>
         <p className="gis-ai-demo-note shrink-0 m-0 text-[#737373] text-[10px] leading-[14px] text-center" id="gis-ai-demo-note">Contoh percakapan · Data dummy · Tanpa koneksi AI</p>

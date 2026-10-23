@@ -13,7 +13,7 @@ export interface RainfallRow {
 
 export interface RainfallFilters {
   query: string;
-  region: string;
+  regionIds: string[];
   month: string;
   classifications: RainfallClass[];
 }

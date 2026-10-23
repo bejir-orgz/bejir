@@ -6,7 +6,7 @@ import { id } from "date-fns/locale";
 import { format } from "date-fns";
 import type { DateRange } from "react-day-picker";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
+import { CalendarTimeline } from "@/components/ui/calendar-timeline";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { getCurrentTimelinePeriod, getTimelineMonths } from "../timeline";
 import type { WorkspaceFilters } from "../types";
@@ -54,19 +54,19 @@ export function TimelineSidebar({ year, filters, hidden, onChange }: {
           if (open) setDraftRange(selectedDate ? { from: selectedDate, to: selectedEnd } : undefined);
           setPickerOpen(open);
         }}>
-          <PopoverTrigger asChild><Button variant="outline" className="gis-time-picker flex w-full h-[38px] justify-start gap-2 p-[8px_16px] mt-2 [border:1px_solid_#a1a1a1] rounded-2xl shadow-none text-[#737373] text-[14px] leading-[20px] font-normal"><IconCalendarWeek className="size-4" aria-hidden="true" /><span className="min-w-0 truncate">{dateLabel}</span></Button></PopoverTrigger>
-          <PopoverContent sticky="always" collisionPadding={16} className="w-auto max-h-[min(calc(100dvh_-_32px),var(--radix-popover-content-available-height))] overflow-y-auto overscroll-contain rounded-lg p-0" align="start" aria-label="Pilih rentang tanggal Timeline">
-            <Calendar mode="range" locale={id} selected={draftRange} defaultMonth={selectedDate ?? new Date(currentYear, currentMonth - 2, 1)} onSelect={setDraftRange} />
-            <div className="flex items-center justify-between gap-4 border-t p-4">
-              <Button variant="ghost" onClick={() => { setDraftRange(undefined); onChange({ period: "custom", date: "", dateTo: "" }); }}>Hapus tanggal</Button>
-              <Button onClick={applyRange} disabled={!draftRange?.from}>Terapkan</Button>
+          <PopoverTrigger asChild><Button variant="outline" className="gis-time-picker mt-2 w-full justify-start"><IconCalendarWeek className="size-6" aria-hidden="true" /><span className="min-w-0 truncate">{dateLabel}</span></Button></PopoverTrigger>
+          <PopoverContent sticky="always" collisionPadding={16} className="w-auto max-h-[min(calc(100dvh-32px),var(--radix-popover-content-available-height))] overflow-y-auto overscroll-contain rounded-lg p-0" align="start" aria-label="Pilih rentang tanggal Timeline">
+            <CalendarTimeline className="rounded-none border-0" mode="range" locale={id} selected={draftRange} defaultMonth={selectedDate ?? new Date(currentYear, currentMonth - 1, 1)} onSelect={setDraftRange} />
+            <div className="flex items-center justify-between gap-4 p-4 pt-0">
+              <Button variant="outline" className="flex-1 w-full" onClick={() => { setDraftRange(undefined); onChange({ period: "custom", date: "", dateTo: "" }); }}>Hapus tanggal</Button>
+              <Button variant="outline" className="flex-1 w-full" onClick={applyRange} disabled={!draftRange?.from}>Terapkan</Button>
             </div>
           </PopoverContent>
         </Popover>
         <div className="gis-timeline-months flex flex-col gap-4 mt-2 [&_h3]:text-[var(--gis-blue)] [&_h3]:text-[16px] [&_h3]:leading-[24px] [&_h3]:font-normal [&_h3]:mb-2">{months.map((month) => (
           <section key={month.id} aria-label={`${month.label} ${month.id.slice(0, 4)}`}>
             <h3>{month.label}</h3>
-            <div className="gis-day-grid grid grid-cols-[repeat(7,minmax(0,1fr))] gap-[0_8px] [&_button]:h-7 [&_button]:p-[4px_0] [&_button]:rounded-lg [&_button]:text-[14px] [&_button]:leading-[20px] [&_button]:font-normal [&_.gis-day-selected]:bg-[var(--gis-blue)] [&_.gis-day-selected]:text-[white]">{month.dates.map((date, index) => (
+            <div className="gis-day-grid grid grid-cols-[repeat(7,minmax(0,1fr))] gap-[0_8px] [&_button]:h-8 [&_button]:p-[4px_0] [&_button]:rounded-lg [&_button]:text-[14px] [&_button]:leading-[20px] [&_button]:font-normal [&_.gis-day-selected]:bg-[var(--gis-blue)] [&_.gis-day-selected]:text-[white]">{month.dates.map((date, index) => (
               <Button key={date} variant="ghost" size="sm" aria-label={`Pilih ${index + 1} ${month.label} ${month.id.slice(0, 4)}`} aria-pressed={isSelectedDate(date)} className={isSelectedDate(date) ? "gis-day-selected" : ""} onClick={() => selectDate(date)}>{index + 1}</Button>
             ))}</div>
           </section>
