@@ -30,9 +30,9 @@ export function RegionFilterPopover({ regions, districtRows, value, onChange, ic
     <Popover>
       <PopoverTrigger asChild>
         <Button
-          variant={iconOnly ? "ghost" : "outline"}
+          variant={iconOnly ? "ghost" : value.length ? "outline" : "filter"}
           size={iconOnly ? "icon-sm" : "default"}
-          className={iconOnly ? "size-8 p-1 text-primary data-[active=true]:bg-blue-100" : "max-w-full"}
+          className={iconOnly ? "size-8 p-1 text-primary data-[active=true]:bg-blue-100" : "max-w-full rounded-2xl"}
           aria-label={iconOnly ? "Filter daerah di header" : "Filter daerah pada tabel"}
           data-active={value.length > 0}
         >

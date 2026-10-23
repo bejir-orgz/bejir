@@ -19,3 +19,17 @@ test("current period follows West Java time at month and year boundaries", () =>
   assert.equal(getCurrentTimelinePeriod(new Date("2026-10-31T17:00:00Z")), "2026-11");
   assert.equal(getCurrentTimelinePeriod(new Date("2026-12-31T17:00:00Z")), "2027-01");
 });
+
+test("calendar dates align with their Sunday-first weekday columns throughout the year", () => {
+  for (const year of [2024, 2026, 2027]) {
+    for (const month of getTimelineMonths(year, 11)) {
+      const monthIndex = Number(month.id.slice(5)) - 1;
+      assert.equal(month.firstWeekday, new Date(year, monthIndex, 1).getDay());
+      month.dates.forEach((date, index) => {
+        assert.equal((month.firstWeekday + index) % 7, new Date(`${date}T00:00:00`).getDay());
+      });
+    }
+  }
+  assert.equal(getTimelineMonths(2026, 9)[0].firstWeekday, 4); // October starts on Thursday.
+  assert.equal(getTimelineMonths(2026, 1)[0].firstWeekday, 0); // February starts on Sunday.
+});

@@ -27,7 +27,7 @@ export function HistoryFiltersBar({ filters, regions, districtRows, year, onChan
     <div className="history-filters flex gap-4 max-[900.01px]:flex-wrap max-[900.01px]:gap-2">
       <Popover>
         <PopoverTrigger asChild>
-          <Button variant="outline" className="history-filter" data-active={!!filters.from}>
+          <Button variant={!!filters.from ? "outline" : "filter"} className="history-filter rounded-2xl" data-active={!!filters.from}>
             <IconCalendarWeek className="size-6" />
             <span>{dateLabel}</span>
           </Button>
@@ -60,7 +60,7 @@ export function HistoryFiltersBar({ filters, regions, districtRows, year, onChan
 
       <Popover>
         <PopoverTrigger asChild>
-          <Button variant="outline" className="history-filter" data-active={!!filters.severities.length}>
+          <Button variant={!!filters.severities.length ? "outline" : "filter"} className="history-filter rounded-2xl" data-active={!!filters.severities.length}>
             <IconAlertTriangle className="size-6" />
             <span>{filters.severities.length ? `${filters.severities.length} keparahan` : "Keparahan"}</span>
           </Button>
@@ -79,10 +79,10 @@ export function HistoryFiltersBar({ filters, regions, districtRows, year, onChan
         </PopoverContent>
       </Popover>
 
-      <div className="history-search relative flex-1 min-w-45 [&_>_svg]:absolute [&_>_svg]:top-[9px] [&_>_svg]:left-4 [&_>_svg]:text-[#a1a1a1] [&_input]:h-[42px] [&_input]:rounded-2xl [&_input]:pl-12 [&_input]:bg-[#fff] [&_input]:shadow-none [&_input::placeholder]:text-[#a1a1a1] max-[900.01px]:basis-[100%]">
-        <IconSearch className="size-6" aria-hidden="true" />
+      <label className="history-search flex items-center gap-2 flex-1 min-w-45 h-10 rounded-2xl border border-neutral-300 focus-within:border-blue-500 bg-white px-4 text-neutral-400 transition-colors max-[900.01px]:basis-[100%] [&_input]:min-w-0 [&_input]:w-full [&_input]:h-5 [&_input]:p-0 [&_input]:border-0 [&_input]:outline-none [&_input]:shadow-none [&_input]:bg-transparent [&_input]:text-[14px] [&_input]:leading-5 [&_input]:text-neutral-400 [&_input::placeholder]:text-neutral-400 [&_input::placeholder]:opacity-100 [&_input]:focus:outline-none [&_input]:focus-visible:ring-0 [&_input]:focus-visible:border-0">
+        <IconSearch className="size-4 shrink-0 text-neutral-400" aria-hidden="true" />
         <Input aria-label="Cari Kota/Kabupaten" placeholder="Cari Kota/Kabupaten" value={filters.query} onChange={(event) => onChange({ ...filters, query: event.target.value })} />
-      </div>
+      </label>
     </div>
   );
 }

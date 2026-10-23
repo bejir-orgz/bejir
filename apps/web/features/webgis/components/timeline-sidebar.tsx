@@ -16,6 +16,15 @@ function subscribeToMonthChange(callback: () => void) {
   return () => window.clearInterval(timer);
 }
 const getServerPeriod = () => null;
+const weekdays = [
+  { short: "Min", name: "Minggu" },
+  { short: "Sen", name: "Senin" },
+  { short: "Sel", name: "Selasa" },
+  { short: "Rab", name: "Rabu" },
+  { short: "Kam", name: "Kamis" },
+  { short: "Jum", name: "Jumat" },
+  { short: "Sab", name: "Sabtu" },
+];
 
 export function TimelineSidebar({ year, filters, hidden, onChange }: {
   year: number;
@@ -54,7 +63,7 @@ export function TimelineSidebar({ year, filters, hidden, onChange }: {
           if (open) setDraftRange(selectedDate ? { from: selectedDate, to: selectedEnd } : undefined);
           setPickerOpen(open);
         }}>
-          <PopoverTrigger asChild><Button variant="outline" className="gis-time-picker mt-2 w-full justify-start"><IconCalendarWeek className="size-6" aria-hidden="true" /><span className="min-w-0 truncate">{dateLabel}</span></Button></PopoverTrigger>
+          <PopoverTrigger asChild><Button variant={!!filters.date ? "outline" : "filter"} className="gis-time-picker mt-2 w-full justify-start rounded-2xl" data-active={!!filters.date}><IconCalendarWeek className="size-4" aria-hidden="true" /><span className="min-w-0 truncate">{dateLabel}</span></Button></PopoverTrigger>
           <PopoverContent sticky="always" collisionPadding={16} className="w-auto max-h-[min(calc(100dvh-32px),var(--radix-popover-content-available-height))] overflow-y-auto overscroll-contain rounded-lg p-0" align="start" aria-label="Pilih rentang tanggal Timeline">
             <CalendarTimeline className="rounded-none border-0" mode="range" locale={id} selected={draftRange} defaultMonth={selectedDate ?? new Date(currentYear, currentMonth - 1, 1)} onSelect={setDraftRange} />
             <div className="flex items-center justify-between gap-4 p-4 pt-0">
@@ -65,8 +74,11 @@ export function TimelineSidebar({ year, filters, hidden, onChange }: {
         </Popover>
         <div className="gis-timeline-months flex flex-col gap-4 mt-2 [&_h3]:text-[var(--gis-blue)] [&_h3]:text-[16px] [&_h3]:leading-[24px] [&_h3]:font-normal [&_h3]:mb-2">{months.map((month) => (
           <section key={month.id} aria-label={`${month.label} ${month.id.slice(0, 4)}`}>
-            <h3>{month.label}</h3>
-            <div className="gis-day-grid grid grid-cols-[repeat(7,minmax(0,1fr))] gap-[0_8px] [&_button]:h-8 [&_button]:p-[4px_0] [&_button]:rounded-lg [&_button]:text-[14px] [&_button]:leading-[20px] [&_button]:font-normal [&_.gis-day-selected]:bg-[var(--gis-blue)] [&_.gis-day-selected]:text-[white]">{month.dates.map((date, index) => (
+            <h3>{month.label} {month.id.slice(0, 4)}</h3>
+            <div className="gis-day-grid grid grid-cols-[repeat(7,minmax(0,1fr))] gap-[0_8px] [&_button]:h-8 [&_button]:p-[4px_0] [&_button]:rounded-lg [&_button]:text-[14px] [&_button]:leading-[20px] [&_button]:font-normal [&_.gis-day-selected]:bg-[var(--gis-blue)] [&_.gis-day-selected]:text-[white]">
+              {weekdays.map((day) => <abbr key={day.name} title={day.name} className="flex h-8 items-center justify-center text-xs font-normal text-neutral-500 no-underline">{day.short}</abbr>)}
+              {Array.from({ length: month.firstWeekday }, (_, index) => <span key={`empty-${index}`} aria-hidden="true" />)}
+              {month.dates.map((date, index) => (
               <Button key={date} variant="ghost" size="sm" aria-label={`Pilih ${index + 1} ${month.label} ${month.id.slice(0, 4)}`} aria-pressed={isSelectedDate(date)} className={isSelectedDate(date) ? "gis-day-selected" : ""} onClick={() => selectDate(date)}>{index + 1}</Button>
             ))}</div>
           </section>

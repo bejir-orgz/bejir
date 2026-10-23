@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { getCoreRowModel, getPaginationRowModel, getSortedRowModel, useReactTable, type Column, type ColumnDef, type SortingState } from "@tanstack/react-table";
-import { IconChevronLeft, IconChevronRight, IconDots, IconSelector } from "@tabler/icons-react";
+import { getCoreRowModel, getPaginationRowModel, getSortedRowModel, useReactTable, type ColumnDef, type SortingState } from "@tanstack/react-table";
+import { IconChevronLeft, IconChevronRight, IconDots } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
+import { TableSortHeader as SortHeader } from "@/components/shared/table-sort-header";
 import { DataTable } from "@/components/shared/data-table";
 import { getPageItems } from "@/lib/pagination";
 import type { AnalysisRow, SusceptibilityClass } from "../analysis-types";
@@ -11,11 +12,8 @@ import type { AnalysisRow, SusceptibilityClass } from "../analysis-types";
 const numberFormatter = new Intl.NumberFormat("id-ID", { maximumFractionDigits: 1 });
 const classOrder: SusceptibilityClass[] = ["Sangat Rendah", "Rendah", "Sedang", "Tinggi", "Sangat Tinggi"];
 
-function SortHeader({ column, title }: { column: Column<AnalysisRow>; title: string }) {
-  return <Button variant="ghost" className="analysis-sort p-0 h-auto gap-2 text-[inherit] text-[14px] font-medium text-left [&:hover]:text-[#155dfc] [&:hover]:bg-[transparent] leading-[1.3333333333]" aria-label={`Urutkan ${title}`} onClick={column.getToggleSortingHandler()}><span>{title}</span><IconSelector className="size-6" aria-hidden="true" /></Button>;
-}
 const columns: ColumnDef<AnalysisRow>[] = [
-  { accessorKey: "region", header: "Kota/Kabupaten", enableSorting: false },
+  { accessorKey: "region", header: ({ column }) => <SortHeader column={column} title="Kota/Kabupaten" /> },
   { accessorKey: "susceptibility", header: ({ column }) => <SortHeader column={column} title="Kerawanan" />, sortingFn: (a, b) => classOrder.indexOf(a.original.susceptibility) - classOrder.indexOf(b.original.susceptibility) },
   { accessorKey: "population", header: ({ column }) => <SortHeader column={column} title="Penduduk" />, cell: ({ row }) => numberFormatter.format(row.original.population) },
   { accessorKey: "areaKm2", header: ({ column }) => <SortHeader column={column} title="Luas" />, cell: ({ row }) => `${numberFormatter.format(row.original.areaKm2)} km²` },
@@ -27,7 +25,7 @@ export function AnalysisTable({ rows }: { rows: AnalysisRow[] }) {
   const [sorting, setSorting] = useState<SortingState>([]);
   // TanStack resets pagination when local filtering changes the supplied row collection.
   // eslint-disable-next-line react-hooks/incompatible-library
-  const table = useReactTable({ data: rows, columns, state: { sorting }, onSortingChange: setSorting, getCoreRowModel: getCoreRowModel(), getSortedRowModel: getSortedRowModel(), getPaginationRowModel: getPaginationRowModel(), initialState: { pagination: { pageSize: 10 } }, getRowId: (row) => row.id });
+  const table = useReactTable({ data: rows, columns, sortDescFirst: false, enableMultiSort: false, state: { sorting }, onSortingChange: setSorting, getCoreRowModel: getCoreRowModel(), getSortedRowModel: getSortedRowModel(), getPaginationRowModel: getPaginationRowModel(), initialState: { pagination: { pageSize: 10 } }, getRowId: (row) => row.id });
   const { pageIndex } = table.getState().pagination;
   return <DataTable table={table} caption="Kerawanan wilayah Jawa Barat — data dummy" captionClassName="sr-only" className="analysis-table [&_[data-slot=data-table-frame]]:border-0 [&_[data-slot=data-table-frame]]:rounded-none [&_table]:table-fixed [&_table]:min-w-292 [&_tr]:h-16 [&_tr]:border-0 [&_thead_tr]:[border-bottom:1px_solid_#d4d4d4] [&_th]:p-[8px_0] [&_th]:text-[14px] [&_th]:leading-[20px] [&_th]:font-medium [&_th]:text-left [&_td]:p-[8px_0] [&_td]:text-[14px] [&_td]:leading-[20px] [&_td]:font-normal [&_td]:text-left [&_th]:text-[#2b7fff] [&_th]:w-[calc(100%_/_6)]" footer={<div className="analysis-table-footer [border-top:1px_solid_#d4d4d4] pt-4 flex items-center justify-between gap-4 text-[14px] leading-[20px] [&_nav]:flex [&_nav]:items-center [&_nav]:gap-2 max-[700.01px]:flex-wrap max-[700.01px]:[&_nav]:gap-1">
     <span aria-live="polite">Menampilkan {table.getRowModel().rows.length} dari {rows.length}</span>

@@ -1,11 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { IconCaretDown } from "@tabler/icons-react";
 import { WebgisHeader } from "@/components/layout/webgis-header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { YearFilterButton } from "@/components/ui/year-filter-button";
 import { emptyAnalysisFilters, filterAnalysisRows } from "../analysis-filter";
 import type { AnalysisData, AnalysisFilters } from "../analysis-types";
 import { AnnualEventsChart, FrequencyChart, SusceptibilityChart } from "./analysis-charts";
@@ -23,7 +22,7 @@ export function AnalysisPage({ data }: { data: AnalysisData }) {
   return <div className="analysis-page min-h-[100dvh] bg-[#fff] text-[#171717] [&_[data-slot=card]]:border-0 [&_[data-slot=card]]:[outline:1px_solid_#d4d4d4] [&_[data-slot=card]]:[outline-offset:-1px] [&_[data-slot=chart]_.recharts-cartesian-axis-tick-value]:[fill:#a1a1a1] [&_[data-slot=chart]_.recharts-cartesian-axis-tick-value]:text-[12px]"><WebgisHeader mapCanvas />
     <main className="analysis-content w-[min(1200px,calc(100%_-_32px))] mx-auto py-4">
       <div className="analysis-heading min-h-10 flex items-center justify-between gap-4 [&_h1]:text-[36px] [&_h1]:leading-[40px] [&_h1]:font-medium max-[700.01px]:items-start max-[700.01px]:flex-wrap max-[700.01px]:[&_h1]:text-[28px] max-[700.01px]:[&_h1]:leading-[36px]"><div className="analysis-heading-scope flex items-center gap-2"><h1>Analisis</h1><span className="analysis-heading-divider h-10 w-4 relative [&::after]:content-[''] [&::after]:absolute [&::after]:[inset-block:0] [&::after]:left-2 [&::after]:w-[1px] [&::after]:bg-[#d4d4d4] max-[700.01px]:h-7 max-[700.01px]:w-2 max-[700.01px]:[&::after]:left-1" aria-hidden="true" /><span className="analysis-province text-[#2b7fff] text-[20px] leading-[28px] whitespace-nowrap max-[700.01px]:text-[16px]">Jawa Barat</span><AnalysisRegionFilter iconOnly regions={data.regions} value={filters.regionIds} onChange={(regionIds) => setFilters({ ...filters, regionIds })} /></div>
-        <DropdownMenu><DropdownMenuTrigger asChild><Button className="analysis-year" aria-label={`Pilih tahun, ${year}`}>{year}<IconCaretDown className="size-6" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuRadioGroup value={String(year)} onValueChange={(value) => { setYear(Number(value)); setFilters(emptyAnalysisFilters); }}>{data.years.map((item) => <DropdownMenuRadioItem key={item} value={String(item)}>{item}</DropdownMenuRadioItem>)}</DropdownMenuRadioGroup></DropdownMenuContent></DropdownMenu>
+        <YearFilterButton years={data.years} value={year} onValueChange={(value) => { setYear(value); setFilters(emptyAnalysisFilters); }} />
       </div>
       <div className="analysis-divider h-4 my-4 flex items-center [&::after]:content-[''] [&::after]:h-[1px] [&::after]:bg-[#d4d4d4] [&::after]:w-full" aria-hidden="true" />
       <section className="analysis-summary grid gap-4" aria-label={`Ringkasan contoh analisis Jawa Barat ${year}`}>
@@ -36,7 +35,7 @@ export function AnalysisPage({ data }: { data: AnalysisData }) {
         </div>
       </section>
       <div className="analysis-divider h-4 my-4 flex items-center [&::after]:content-[''] [&::after]:h-[1px] [&::after]:bg-[#d4d4d4] [&::after]:w-full" aria-hidden="true" />
-      <Card className="analysis-table-card p-4 flex flex-col gap-4 min-w-0"><div className="analysis-table-title flex items-center justify-between min-h-7 [&_h2]:text-[20px] [&_h2]:leading-[28px] [&_h2]:font-medium"><h2>Tabel Kerawanan/Wilayah</h2>{active && <Button variant="ghost" size="sm" onClick={() => setFilters(emptyAnalysisFilters)}>Reset filter</Button>}</div>
+      <Card className="analysis-table-card p-4 flex flex-col gap-4 min-w-0"><div className="analysis-table-title flex items-center justify-between min-h-8 [&_h2]:text-[20px] [&_h2]:leading-[28px] [&_h2]:font-medium"><h2>Tabel Kerawanan/Wilayah</h2>{active && <Button variant="destructive" size="sm" onClick={() => setFilters(emptyAnalysisFilters)}>Reset filter</Button>}</div>
         <AnalysisFiltersBar filters={filters} regions={data.regions} classes={data.classes} onChange={setFilters} />
         <AnalysisTable rows={rows} />
       </Card>
