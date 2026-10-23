@@ -88,6 +88,7 @@ body {
 }
 
 html { scroll-behavior: smooth; }
+
 ::selection { background: #dbeafe; color: #1e40af; }
 
 .site-container { width: min(100% - 32px, 1160px); margin-inline: auto; }

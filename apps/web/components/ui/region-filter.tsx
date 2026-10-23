@@ -92,7 +92,7 @@ export function RegionFilter({ regions, value, onValueChange, defaultExpandedIds
   return (
     <section role="group" aria-labelledby={`${id}-title`} className={cn("flex max-h-[min(744px,calc(100dvh_-_32px))] w-full min-w-0 max-w-[497px] flex-col gap-2.5 overflow-hidden rounded-2xl border border-neutral-300 bg-white p-4 text-black", className)}>
       <h3 id={`${id}-title`} className="shrink-0 border-b border-neutral-300 pb-4 text-lg leading-7 font-semibold">Filter Daerah</h3>
-      <div className="min-h-0 overflow-y-auto overscroll-contain [scrollbar-width:thin] [scrollbar-color:#8ec5ff_white] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-2xl [&::-webkit-scrollbar-thumb]:bg-blue-300 [&::-webkit-scrollbar-track]:bg-white">
+      <div className="min-h-0 overflow-y-auto overscroll-contain [--sb-size:4px]">
         <RegionRows regions={regions} value={value} onValueChange={onValueChange} disabled={disabled} prefix={id} depth={0} expandedIds={expandedIds} onExpand={(nodeId) => setExpandedIds((current) => toggleSelection(current, nodeId))} />
         {regions.length === 0 && <p className="text-sm text-neutral-500" role="status">Daerah belum tersedia.</p>}
       </div>
