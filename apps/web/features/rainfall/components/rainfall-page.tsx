@@ -17,12 +17,16 @@ export function RainfallPage({ data }: { data: RainfallPageData }) {
   const [filters, setFilters] = useState<RainfallFilters>(emptyRainfallFilters);
   const rows = useMemo(() => filterRainfallRows(data.rows, year, filters), [data.rows, year, filters]);
   const snapshot = data.snapshots[year];
+  function changeYear(value: number) {
+    setYear(value);
+    setFilters(emptyRainfallFilters);
+  }
   const active = !!(filters.query || filters.regionIds.length || filters.month || filters.classifications.length);
 
   return <div className="rainfall-page min-h-[100dvh] bg-[#fff] text-[#171717] [&_[data-slot=card]]:border-0 [&_[data-slot=card]]:[outline:1px_solid_#d4d4d4] [&_[data-slot=card]]:[outline-offset:-1px]"><WebgisHeader mapCanvas />
     <main className="rainfall-content w-[min(1200px,calc(100%_-_32px))] mx-auto py-4">
       <div className="rainfall-heading min-h-10 flex items-center justify-between gap-4 [&_h1]:text-[36px] [&_h1]:leading-[40px] [&_h1]:font-medium max-[700.01px]:items-start max-[700.01px]:flex-wrap max-[700.01px]:[&_h1]:text-[28px] max-[700.01px]:[&_h1]:leading-[36px]"><div className="rainfall-heading-scope flex items-center gap-2"><h1>Curah Hujan</h1><span className="rainfall-heading-divider h-10 w-4 relative [&::after]:content-[''] [&::after]:absolute [&::after]:[inset-block:0] [&::after]:left-2 [&::after]:w-[1px] [&::after]:bg-[#d4d4d4] max-[700.01px]:h-7 max-[700.01px]:w-2 max-[700.01px]:[&::after]:left-1" aria-hidden="true" /><span className="rainfall-province text-[#2b7fff] text-[20px] leading-[28px] whitespace-nowrap max-[700.01px]:text-[16px]">Jawa Barat</span><RainfallRegionFilter iconOnly regions={data.regions} value={filters.regionIds} onChange={(regionIds) => setFilters({ ...filters, regionIds })} /></div>
-        <YearFilterButton years={data.years} value={year} onValueChange={(value) => { setYear(value); setFilters(emptyRainfallFilters); }} />
+        <YearFilterButton years={data.years} value={year} onValueChange={changeYear} />
       </div>
       <div className="rainfall-divider h-4 my-4 flex items-center [&::after]:content-[''] [&::after]:h-[1px] [&::after]:bg-[#d4d4d4] [&::after]:w-full" aria-hidden="true" />
       <section className="rainfall-summary grid gap-4" aria-label={`Ringkasan contoh curah hujan Jawa Barat ${year}`}>
@@ -33,7 +37,7 @@ export function RainfallPage({ data }: { data: RainfallPageData }) {
       </section>
       <div className="rainfall-divider h-4 my-4 flex items-center [&::after]:content-[''] [&::after]:h-[1px] [&::after]:bg-[#d4d4d4] [&::after]:w-full" aria-hidden="true" />
       <Card className="rainfall-table-card p-4 flex flex-col gap-4 min-w-0"><div className="rainfall-table-title flex items-center justify-between min-h-8 [&_h2]:text-[20px] [&_h2]:leading-[28px] [&_h2]:font-medium"><h2>Tabel Curah Hujan</h2>{active && <Button variant="destructive" size="sm" onClick={() => setFilters(emptyRainfallFilters)}>Reset filter</Button>}</div>
-        <RainfallFiltersBar filters={filters} regions={data.regions} legend={data.legend} year={year} onChange={setFilters} />
+        <RainfallFiltersBar filters={filters} regions={data.regions} legend={data.legend} year={year} years={data.years} onYearChange={changeYear} onChange={setFilters} />
         <RainfallTable rows={rows} />
       </Card>
       <p className="rainfall-data-note mt-4 text-[12px] leading-[16px] text-[#737373]">Data dummy. Filter berlaku pada tabel; ringkasan, grafik, dan legenda tahunan adalah contoh desain terpisah.</p>

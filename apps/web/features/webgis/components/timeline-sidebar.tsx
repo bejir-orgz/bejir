@@ -39,10 +39,13 @@ export function TimelineSidebar({ year, filters, hidden, onChange }: {
   const months = getTimelineMonths(currentYear, currentMonth - 1);
   const selectedDate = filters.date ? new Date(`${filters.date}T00:00:00`) : undefined;
   const selectedEnd = filters.dateTo ? new Date(`${filters.dateTo}T00:00:00`) : undefined;
-  const dateLabel = selectedDate
-    ? `${format(selectedDate, "dd/MM/yyyy")}${selectedEnd && filters.dateTo !== filters.date ? ` – ${format(selectedEnd, "dd/MM/yyyy")}` : ""}`
+  const displayedRange = pickerOpen ? draftRange : { from: selectedDate, to: selectedEnd };
+  const displayedFrom = displayedRange?.from ? format(displayedRange.from, "yyyy-MM-dd") : "";
+  const displayedTo = displayedRange?.to ? format(displayedRange.to, "yyyy-MM-dd") : displayedFrom;
+  const dateLabel = displayedRange?.from
+    ? `${format(displayedRange.from, "dd/MM/yyyy")}${displayedRange.to && displayedTo !== displayedFrom ? ` – ${format(displayedRange.to, "dd/MM/yyyy")}` : ""}`
     : "Pilih waktu";
-  const isSelectedDate = (date: string) => !!filters.date && date >= filters.date && date <= (filters.dateTo || filters.date);
+  const isSelectedDate = (date: string) => !!displayedFrom && date >= displayedFrom && date <= displayedTo;
 
   function selectDate(date: string) {
     onChange({ period: "custom", date, dateTo: "" });
@@ -63,12 +66,12 @@ export function TimelineSidebar({ year, filters, hidden, onChange }: {
           if (open) setDraftRange(selectedDate ? { from: selectedDate, to: selectedEnd } : undefined);
           setPickerOpen(open);
         }}>
-          <PopoverTrigger asChild><Button variant={!!filters.date ? "outline" : "filter"} className="gis-time-picker mt-2 w-full justify-start rounded-2xl" data-active={!!filters.date}><IconCalendarWeek className="size-4" aria-hidden="true" /><span className="min-w-0 truncate">{dateLabel}</span></Button></PopoverTrigger>
-          <PopoverContent sticky="always" collisionPadding={16} className="w-auto max-h-[min(calc(100dvh-32px),var(--radix-popover-content-available-height))] overflow-y-auto overscroll-contain rounded-lg p-0" align="start" aria-label="Pilih rentang tanggal Timeline">
+          <PopoverTrigger asChild><Button variant={displayedFrom ? "outline" : "filter"} className="gis-time-picker mt-2 w-full justify-start rounded-2xl" data-active={!!displayedFrom}><IconCalendarWeek className="size-4" aria-hidden="true" /><span className="min-w-0 truncate" aria-live="polite" title={dateLabel}>{dateLabel}</span></Button></PopoverTrigger>
+          <PopoverContent sticky="always" collisionPadding={16} className="w-auto max-h-[min(calc(100dvh-32px),var(--radix-popover-content-available-height))] overflow-y-auto overscroll-contain rounded-2xl p-0" align="start" aria-label="Pilih rentang tanggal Timeline">
             <CalendarTimeline className="rounded-none border-0" mode="range" locale={id} selected={draftRange} defaultMonth={selectedDate ?? new Date(currentYear, currentMonth - 1, 1)} onSelect={setDraftRange} />
             <div className="flex items-center justify-between gap-4 p-4 pt-0">
               <Button variant="outline" className="flex-1 w-full" onClick={() => { setDraftRange(undefined); onChange({ period: "custom", date: "", dateTo: "" }); }}>Hapus tanggal</Button>
-              <Button variant="outline" className="flex-1 w-full" onClick={applyRange} disabled={!draftRange?.from}>Terapkan</Button>
+              <Button className="flex-1 w-full" onClick={applyRange} disabled={!draftRange?.from}>Terapkan</Button>
             </div>
           </PopoverContent>
         </Popover>

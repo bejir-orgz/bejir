@@ -4,7 +4,7 @@ import { IconAlertTriangle, IconCalendarWeek, IconSearch } from "@tabler/icons-r
 import { id } from "date-fns/locale";
 import { RegionFilterPopover as RegionFilter } from "@/components/shared/region-filter-popover";
 import { Button } from "@/components/ui/button";
-import { CalendarFilter } from "@/components/ui/calendar-filter";
+import { CalendarBase } from "@/components/ui/calendar-base";
 import { CategoryFilter, type CategoryFilterOption } from "@/components/ui/category-filter";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -36,9 +36,11 @@ export function HistoryFiltersBar({ filters, regions, districtRows, year, onChan
           sticky="always"
           collisionPadding={16}
           align="start"
-          className="w-auto max-h-[min(calc(100dvh-32px),var(--radix-popover-content-available-height))] overflow-y-auto overscroll-contain rounded-lg p-0"
+          className="w-auto max-h-[min(calc(100dvh-32px),var(--radix-popover-content-available-height))] overflow-y-auto overscroll-contain rounded-2xl p-0"
         >
-          <CalendarFilter
+          <CalendarBase
+            captionLayout="dropdown"
+            reverseYears
             className="rounded-none border-0"
             mode="range"
             locale={id}

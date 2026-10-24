@@ -11,6 +11,7 @@ import {
 import { id } from "date-fns/locale"
 
 import { Button, buttonVariants } from "@/components/ui/button"
+import { CalendarDropdown } from "@/components/ui/calendar-selector"
 
 function CalendarBase({
   className,
@@ -36,7 +37,7 @@ function CalendarBase({
       locale={locale}
       weekStartsOn={weekStartsOn}
       className={cn(
-        "group/calendar rounded-lg border border-neutral-300 bg-white p-4 text-black [--cell-size:48px] max-[767.99px]:[--cell-size:clamp(32px,calc((100vw_-_92px)/7),48px)] [&_button[data-day]]:text-sm! [&_button[data-day]]:leading-5! [&_button[data-day]]:font-normal!",
+        "group/calendar rounded-2xl border border-neutral-300 bg-white p-3 text-black [--cell-size:32px] [&_button[data-day]]:text-sm! [&_button[data-day]]:leading-5! [&_button[data-day]]:font-normal!",
         String.raw`rtl:**:[.rdp-button\_next>svg]:rotate-180`,
         String.raw`rtl:**:[.rdp-button\_previous>svg]:rotate-180`,
         className
@@ -54,9 +55,9 @@ function CalendarBase({
           "relative flex flex-col gap-4 md:flex-row",
           defaultClassNames.months
         ),
-        month: cn("flex w-[calc(var(--cell-size)*7_+_6px)] flex-col gap-4", defaultClassNames.month),
+        month: cn("flex w-[calc(var(--cell-size)*7_+_24px)] flex-col gap-4", defaultClassNames.month),
         nav: cn(
-          "absolute inset-x-0 top-0 flex w-full items-center justify-between gap-1",
+          "pointer-events-none absolute inset-x-0 top-0 flex w-full items-center justify-between gap-1 [&_button]:pointer-events-auto",
           defaultClassNames.nav
         ),
         button_previous: cn(
@@ -93,12 +94,12 @@ function CalendarBase({
           defaultClassNames.caption_label
         ),
         month_grid: cn("w-full border-collapse", defaultClassNames.month_grid),
-        weekdays: cn("flex gap-px", defaultClassNames.weekdays),
+        weekdays: cn("flex", defaultClassNames.weekdays),
         weekday: cn(
-          "flex h-8 flex-1 items-center justify-center text-xs leading-4 font-normal text-neutral-500 select-none",
+          "flex-1 rounded-md text-center text-[0.8rem] font-normal text-neutral-500 select-none",
           defaultClassNames.weekday
         ),
-        week: cn("mt-px flex w-full gap-px", defaultClassNames.week),
+        week: cn("mt-2 flex w-full", defaultClassNames.week),
         week_number_header: cn(
           "w-(--cell-size) select-none",
           defaultClassNames.week_number_header
@@ -108,24 +109,18 @@ function CalendarBase({
           defaultClassNames.week_number
         ),
         day: cn(
-          "group/day relative size-(--cell-size) p-0 text-center select-none [&:last-child[data-selected=true]_button]:rounded-r-md",
-          props.showWeekNumber
-            ? "[&:nth-child(2)[data-selected=true]_button]:rounded-l-md"
-            : "[&:first-child[data-selected=true]_button]:rounded-l-md",
+          "group/day relative h-(--cell-size) min-w-(--cell-size) flex-1 p-0 text-center select-none [&:has(button[data-range-start=true][data-range-end=true])]:before:hidden",
           defaultClassNames.day
         ),
-        range_start: cn(
-          "rounded-l-lg bg-blue-100",
-          defaultClassNames.range_start
-        ),
-        range_middle: cn("rounded-none bg-blue-100", defaultClassNames.range_middle),
-        range_end: cn("rounded-r-lg bg-blue-100", defaultClassNames.range_end),
+        range_start: "before:pointer-events-none before:absolute before:inset-y-0 before:right-0 before:w-1/2 before:bg-blue-100",
+        range_middle: "bg-blue-100 first:rounded-l-lg last:rounded-r-lg",
+        range_end: "before:pointer-events-none before:absolute before:inset-y-0 before:left-0 before:w-1/2 before:bg-blue-100",
         today: cn(
           "font-normal",
           defaultClassNames.today
         ),
         outside: cn(
-          "text-black opacity-50",
+          "text-black opacity-50 data-[selected=true]:opacity-100",
           defaultClassNames.outside
         ),
         disabled: cn(
@@ -136,6 +131,7 @@ function CalendarBase({
         ...classNames,
       }}
       components={{
+        Dropdown: CalendarDropdown,
         Root: ({ className, rootRef, ...props }) => {
           return (
             <div
@@ -212,7 +208,7 @@ function CalendarDayButton({
       data-range-end={modifiers.range_end}
       data-range-middle={modifiers.range_middle}
       className={cn(
-        "flex size-(--cell-size) min-w-(--cell-size) flex-col gap-1 rounded-sm p-0 leading-5 font-normal group-data-[focused=true]/day:relative group-data-[focused=true]/day:z-10 group-data-[focused=true]/day:border-ring group-data-[focused=true]/day:ring-[3px] group-data-[focused=true]/day:ring-ring/50 data-[range-end=true]:rounded-lg data-[range-end=true]:rounded-r-md data-[range-end=true]:bg-primary! data-[range-end=true]:text-primary-foreground! data-[range-middle=true]:rounded-none data-[range-middle=true]:bg-blue-100! data-[range-middle=true]:text-black! data-[range-start=true]:rounded-lg data-[range-start=true]:rounded-l-md data-[range-start=true]:bg-primary! data-[range-start=true]:text-primary-foreground! data-[selected-single=true]:bg-primary! data-[selected-single=true]:text-primary-foreground! dark:hover:text-accent-foreground [&>span]:text-xs [&>span]:opacity-70",
+        "relative z-1 mx-auto flex size-(--cell-size) min-w-(--cell-size) flex-col gap-1 rounded-sm p-0 leading-5 font-normal group-data-[focused=true]/day:relative group-data-[focused=true]/day:z-10 group-data-[focused=true]/day:border-ring group-data-[focused=true]/day:ring-[3px] group-data-[focused=true]/day:ring-ring/50 data-[range-end=true]:rounded-lg data-[range-end=true]:rounded-r-lg data-[range-end=true]:bg-primary! data-[range-end=true]:text-primary-foreground! data-[range-middle=true]:rounded-none data-[range-middle=true]:bg-transparent! data-[range-middle=true]:text-black! data-[range-start=true]:rounded-lg data-[range-start=true]:rounded-l-lg data-[range-start=true]:bg-primary! data-[range-start=true]:text-primary-foreground! data-[selected-single=true]:bg-primary! data-[selected-single=true]:text-primary-foreground! dark:hover:text-accent-foreground [&>span]:text-xs [&>span]:opacity-70",
         defaultClassNames.day,
         className
       )}
