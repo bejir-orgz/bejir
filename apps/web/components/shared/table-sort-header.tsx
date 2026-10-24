@@ -16,7 +16,7 @@ export function TableSortHeader<TData>({ column, title, className }: {
   return (
     <Button
       variant="ghost"
-      className={cn("h-auto gap-2 whitespace-normal p-0 text-left text-inherit hover:bg-transparent hover:text-blue-500", className)}
+      className={cn("h-auto gap-2 whitespace-normal p-0 text-left text-inherit hover:bg-transparent hover:text-inherit", className)}
       aria-label={`Urutkan ${title}`}
       onClick={column.getToggleSortingHandler()}
     >

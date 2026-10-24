@@ -19,3 +19,9 @@ export function getCurrentTimelinePeriod(now = new Date()) {
   const parts = new Intl.DateTimeFormat("en", { timeZone: "Asia/Jakarta", year: "numeric", month: "2-digit" }).formatToParts(now);
   return `${parts.find((part) => part.type === "year")!.value}-${parts.find((part) => part.type === "month")!.value}`;
 }
+
+/** Today in West Java, including the day so the highlight refreshes at midnight. */
+export function getCurrentTimelineDate(now = new Date()) {
+  const parts = new Intl.DateTimeFormat("en", { timeZone: "Asia/Jakarta", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(now);
+  return ["year", "month", "day"].map((type) => parts.find((part) => part.type === type)!.value).join("-");
+}

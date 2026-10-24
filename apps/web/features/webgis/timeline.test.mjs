@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { getCurrentTimelinePeriod, getTimelineMonths } from "./timeline.ts";
+import { getCurrentTimelineDate, getCurrentTimelinePeriod, getTimelineMonths } from "./timeline.ts";
 
 test("timeline shows the current month descending through January only", () => {
   const months = getTimelineMonths(2026, 9);
@@ -32,4 +32,10 @@ test("calendar dates align with their Sunday-first weekday columns throughout th
   }
   assert.equal(getTimelineMonths(2026, 9)[0].firstWeekday, 4); // October starts on Thursday.
   assert.equal(getTimelineMonths(2026, 1)[0].firstWeekday, 0); // February starts on Sunday.
+});
+
+test("today follows Jakarta midnight even when the UTC day differs", () => {
+  assert.equal(getCurrentTimelineDate(new Date("2026-10-24T16:59:59Z")), "2026-10-24");
+  assert.equal(getCurrentTimelineDate(new Date("2026-10-24T17:00:00Z")), "2026-10-25");
+  assert.equal(getCurrentTimelineDate(new Date("2026-12-31T17:00:00Z")), "2027-01-01");
 });

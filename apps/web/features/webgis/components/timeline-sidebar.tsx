@@ -6,12 +6,13 @@ import { id } from "date-fns/locale";
 import { format } from "date-fns";
 import type { DateRange } from "react-day-picker";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { CalendarTimeline } from "@/components/ui/calendar-timeline";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { getCurrentTimelinePeriod, getTimelineMonths } from "../timeline";
+import { getCurrentTimelineDate, getTimelineMonths } from "../timeline";
 import type { WorkspaceFilters } from "../types";
 
-function subscribeToMonthChange(callback: () => void) {
+function subscribeToDateChange(callback: () => void) {
   const timer = window.setInterval(callback, 60_000);
   return () => window.clearInterval(timer);
 }
@@ -34,8 +35,8 @@ export function TimelineSidebar({ year, filters, hidden, onChange }: {
 }) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [draftRange, setDraftRange] = useState<DateRange>();
-  const period = useSyncExternalStore(subscribeToMonthChange, getCurrentTimelinePeriod, getServerPeriod);
-  const [currentYear, currentMonth] = period ? period.split("-").map(Number) : [year, 1];
+  const today = useSyncExternalStore(subscribeToDateChange, getCurrentTimelineDate, getServerPeriod);
+  const [currentYear, currentMonth] = today ? today.split("-").map(Number) : [year, 1];
   const months = getTimelineMonths(currentYear, currentMonth - 1);
   const selectedDate = filters.date ? new Date(`${filters.date}T00:00:00`) : undefined;
   const selectedEnd = filters.dateTo ? new Date(`${filters.dateTo}T00:00:00`) : undefined;
@@ -75,14 +76,21 @@ export function TimelineSidebar({ year, filters, hidden, onChange }: {
             </div>
           </PopoverContent>
         </Popover>
-        <div className="gis-timeline-months flex flex-col gap-4 mt-2 [&_h3]:text-[var(--gis-blue)] [&_h3]:text-[16px] [&_h3]:leading-[24px] [&_h3]:font-normal [&_h3]:mb-2">{months.map((month) => (
+        <div className="gis-timeline-months flex flex-col gap-4 mt-4 [&_h3]:text-[var(--gis-blue)] [&_h3]:text-[16px] [&_h3]:leading-[24px] [&_h3]:font-normal [&_h3]:mb-2">{months.map((month) => (
           <section key={month.id} aria-label={`${month.label} ${month.id.slice(0, 4)}`}>
             <h3>{month.label} {month.id.slice(0, 4)}</h3>
-            <div className="gis-day-grid grid grid-cols-[repeat(7,minmax(0,1fr))] gap-[0_8px] [&_button]:h-8 [&_button]:p-[4px_0] [&_button]:rounded-lg [&_button]:text-[14px] [&_button]:leading-[20px] [&_button]:font-normal [&_.gis-day-selected]:bg-[var(--gis-blue)] [&_.gis-day-selected]:text-[white]">
-              {weekdays.map((day) => <abbr key={day.name} title={day.name} className="flex h-8 items-center justify-center text-xs font-normal text-neutral-500 no-underline">{day.short}</abbr>)}
+            <div className="gis-day-grid grid grid-cols-[repeat(7,minmax(0,1fr))] gap-x-0 gap-y-2">
+              {weekdays.map((day) => <abbr key={day.name} title={day.name} className="flex h-8 items-center justify-center text-[0.8rem] font-normal text-neutral-500 no-underline">{day.short}</abbr>)}
               {Array.from({ length: month.firstWeekday }, (_, index) => <span key={`empty-${index}`} aria-hidden="true" />)}
               {month.dates.map((date, index) => (
-              <Button key={date} variant="ghost" size="sm" aria-label={`Pilih ${index + 1} ${month.label} ${month.id.slice(0, 4)}`} aria-pressed={isSelectedDate(date)} className={isSelectedDate(date) ? "gis-day-selected" : ""} onClick={() => selectDate(date)}>{index + 1}</Button>
+              <Button key={date} variant="ghost" size="icon-sm" aria-label={`Pilih ${index + 1} ${month.label} ${month.id.slice(0, 4)}`} aria-current={date === today ? "date" : undefined} aria-pressed={isSelectedDate(date)} data-selected={isSelectedDate(date)} data-today={date === today} className={cn(
+                "size-8 justify-self-center rounded-sm p-0 text-sm! leading-5! font-normal!",
+                date === today
+                  ? "bg-blue-500! text-white! hover:bg-blue-500! hover:text-white!"
+                  : isSelectedDate(date)
+                    ? "bg-blue-200! text-black! hover:bg-blue-200! hover:text-black!"
+                    : "bg-transparent text-black hover:bg-blue-50"
+              )} onClick={() => selectDate(date)}>{index + 1}</Button>
             ))}</div>
           </section>
         ))}</div>
