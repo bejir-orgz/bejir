@@ -19,7 +19,7 @@ const severityOptions: readonly CategoryFilterOption<FloodSeverity>[] = [
 
 export { RegionFilter };
 
-export function HistoryFiltersBar({ filters, regions, districtRows, year, onChange }: { filters: HistoryFilters; regions: string[]; districtRows: readonly FloodHistoryRow[]; year: number; onChange: (filters: HistoryFilters) => void }) {
+export function HistoryFiltersBar({ filters, regions, districtRows, year, years, onYearChange, onChange }: { filters: HistoryFilters; regions: string[]; districtRows: readonly FloodHistoryRow[]; year: number; years: readonly number[]; onYearChange: (year: number) => void; onChange: (filters: HistoryFilters) => void }) {
   const range = filters.from ? { from: new Date(`${filters.from}T12:00:00`), to: filters.to ? new Date(`${filters.to}T12:00:00`) : undefined } : undefined;
   const dateLabel = filters.from ? `${filters.from.slice(8)}/${filters.from.slice(5, 7)}${filters.to ? ` – ${filters.to.slice(8)}/${filters.to.slice(5, 7)}` : ""}` : "Tanggal";
 
@@ -44,9 +44,12 @@ export function HistoryFiltersBar({ filters, regions, districtRows, year, onChan
             className="rounded-none border-0"
             mode="range"
             locale={id}
-            defaultMonth={new Date(year, 8, 1)}
-            startMonth={new Date(year, 0, 1)}
-            endMonth={new Date(year, 11, 31)}
+            defaultMonth={range?.from ?? new Date(year, 8, 1)}
+            onMonthChange={(month) => {
+              if (month.getFullYear() !== year) onYearChange(month.getFullYear());
+            }}
+            startMonth={new Date(Math.min(...years), 0, 1)}
+            endMonth={new Date(Math.max(...years), 11, 31)}
             selected={range}
             onSelect={(next) => onChange({ ...filters, from: next?.from ? localDateString(next.from) : "", to: next?.to ? localDateString(next.to) : "" })}
           />
