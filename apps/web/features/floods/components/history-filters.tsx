@@ -1,36 +1,93 @@
 "use client";
 
-import { IconAlertTriangle, IconCalendarWeek, IconFilter2, IconMap, IconSearch } from "@tabler/icons-react";
+import { IconAlertTriangle, IconCalendarWeek, IconSearch } from "@tabler/icons-react";
 import { id } from "date-fns/locale";
+import { RegionFilterPopover as RegionFilter } from "@/components/shared/region-filter-popover";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { Checkbox } from "@/components/ui/checkbox";
+import { CalendarBase } from "@/components/ui/calendar-base";
+import { CategoryFilter, type CategoryFilterOption } from "@/components/ui/category-filter";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { localDateString } from "../history";
-import type { FloodSeverity, HistoryFilters } from "../types";
+import type { FloodHistoryRow, FloodSeverity, HistoryFilters } from "../types";
 
-export function RegionFilter({ regions, value, onChange, iconOnly = false }: { regions: string[]; value: string; onChange: (value: string) => void; iconOnly?: boolean }) {
-  return <Popover><PopoverTrigger asChild><Button variant={iconOnly ? "ghost" : "outline"} className={iconOnly ? "history-region-icon" : "history-filter"} aria-label="Filter daerah pada tabel" data-active={!!value}>
-    {iconOnly ? <IconFilter2 className="size-6" /> : <><IconMap className="size-6" /><span>{value || "Daerah"}</span></>}
-  </Button></PopoverTrigger><PopoverContent align="start" className="w-72 space-y-3">
-    <p className="text-sm font-medium">Daerah pada tabel</p>
-    <Select value={value || "all"} onValueChange={(next) => onChange(next === "all" ? "" : next)}><SelectTrigger className="w-full" aria-label="Pilih kota atau kabupaten"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Semua daerah</SelectItem>{regions.map((region) => <SelectItem key={region} value={region}>{region}</SelectItem>)}</SelectContent></Select>
-  </PopoverContent></Popover>;
-}
+const severityOptions: readonly CategoryFilterOption<FloodSeverity>[] = [
+  { value: "Rendah", label: "Rendah" },
+  { value: "Sedang", label: "Sedang" },
+  { value: "Tinggi", label: "Tinggi" },
+];
 
-export function HistoryFiltersBar({ filters, regions, year, onChange }: { filters: HistoryFilters; regions: string[]; year: number; onChange: (filters: HistoryFilters) => void }) {
+export { RegionFilter };
+
+export function HistoryFiltersBar({ filters, regions, districtRows, year, years, onYearChange, onChange }: { filters: HistoryFilters; regions: string[]; districtRows: readonly FloodHistoryRow[]; year: number; years: readonly number[]; onYearChange: (year: number) => void; onChange: (filters: HistoryFilters) => void }) {
   const range = filters.from ? { from: new Date(`${filters.from}T12:00:00`), to: filters.to ? new Date(`${filters.to}T12:00:00`) : undefined } : undefined;
   const dateLabel = filters.from ? `${filters.from.slice(8)}/${filters.from.slice(5, 7)}${filters.to ? ` – ${filters.to.slice(8)}/${filters.to.slice(5, 7)}` : ""}` : "Tanggal";
-  return <div className="history-filters">
-    <Popover><PopoverTrigger asChild><Button variant="outline" className="history-filter" data-active={!!filters.from}><IconCalendarWeek className="size-6" /><span>{dateLabel}</span></Button></PopoverTrigger><PopoverContent align="start" className="w-auto p-0">
-      <Calendar mode="range" locale={id} defaultMonth={new Date(year, 8, 1)} startMonth={new Date(year, 0, 1)} endMonth={new Date(year, 11, 31)} selected={range} onSelect={(next) => onChange({ ...filters, from: next?.from ? localDateString(next.from) : "", to: next?.to ? localDateString(next.to) : "" })} />
-      <Button variant="ghost" size="sm" className="m-2" onClick={() => onChange({ ...filters, from: "", to: "" })}>Hapus tanggal</Button>
-    </PopoverContent></Popover>
-    <RegionFilter regions={regions} value={filters.region} onChange={(region) => onChange({ ...filters, region })} />
-    <Popover><PopoverTrigger asChild><Button variant="outline" className="history-filter" data-active={!!filters.severities.length}><IconAlertTriangle className="size-6" /><span>{filters.severities.length ? `${filters.severities.length} keparahan` : "Keparahan"}</span></Button></PopoverTrigger><PopoverContent align="start" className="w-52 space-y-4"><p className="text-sm font-medium">Keparahan pada tabel</p>{(["Rendah", "Sedang", "Tinggi"] as FloodSeverity[]).map((severity) => <Label key={severity} className="flex items-center gap-2"><Checkbox checked={filters.severities.includes(severity)} onCheckedChange={(checked) => onChange({ ...filters, severities: checked === true ? [...filters.severities, severity] : filters.severities.filter((item) => item !== severity) })} />{severity}</Label>)}</PopoverContent></Popover>
-    <div className="history-search"><IconSearch className="size-6" aria-hidden="true" /><Input aria-label="Cari Kota/Kabupaten" placeholder="Cari Kota/Kabupaten" value={filters.query} onChange={(event) => onChange({ ...filters, query: event.target.value })} /></div>
-  </div>;
+
+  return (
+    <div className="history-filters flex gap-4 max-[900.01px]:flex-wrap max-[900.01px]:gap-2">
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button variant={!!filters.from ? "outline" : "filter"} className="history-filter rounded-2xl" data-active={!!filters.from}>
+            <IconCalendarWeek className="size-6" />
+            <span>{dateLabel}</span>
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent
+          sticky="always"
+          collisionPadding={16}
+          align="start"
+          className="w-auto max-h-[min(calc(100dvh-32px),var(--radix-popover-content-available-height))] overflow-y-auto overscroll-contain rounded-2xl p-0"
+        >
+          <CalendarBase
+            captionLayout="dropdown"
+            reverseYears
+            className="rounded-none border-0"
+            mode="range"
+            locale={id}
+            defaultMonth={range?.from ?? new Date(year, 8, 1)}
+            onMonthChange={(month) => {
+              if (month.getFullYear() !== year) onYearChange(month.getFullYear());
+            }}
+            startMonth={new Date(Math.min(...years), 0, 1)}
+            endMonth={new Date(Math.max(...years), 11, 31)}
+            selected={range}
+            onSelect={(next) => onChange({ ...filters, from: next?.from ? localDateString(next.from) : "", to: next?.to ? localDateString(next.to) : "" })}
+          />
+          <div className="p-4 pt-0">
+            <Button variant="outline" className="w-full" onClick={() => onChange({ ...filters, from: "", to: "" })}>
+              Hapus tanggal
+            </Button>
+          </div>
+        </PopoverContent>
+      </Popover>
+
+      <RegionFilter regions={regions} districtRows={districtRows} value={filters.regionIds} onChange={(regionIds) => onChange({ ...filters, regionIds })} />
+
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button variant={!!filters.severities.length ? "outline" : "filter"} className="history-filter rounded-2xl" data-active={!!filters.severities.length}>
+            <IconAlertTriangle className="size-6" />
+            <span>{filters.severities.length ? `${filters.severities.length} keparahan` : "Keparahan"}</span>
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent
+          align="start"
+          collisionPadding={16}
+          className="w-auto max-w-[calc(100vw-32px)] rounded-2xl border-0 bg-transparent p-0"
+        >
+          <CategoryFilter
+            variant="keparahan"
+            options={severityOptions}
+            value={filters.severities}
+            onValueChange={(severities) => onChange({ ...filters, severities })}
+          />
+        </PopoverContent>
+      </Popover>
+
+      <label className="history-search flex items-center gap-2 flex-1 min-w-45 h-10 rounded-2xl border border-neutral-300 focus-within:border-blue-500 bg-white px-4 text-neutral-400 transition-colors max-[900.01px]:basis-[100%] [&_input]:min-w-0 [&_input]:w-full [&_input]:h-5 [&_input]:p-0 [&_input]:border-0 [&_input]:outline-none [&_input]:shadow-none [&_input]:bg-transparent [&_input]:text-[14px] [&_input]:leading-5 [&_input]:text-neutral-400 [&_input::placeholder]:text-neutral-400 [&_input::placeholder]:opacity-100 [&_input]:focus:outline-none [&_input]:focus-visible:ring-0 [&_input]:focus-visible:border-0">
+        <IconSearch className="size-4 shrink-0 text-neutral-400" aria-hidden="true" />
+        <Input aria-label="Cari Kota/Kabupaten" placeholder="Cari Kota/Kabupaten" value={filters.query} onChange={(event) => onChange({ ...filters, query: event.target.value })} />
+      </label>
+    </div>
+  );
 }

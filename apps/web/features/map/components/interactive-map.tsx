@@ -58,20 +58,20 @@ export function InteractiveMap() {
   }, []);
 
   return (
-    <section className="gis-map" aria-label="Peta interaktif Jawa Barat">
-      <div ref={container} className="gis-leaflet-map" aria-label="Peta dasar OpenStreetMap Jawa Barat. Gunakan tombol panah untuk menggeser serta tombol tambah dan kurang untuk zoom." />
-      {status !== "ready" ? <div className="gis-map-status" role="status">
+    <section className="gis-map absolute [inset:0] overflow-hidden bg-[#e8eee6] [&_.leaflet-control-attribution]:[font:10px/16px_var(--font-google-sans-flex),Arial,sans-serif]! [&_.leaflet-control-attribution]:bg-[#fffffff2]! [&_:is(.leaflet-bar,.leaflet-control-layers,.leaflet-popup-content-wrapper,.leaflet-popup-tip,.leaflet-tooltip)]:shadow-none! [&_.leaflet-control-scale-line]:[text-shadow:none]! max-[999.01px]:[inset:0]" aria-label="Peta interaktif Jawa Barat">
+      <div ref={container} className="gis-leaflet-map absolute! [inset:0]! z-0! [font-family:inherit]!" aria-label="Peta dasar OpenStreetMap Jawa Barat. Gunakan tombol panah untuk menggeser serta tombol tambah dan kurang untuk zoom." />
+      {status !== "ready" ? <div className="gis-map-status absolute z-1 left-4 right-16 bottom-16 flex items-center flex-wrap gap-2 p-2 rounded-lg bg-[white] text-[12px]" role="status">
         {status === "loading" ? "Memuat peta dasar…" : "Sebagian peta dasar belum dapat dimuat. Periksa koneksi internet."}
         {status === "error" ? <Button size="sm" variant="outline" onClick={() => { setStatus("loading"); tileLayer.current?.redraw(); }}>Coba lagi</Button> : null}
       </div> : null}
-      <div className="gis-map-controls" aria-label="Kontrol peta">
-        <div className="gis-zoom-controls">
+      <div className="gis-map-controls absolute z-1 bottom-4 right-4 [transition:right_var(--gis-slide-duration)_var(--gis-slide-easing)] motion-reduce:[transition:none] flex flex-col gap-2 text-[var(--gis-blue)] [&_button]:w-6 [&_button]:h-6 [&_button]:p-0 [&_button]:rounded-sm [&_button]:cursor-pointer [&_button:disabled]:[opacity:.4] [&_button:disabled]:cursor-default [&_.gis-reset-map]:w-9 [&_.gis-reset-map]:h-9 [&_.gis-reset-map]:p-[6px] [&_.gis-reset-map]:rounded-lg [&_.gis-reset-map]:bg-[white]" aria-label="Kontrol peta">
+        <div className="gis-zoom-controls flex flex-col gap-2 p-[6px] rounded-lg bg-[white]">
           <Button variant="ghost" size="icon-sm" aria-label="Perbesar peta" disabled={zoom >= westJavaBasemap.maxZoom} onClick={() => instance.current?.zoomIn()}><IconPlus className="size-6" aria-hidden="true" /></Button>
           <Button variant="ghost" size="icon-sm" aria-label="Perkecil peta" disabled={zoom <= westJavaBasemap.minZoom} onClick={() => instance.current?.zoomOut()}><IconMinus className="size-6" aria-hidden="true" /></Button>
         </div>
         <Button variant="ghost" size="icon-sm" className="gis-reset-map" aria-label="Kembali ke Jawa Barat" title="Kembali ke Jawa Barat, tanpa akses lokasi perangkat" onClick={() => instance.current?.fitBounds(westJavaBasemap.bounds, { padding: [24, 24] })}><IconCurrentLocation className="size-6" aria-hidden="true" /></Button>
       </div>
-      <p className="gis-map-disclaimer">Jawa Barat · Peta dasar OSM · Statistik dummy</p>
+      <p className="gis-map-disclaimer absolute z-1 left-2 bottom-6 max-w-[calc(100%_-_64px)] p-[4px_8px] rounded-sm text-[10px] leading-[16px] bg-[#fffffff2] text-[#525252] pointer-events-none">Jawa Barat · Peta dasar OSM · Statistik dummy</p>
     </section>
   );
 }

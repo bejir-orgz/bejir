@@ -15,7 +15,7 @@ export interface AnalysisRow {
 
 export interface AnalysisFilters {
   query: string;
-  region: string;
+  regionIds: string[];
   susceptibility: SusceptibilityClass[];
 }
 

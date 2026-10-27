@@ -2,8 +2,6 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 import { IconChevronLeft, IconChevronRight, IconDots } from "@tabler/icons-react"
 
-import { buttonVariants, type Button } from "@/components/ui/button"
-
 function Pagination({ className, ...props }: React.ComponentProps<"nav">) {
   return (
     <nav
@@ -35,13 +33,11 @@ function PaginationItem({ ...props }: React.ComponentProps<"li">) {
 
 type PaginationLinkProps = {
   isActive?: boolean
-} & Pick<React.ComponentProps<typeof Button>, "size"> &
-  React.ComponentProps<"a">
+} & React.ComponentProps<"a">
 
 function PaginationLink({
   className,
   isActive,
-  size = "icon",
   ...props
 }: PaginationLinkProps) {
   return (
@@ -50,10 +46,10 @@ function PaginationLink({
       data-slot="pagination-link"
       data-active={isActive}
       className={cn(
-        buttonVariants({
-          variant: isActive ? "outline" : "ghost",
-          size,
-        }),
+        "inline-flex h-10 min-w-10 items-center justify-center p-2 rounded-[10px] text-[#2b7fff] text-[14px] font-normal leading-[1.3333333333] select-none transition-colors max-[700.01px]:min-w-8 max-[700.01px]:w-8 max-[700.01px]:h-8 max-[700.01px]:rounded-lg",
+        isActive
+          ? "border border-[#2b7fff] bg-transparent text-[#2b7fff]"
+          : "hover:bg-[#dbeafe]/50 text-[#2b7fff]",
         className
       )}
       {...props}
@@ -67,13 +63,12 @@ function PaginationPrevious({
 }: React.ComponentProps<typeof PaginationLink>) {
   return (
     <PaginationLink
-      aria-label="Go to previous page"
-      size="default"
-      className={cn("gap-1 px-2.5 sm:pl-2.5", className)}
+      aria-label="Halaman sebelumnya"
+      className={cn("bg-[#dbeafe] text-[#2b7fff] hover:bg-[#bfdbfe] border-0", className)}
       {...props}
     >
-      <IconChevronLeft aria-hidden="true" />
-      <span className="hidden sm:block">Previous</span>
+      <IconChevronLeft className="size-6" aria-hidden="true" />
+      <span className="sr-only">Halaman sebelumnya</span>
     </PaginationLink>
   )
 }
@@ -84,13 +79,12 @@ function PaginationNext({
 }: React.ComponentProps<typeof PaginationLink>) {
   return (
     <PaginationLink
-      aria-label="Go to next page"
-      size="default"
-      className={cn("gap-1 px-2.5 sm:pr-2.5", className)}
+      aria-label="Halaman berikutnya"
+      className={cn("bg-[#dbeafe] text-[#2b7fff] hover:bg-[#bfdbfe] border-0", className)}
       {...props}
     >
-      <span className="hidden sm:block">Next</span>
-      <IconChevronRight aria-hidden="true" />
+      <IconChevronRight className="size-6" aria-hidden="true" />
+      <span className="sr-only">Halaman berikutnya</span>
     </PaginationLink>
   )
 }
@@ -103,11 +97,11 @@ function PaginationEllipsis({
     <span
       aria-hidden
       data-slot="pagination-ellipsis"
-      className={cn("flex size-9 items-center justify-center", className)}
+      className={cn("grid w-8 place-items-center text-[#2b7fff]", className)}
       {...props}
     >
       <IconDots aria-hidden="true" className="size-4" />
-      <span className="sr-only">More pages</span>
+      <span className="sr-only">Halaman lainnya</span>
     </span>
   )
 }

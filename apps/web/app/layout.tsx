@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Google_Sans_Flex } from "next/font/google";
 import "./globals.css";
+import { Scrollbar } from "@/components/ui/scrollbar";
 
 const googleSans = Google_Sans_Flex({
   variable: "--font-google-sans-flex",
@@ -17,11 +18,16 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html
-      lang="id"
-      className={`${googleSans.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">{children}</body>
-    </html>
+    <Scrollbar asChild>
+      <html
+        lang="id"
+        className={`${googleSans.variable} h-full antialiased`}
+        suppressHydrationWarning
+      >
+        <body className="min-h-full flex flex-col" suppressHydrationWarning>
+          {children}
+        </body>
+      </html>
+    </Scrollbar>
   );
 }

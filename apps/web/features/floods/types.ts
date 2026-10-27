@@ -14,7 +14,7 @@ export interface FloodHistoryRow {
 
 export interface HistoryFilters {
   query: string;
-  region: string;
+  regionIds: string[];
   severities: FloodSeverity[];
   from: string;
   to: string;
