@@ -1,10 +1,11 @@
 import Link from "next/link";
+import Image from "next/image";
 import { IconArrowDown, IconArrowUpRight, IconChartBar, IconCloudRain, IconLayersIntersect, IconMap2, IconMapPin, IconRoute, IconShieldCheck } from "@tabler/icons-react";
 import { SiteHeader } from "@/components/layout/site-header";
 import { Brand } from "@/components/shared/brand";
 import { Button } from "@/components/ui/button";
-import { LandingMiniMap } from "./landing-mini-map";
-import { AnimatedNumber, LandingMotion, MotionMap, MotionProgress, MotionReveal } from "./landing-motion";
+import { AnimatedNumber, LandingMotion, MotionArtwork, MotionDataBar, MotionProgress, MotionReveal } from "./landing-motion";
+import { floodRankingSource, topFloodRegions } from "./flood-data";
 import styles from "./landing.module.css";
 
 const capabilities = [
@@ -30,7 +31,7 @@ function Landscape() {
   return (
     <div className={styles.landscape} aria-hidden="true">
       <div className={styles.cloud} /><div className={styles.cloud} />
-      <svg viewBox="0 0 1440 520" preserveAspectRatio="xMidYMax slice">
+      <svg viewBox="0 0 1440 520" preserveAspectRatio="none">
         <path fill="#eff6ff" d="M0 245 140 150 250 210 420 70 580 230 760 155 900 240 1100 90 1260 220 1440 130V520H0Z" />
         <path fill="#dbeafe" d="m0 290 180-80 140 90 180-130 150 130 170-75 140 70 170-125 160 105 150-75v310H0Z" />
         <path fill="#bfdbfe" d="M0 330Q180 215 390 350T770 340 1100 300 1440 290V520H0Z" />
@@ -52,6 +53,17 @@ export function LandingPage() {
       <SiteHeader />
       <main id="main-content">
         <section className={styles.hero} id="jelajahi">
+          {/* Already compressed to 107 KB; retain panorama resolution for narrow cover crops. */}
+          <MotionArtwork className={styles.heroArt}>
+            <Image src="/images/jabar-river-hero.webp" alt="" fill sizes="100vw" unoptimized preload className={styles.heroImage} />
+            <div className={styles.skyMotion}><i /><i /></div>
+            <svg className={styles.waterMotion} viewBox="0 0 1600 200" preserveAspectRatio="none" aria-hidden="true">
+              <g><path d="M50 40h85m135 4h150m175 5h105m245-4h155m210 6h125" /><path d="M175 85h120m175-4h95m210 6h140m160-5h190" /></g>
+              <g><path d="M100 125h190m165 8h135m160-8h105m190 3h190m180-7h100" /><path d="M290 175h125m210-8h160m220 9h140m180-8h150" /></g>
+              <g><path d="M420 61h120m275 4h80m160-4h100" /><path d="M70 153h110m400-8h100m270 8h100m240-5h110" /></g>
+            </svg>
+          </MotionArtwork>
+
           <div className={styles.heroContent}>
             <h1>Kenali banjir.<br />Pahami <span>wilayahmu.</span></h1>
             <p className={styles.heroDescription}>Jawa Barat berulang kali mengalami banjir. Mulai dari peta, kenali lokasinya, dan pahami informasi di balik setiap wilayah.</p>
@@ -61,9 +73,16 @@ export function LandingPage() {
             </div>
             <a href={floodSource} target="_blank" rel="noreferrer" className={styles.heroFact}><span className={styles.factIcon}><IconCloudRain size={22} aria-hidden="true" /></span><span><strong><AnimatedNumber value={143} /><span> kejadian banjir</span></strong><small>Jawa Barat · Tahun 2024 · Sumber BNPB <IconArrowUpRight size={12} aria-hidden="true" /></small></span></a>
           </div>
-          <MotionMap className={styles.heroMap}><LandingMiniMap /><p className={styles.heroMapCaption}>Peringkat kejadian banjir kabupaten/kota di Jawa Barat · BNPB 2024</p></MotionMap>
+
+          <svg className={styles.heroShore} viewBox="0 0 1440 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0 60C220 118 390 18 680 65S1180 110 1440 42V120H0Z" fill="#bde6ff" /><path d="M0 82C220 125 420 48 710 85S1190 105 1440 65V120H0Z" fill="#eaf4ff" /></svg>
         </section>
 
+        <div className={styles.riverContinuation}>
+        <MotionReveal className={styles.regionSummary}>
+          <div className={styles.regionSummaryHeading}><div><p>5 daerah dengan banjir terbanyak · 2024</p><h2>Kenali riwayat wilayahnya.</h2></div><a href={floodRankingSource} target="_blank" rel="noreferrer">BNPB · Tabel L5, hlm. 128–129 <IconArrowUpRight size={13} aria-hidden="true" /></a></div>
+          <ol className={styles.regionList}>{topFloodRegions.map((region, i) => <MotionReveal as="li" key={region.code} delay={i * 0.08}><span className={styles.regionName}><small>0{i + 1}</small>{region.name}</span><strong><AnimatedNumber value={region.count} delay={i * 0.08} /><span>kejadian</span></strong></MotionReveal>)}</ol>
+          <p className={styles.regionNote}>Jumlah kejadian Januari–Desember 2024. Data historis, bukan kondisi saat ini.</p>
+        </MotionReveal>
         <section className={styles.coverage} aria-label="Cakupan informasi">
           <p>Kenali banjir dari berbagai sisi</p>
 
@@ -72,9 +91,11 @@ export function LandingPage() {
 
         <section id="fakta-banjir" className={`${styles.section} ${styles.statsSection}`}>
           <MotionReveal className={styles.sectionHeading}><span className={styles.sectionLabel}><span className={styles.sectionIndex} aria-hidden="true">01</span>Kenapa kita perlu peduli?</span><h2>Bukan sekadar angka.<br /><span>Ada kehidupan di baliknya.</span></h2><p>Sepanjang 2024, BNPB mencatat ratusan ribu jiwa mengungsi dan terdampak banjir di Jawa Barat. Memahami wilayah adalah langkah awal untuk lebih bersiap.</p></MotionReveal>
-          <div className={styles.statsGrid}>{floodStats.map(({ value, label, detail, icon: Icon }, i) => <MotionReveal as="article" className={styles.statCard} key={label} delay={i * 0.08}><span className={styles.cardIcon}><Icon size={22} aria-hidden="true" /></span><strong><AnimatedNumber value={value} /></strong><h3>{label}</h3><p>{detail}</p><div className={styles.statLine} aria-hidden="true"><span /></div></MotionReveal>)}</div>
+          <div className={styles.statsGrid}>{floodStats.map(({ value, label, detail, icon: Icon }, i) => <MotionReveal as="article" className={styles.statCard} key={label} delay={i * 0.1}><span className={styles.cardIcon}><Icon size={22} aria-hidden="true" /></span><strong><AnimatedNumber value={value} delay={i * 0.1} /></strong><h3>{label}</h3><p>{detail}</p><div className={styles.statLine} aria-hidden="true"><MotionDataBar /></div></MotionReveal>)}</div>
           <p className={styles.sourceNote}>Data historis Januari–Desember 2024, bukan kondisi saat ini.<br /><a href={floodSource} target="_blank" rel="noreferrer">Sumber: BNPB · Data Bencana Indonesia 2024 · Tabel L4, hlm. 124 <IconArrowUpRight size={12} aria-hidden="true" /></a></p>
         </section>
+
+        </div>
 
         <section id="tentang" className={`${styles.section} ${styles.about}`}>
           <MotionReveal><span className={styles.sectionLabel}><span className={styles.sectionIndex} aria-hidden="true">02</span>Tentang Bejir</span><h2>Informasi terhubung.<br /><span>Pemahaman lebih utuh.</span></h2></MotionReveal>
@@ -83,7 +104,7 @@ export function LandingPage() {
 
         <section id="fitur" className={`${styles.section} ${styles.features}`}>
           <MotionReveal className={styles.sectionHeading}><span className={styles.sectionLabel}><span className={styles.sectionIndex} aria-hidden="true">03</span>Dari data ke pemahaman</span><h2>Lihat lebih dekat.<br /><span>Temukan gambaran besarnya.</span></h2></MotionReveal>
-          <div className={styles.featureGrid}>{capabilities.map(({ number, icon: Icon, title, description, tag }, i) => <MotionReveal as="article" key={number} className={styles.featureCard} delay={i * 0.08}><div className={styles.featureTop}><span className={styles.cardIcon}><Icon size={24} stroke={1.5} aria-hidden="true" /></span><span>{number}</span></div><div className={styles.featureIllustration} aria-hidden="true">{number === "01" ? <><i /><i /><i /><IconMapPin size={36} /></> : number === "02" ? <><b /><b /><b /></> : <>{[35, 65, 45, 90, 75, 100].map((height, i) => <em key={i} style={{ height: `${height}%` }} />)}</>}</div><span className={styles.cardLabel}>{tag}</span><h3>{title}</h3><p>{description}</p></MotionReveal>)}</div>
+          <div className={styles.featureGrid}>{capabilities.map(({ number, icon: Icon, title, description, tag }, i) => <MotionReveal as="article" key={number} className={styles.featureCard} delay={i * 0.08}><div className={styles.featureTop}><div className={styles.featureIdentity}><span className={styles.cardIcon}><Icon size={24} stroke={1.5} aria-hidden="true" /></span><span className={styles.cardLabel}>{tag}</span></div><span>{number}</span></div><div className={styles.featureIllustration} aria-hidden="true">{number === "01" ? <><i /><i /><i /><IconMapPin size={36} /></> : number === "02" ? <><b /><b /><b /></> : <>{[35, 65, 45, 90, 75, 100].map((height, i) => <em key={i} style={{ height: `${height}%` }} />)}</>}</div><h3>{title}</h3><p>{description}</p></MotionReveal>)}</div>
           <p className={styles.mapFootnote}><IconShieldCheck size={15} aria-hidden="true" />Platform dalam pengembangan. Hasil prediksi, simulasi, dan analisis mengikuti sumber serta metode yang digunakan.</p>
         </section>
 
