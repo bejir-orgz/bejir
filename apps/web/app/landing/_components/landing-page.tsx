@@ -4,7 +4,7 @@ import { IconArrowDown, IconArrowUpRight, IconChartBar, IconCloudRain, IconLayer
 import { SiteHeader } from "@/components/layout/site-header";
 import { Brand } from "@/components/shared/brand";
 import { Button } from "@/components/ui/button";
-import { AnimatedNumber, LandingMotion, MotionArtwork, MotionDataBar, MotionProgress, MotionReveal } from "./landing-motion";
+import { AnimatedNumber, LandingNavbar, LandingMotion, MotionArtwork, MotionDataBar, MotionProgress, MotionReveal } from "./landing-motion";
 import { floodRankingSource, topFloodRegions } from "./flood-data";
 import styles from "./landing.module.css";
 
@@ -50,7 +50,7 @@ export function LandingPage() {
     <LandingMotion><div className={styles.landing}>
       <MotionProgress />
       <a href="#main-content" className="skip-link">Lewati ke konten</a>
-      <SiteHeader />
+      <LandingNavbar className={styles.navbar}><SiteHeader /></LandingNavbar>
       <main id="main-content">
         <section className={styles.hero} id="jelajahi">
           {/* Already compressed to 107 KB; retain panorama resolution for narrow cover crops. */}

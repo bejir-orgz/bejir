@@ -15,6 +15,19 @@ function subscribeVisibility(callback: () => void) {
 function getPageVisible() { return !document.hidden; }
 function getServerVisible() { return true; }
 
+function subscribeScroll(callback: () => void) {
+  window.addEventListener("scroll", callback, { passive: true });
+  return () => window.removeEventListener("scroll", callback);
+}
+
+function getNavbarFloating() { return window.scrollY > 64; }
+function getNavbarServerSnapshot() { return false; }
+
+export function LandingNavbar({ children, className }: { children: ReactNode; className: string }) {
+  const floating = useSyncExternalStore(subscribeScroll, getNavbarFloating, getNavbarServerSnapshot);
+  return <div className={className} data-floating={floating}>{children}</div>;
+}
+
 export function LandingMotion({ children }: { children: ReactNode }) {
   return <MotionConfig reducedMotion="user"><LazyMotion features={domAnimation} strict>{children}</LazyMotion></MotionConfig>;
 }

@@ -1,5 +1,10 @@
 .landing { position: relative; overflow: clip; background: #fff; color: #171717; }
-.landing > header { position: absolute; z-index: 20; inset: 0 0 auto; border: 0; background: transparent; }
+.navbar { position: fixed; z-index: 50; top: 0; left: 0; right: 0; max-width: 100%; margin-inline: auto; border: 1px solid transparent; border-radius: 0; background: transparent; transition: top .3s ease, max-width .3s ease, background-color .3s ease, border-radius .3s ease, box-shadow .3s ease; }
+.navbar > header { border: 0; background: transparent; }
+.navbar[data-floating=true] { top: 16px; max-width: min(1160px, calc(100% - 32px)); border-color: #e5e7eb; border-radius: 999px; background: #fff; box-shadow: 0 8px 32px #17255414; }
+.navbar[data-floating=true] > header > div { height: 68px; }
+.landing section[id] { scroll-margin-top: 108px; }
+@media (max-width: 760px) { .navbar[data-floating=true] { top: 10px; max-width: calc(100% - 24px); border-radius: 999px; }.navbar[data-floating=true] > header > div { height: 64px; padding-inline: 16px; } }
 .landing > :global(.skip-link) { position: fixed; z-index: 70; top: 8px; left: 16px; transform: translateY(-160%); padding: 8px 16px; border-radius: 8px; background: #2563eb; color: #fff; }
 .landing > :global(.skip-link):focus { transform: translateY(0); }
 .landing h2 { font-size: clamp(30px, 3.5vw, 46px); line-height: 1.15; letter-spacing: -.045em; font-weight: 500; }
@@ -117,12 +122,14 @@
 .workflow h3 { margin: 2px 0 8px; font-size: 16px; font-weight: 500; }
 .workflow li p { font-size: 12px; color: #737373; line-height: 1.8; }
 .ctaSection { position: relative; isolation: isolate; padding: 30px 24px 160px; }
-.ctaSection .landscape svg { height: 350px; }.ctaSection .cloud { display: none; }
+.ctaSection .landscape { bottom: -160px; }
+.ctaSection .landscape svg { bottom: -28px; height: 538px; }.ctaSection .cloud { display: none; }
 .ctaCard { max-width: 620px; margin: auto; padding: 48px 24px; border: 1px solid #e5e7eb; border-radius: 24px; background: #ffffffed; text-align: center; box-shadow: 0 15px 50px #1e40af0a; }
 .ctaCard h2 { margin-top: 0; font-size: clamp(30px, 3.4vw, 43px); }.ctaCard h2 span { color: #2563eb; }
 .ctaCard > p:last-of-type { margin: 20px 0 26px; color: #737373; font-size: 13px; }.ctaCard > a { border-radius: 100px; padding-inline: 25px; }
-.footer { display: flex; align-items: center; flex-wrap: wrap; gap: 20px; max-width: 1160px; margin: auto; padding: 30px 24px; }
-.footer p, .footer > a:last-child { color: #737373; font-size: 11px; }.footer > a:last-child { margin-left: auto; }
+.footer { position: relative; background: #fff; display: flex; align-items: center; flex-wrap: wrap; gap: 20px; width: min(1160px, calc(100% - 32px)); margin: 0 auto 16px; padding: 20px 30px; border: 1px solid #e5e7eb; border-radius: 999px; box-shadow: 0 8px 32px #17255414; }
+.footer ::selection { background: transparent; color: inherit; }
+.footer p, .footer > a:last-child { color: #334155; font-size: 11px; }.footer > a:last-child { margin-left: auto; }
 .heroFact { display: flex; align-items: center; justify-content: center; gap: 10px; width: fit-content; max-width: 100%; margin: 20px auto 0; padding: 10px 16px; border: 1px solid #ffffffb3; border-radius: 14px; background: #ffffffb8; text-align: left; }
 .factIcon { display: grid; place-items: center; flex-shrink: 0; width: 42px; height: 42px; border-radius: 12px; background: #eff6ff; color: #2563eb; }
 .heroFact strong { font-size: 29px; line-height: 1.1; letter-spacing: -.04em; font-weight: 500; font-variant-numeric: tabular-nums; }
