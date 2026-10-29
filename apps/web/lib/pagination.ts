@@ -25,9 +25,9 @@ export function getPageItems(pageCount: number, pageIndex: number): (number | "e
     start = Math.max(1, end - 4);
   }
 
-  const items: (number | "ellipsis")[] = [];
+  const items: (number | "ellipsis")[] = [1];
 
-  if (start > 1) {
+  if (start > 2) {
     items.push("ellipsis");
   }
 
