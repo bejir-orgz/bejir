@@ -22,3 +22,8 @@ class Regency(Base):
         "FloodEvent",
         back_populates="regency",
     )
+
+    districts = relationship(
+        "District",
+        back_populates="regency",
+    )

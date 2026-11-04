@@ -1,3 +1,79 @@
+
+# ==========================================
+# ENVIRONMENT & SECRETS
+# ==========================================
 .env
 .env.*
 !.env.example
+!.env.*.example
+
+# ==========================================
+# PYTHON
+# ==========================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+.venv/
+venv/
+**/.venv/
+**/venv/
+env/
+ENV/
+
+# Python packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Python testing & linting
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# ==========================================
+# FASTAPI / APPLICATION
+# ==========================================
+*.log
+instance/
+
+# ==========================================
+# NODE.JS / NEXT.JS
+# ==========================================
+node_modules/
+.next/
+out/
+dist/
+build/
+.npm/
+.turbo/
+.vercel/
+
+# ==========================================
+# IDE & EDITORS
+# ==========================================
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ==========================================
+# OPERATING SYSTEM
+# ==========================================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ==========================================
+# TEMPORARY FILES
+# ==========================================
+*.tmp
+*.bak
+*.orig
