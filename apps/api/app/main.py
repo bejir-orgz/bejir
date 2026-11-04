@@ -1,14 +1,17 @@
 from fastapi import FastAPI
 
-app = FastAPI(
-  title="Bejir API",
-  description="Flood Intelligence & Evacuation Assistant API",
-  version="0.0.1",
+from app.api.router import api_router
+
+app = FastAPI()
+
+app.include_router(
+    api_router,
+    prefix="/api",
 )
 
+
 @app.get("/")
-async def root():
-  return {
-    "message": "Bejir API is running",
-    "version": "0.1.0",
-  }
+def root():
+    return {
+        "message": "Welcome to Sibajawa API",
+    }
