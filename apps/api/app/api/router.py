@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.endpoints import flood, geography, spatial_analysis
+from app.api.endpoints import evacuation, flood, geography, spatial_analysis
 
 api_router = APIRouter()
 
@@ -19,4 +19,9 @@ api_router.include_router(
     spatial_analysis.router,
     prefix="/spatial-analysis",
     tags=["Spatial Analysis"],
+)
+api_router.include_router(
+    evacuation.router,
+    prefix="/evacuation",
+    tags=["Evacuation"],
 )

@@ -18,6 +18,13 @@ from app.models.spatial_analysis.district_hazard_statistics import (
     DistrictHazardStatistics,
 )
 from app.models.spatial_analysis.population_exposure import PopulationExposure
+from app.models.evacuation import (
+    EvacuationSite,
+    RoadSegment,
+    RouteDestination,
+    RouteRequest,
+    RouteSegment,
+)
 
 
 __all__ = [
@@ -31,4 +38,9 @@ __all__ = [
     "FloodEventImpact",
     "DistrictHazardStatistics",
     "PopulationExposure",
+    "EvacuationSite",
+    "RoadSegment",
+    "RouteDestination",
+    "RouteRequest",
+    "RouteSegment",
 ]
