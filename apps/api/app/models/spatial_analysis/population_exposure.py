@@ -1,4 +1,4 @@
-from sqlalchemy import Integer, String, ForeignKey
+from sqlalchemy import Integer, String, Float, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
@@ -17,11 +17,11 @@ class PopulationExposure(Base):
         nullable=False,
     )
 
-    n_piksel: Mapped[str | None] = mapped_column(String)
-    luas_km2: Mapped[str | None] = mapped_column(String)
-    penduduk_est: Mapped[str | None] = mapped_column(String)
-    kepadatan_jiwa_km2: Mapped[str | None] = mapped_column(String)
+    n_piksel: Mapped[int | None] = mapped_column(Integer)
+    luas_km2: Mapped[float | None] = mapped_column(Float)
+    penduduk_est: Mapped[int | None] = mapped_column(Integer)
 
+    kepadatan_jiwa_km2: Mapped[str | None] = mapped_column(String)
     pend_rawan_v2: Mapped[str | None] = mapped_column(String)
     pct_rawan_v2: Mapped[str | None] = mapped_column(String)
 

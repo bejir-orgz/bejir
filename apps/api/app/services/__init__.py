@@ -3,9 +3,15 @@ from app.services.flood import (
     FloodEventImpactService,
     FloodEventTypeService,
 )
+from app.services.spatial_analysis import (
+    DistrictHazardStatisticService,
+    PopulationExposureService,
+)
 
 __all__ = [
     "FloodEventService",
     "FloodEventImpactService",
     "FloodEventTypeService",
+    "DistrictHazardStatisticService",
+    "PopulationExposureService",
 ]
