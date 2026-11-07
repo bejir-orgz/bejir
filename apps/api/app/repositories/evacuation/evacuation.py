@@ -2,7 +2,7 @@ import json
 from uuid import UUID
 
 from geoalchemy2 import Geography, WKTElement
-from sqlalchemy import func, select, text
+from sqlalchemy import cast, func, select, text
 from sqlalchemy.orm import Session
 
 from app.models.evacuation import EvacuationSite, RoadSegment, RouteRequest
@@ -57,9 +57,12 @@ class EvacuationRepository:
         radius_m: float,
         limit: int,
     ) -> list[dict]:
-        point = EvacuationRepository._point(longitude, latitude)
-        site_geography = EvacuationSite.geom.cast(Geography)
-        point_geography = point.cast(Geography)
+        point_geometry = func.ST_SetSRID(
+            func.ST_MakePoint(longitude, latitude),
+            4326,
+        )
+        site_geography = cast(EvacuationSite.geom, Geography)
+        point_geography = cast(point_geometry, Geography)
         distance = func.ST_Distance(site_geography, point_geography).label("distance_m")
         rows = db.execute(
             select(
