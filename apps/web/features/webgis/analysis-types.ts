@@ -4,13 +4,13 @@ export type SusceptibilityClass = "Sangat Rendah" | "Rendah" | "Sedang" | "Tingg
 
 export interface AnalysisRow {
   id: string;
-  year: number;
+  year: number | null;
   region: string;
-  susceptibility: SusceptibilityClass;
-  population: number;
-  areaKm2: number;
-  rivers: number;
-  elevationM: number;
+  susceptibility: SusceptibilityClass | null;
+  population: number | null;
+  areaKm2: number | null;
+  rivers: number | null;
+  elevationM: number | null;
 }
 
 export interface AnalysisFilters {
@@ -21,6 +21,8 @@ export interface AnalysisFilters {
 
 /** Dashboard presentation only; no API contract or spatial analysis method is implied. */
 export interface AnalysisData {
+  source?: "backend" | "dummy";
+  error?: string;
   years: number[];
   regions: string[];
   rows: AnalysisRow[];
@@ -28,7 +30,7 @@ export interface AnalysisData {
   snapshots: Record<number, {
     metrics: OverviewMetric[];
     frequency: { id: string; region: string; events: number }[];
-    distribution: { label: SusceptibilityClass; value: number; color: string }[];
+    distribution: { label: SusceptibilityClass; value: number | null; color: string }[];
     annualEvents: { year: string; events: number }[];
     facilities: FacilityMetric[];
   }>;

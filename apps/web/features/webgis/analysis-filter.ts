@@ -5,8 +5,8 @@ export const emptyAnalysisFilters: AnalysisFilters = { query: "", regionIds: [],
 
 export function filterAnalysisRows(rows: readonly AnalysisRow[], year: number, filters: AnalysisFilters) {
   const query = filters.query.trim().toLocaleLowerCase("id-ID");
-  return rows.filter((row) => row.year === year &&
+  return rows.filter((row) => (row.year === null || row.year === year) &&
     matchesRegionFilter(filters.regionIds, row.region) &&
     (!query || row.region.toLocaleLowerCase("id-ID").includes(query)) &&
-    (!filters.susceptibility.length || filters.susceptibility.includes(row.susceptibility)));
+    (!filters.susceptibility.length || (row.susceptibility !== null && filters.susceptibility.includes(row.susceptibility))));
 }

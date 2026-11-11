@@ -12,6 +12,6 @@ const facilityStyles = {
 export function FacilityRows({ facilities }: { facilities: FacilityMetric[] }) {
   return facilities.map((facility) => {
     const Icon = facilityStyles[facility.id].icon;
-    return <div key={facility.id} className="gis-facility-row flex items-center justify-between gap-2 [&_strong]:font-semibold max-[639.01px]:text-[12px]"><div className="gis-facility-label flex items-center gap-4 max-[639.01px]:gap-2"><span className="gis-facility-icon flex items-center justify-center w-10 h-10 [flex:0_0_40px] p-2 rounded-lg" style={{ backgroundColor: facilityStyles[facility.id].background, color: facilityStyles[facility.id].color }}><Icon className="size-6 shrink-0" stroke={2} aria-hidden="true" /></span><span>{facility.label}</span></div><strong>{facility.count}</strong></div>;
+    return <div key={facility.id} className="gis-facility-row flex items-center justify-between gap-2 [&_strong]:font-semibold max-[639.01px]:text-[12px]"><div className="gis-facility-label flex items-center gap-4 max-[639.01px]:gap-2"><span className="gis-facility-icon flex items-center justify-center w-10 h-10 [flex:0_0_40px] p-2 rounded-lg" style={{ backgroundColor: facilityStyles[facility.id].background, color: facilityStyles[facility.id].color }}><Icon className="size-6 shrink-0" stroke={2} aria-hidden="true" /></span><span>{facility.label}</span></div><strong>{facility.count ?? "—"}</strong></div>;
   });
 }

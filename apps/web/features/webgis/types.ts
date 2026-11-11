@@ -37,7 +37,7 @@ export interface OverviewMetric {
 export interface FacilityMetric {
   id: "health" | "education" | "public" | "worship";
   label: string;
-  count: number;
+  count: number | null;
 }
 
 /** Frontend presentation model; not an assumed backend API contract. */

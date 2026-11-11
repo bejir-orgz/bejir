@@ -7,11 +7,11 @@ import type { AnalysisData } from "../analysis-types";
 
 type Snapshot = AnalysisData["snapshots"][number];
 const eventConfig = { events: { label: "Kejadian", color: "var(--primary)" } } satisfies ChartConfig;
-const riskConfig = { value: { label: "Nilai contoh" } } satisfies ChartConfig;
+const riskConfig = { value: { label: "Jumlah wilayah" } } satisfies ChartConfig;
 
 export function FrequencyChart({ frequency }: { frequency: Snapshot["frequency"] }) {
   return <Card className="analysis-frequency h-[330px] [&_[data-slot=chart]_.recharts-yAxis-tick-labels_text]:[fill:#171717]"><h2>Frekuensi Banjir</h2>
-    <ChartContainer config={eventConfig} className="h-[258px] w-full aspect-auto" aria-label="Contoh frekuensi banjir, label berulang mengikuti desain Figma">
+    <ChartContainer config={eventConfig} className="h-[258px] w-full aspect-auto" aria-label="Frekuensi banjir">
       <BarChart accessibilityLayer layout="vertical" data={frequency} margin={{ top: -4, right: 0, bottom: 0, left: 0 }}>
         <XAxis type="number" domain={[0, 40]} ticks={[0, 10, 20, 30, 40]} tickLine={false} axisLine={false} height={24} tickMargin={8} />
         <YAxis type="category" dataKey="id" interval={0} tickFormatter={(id) => frequency.find((row) => row.id === id)?.region || ""} tickLine={false} axisLine={false} width={156} tickMargin={16} />
@@ -24,7 +24,7 @@ export function FrequencyChart({ frequency }: { frequency: Snapshot["frequency"]
 
 export function SusceptibilityChart({ distribution }: { distribution: Snapshot["distribution"] }) {
   return <Card className="analysis-susceptibility h-[330px] [&_[data-slot=chart]_.recharts-yAxis-tick-labels_text]:[fill:#171717]"><h2>Distribusi Kerawanan</h2>
-    <ChartContainer config={riskConfig} className="h-[258px] w-full aspect-auto" aria-label="Distribusi kerawanan, nilai contoh desain tanpa satuan atau metode analisis yang ditetapkan">
+    <ChartContainer config={riskConfig} className="h-[258px] w-full aspect-auto" aria-label="Distribusi kerawanan, data belum tersedia">
       <BarChart accessibilityLayer layout="vertical" data={distribution} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
         <XAxis type="number" domain={[0, 40]} ticks={[0, 10, 20, 30, 40]} tickLine={false} axisLine={false} height={24} tickMargin={8} />
         <YAxis type="category" dataKey="label" interval={0} tickLine={false} axisLine={false} width={112} tickMargin={16} />
@@ -37,7 +37,7 @@ export function SusceptibilityChart({ distribution }: { distribution: Snapshot["
 
 export function AnnualEventsChart({ annualEvents }: { annualEvents: Snapshot["annualEvents"] }) {
   return <Card className="analysis-annual h-[314px]"><h2>Distribusi Kejadian/Tahun</h2>
-    <ChartContainer config={eventConfig} className="h-[240px] w-full aspect-auto" aria-label="Contoh distribusi kejadian lima tahun, terpisah dari ringkasan tahunan">
+    <ChartContainer config={eventConfig} className="h-[240px] w-full aspect-auto" aria-label="Distribusi kejadian per tahun">
       <BarChart accessibilityLayer data={annualEvents} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey="year" tickLine={false} axisLine={false} interval={0} tickMargin={8} height={24} padding={{ left: -12, right: -12 }} />
