@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
@@ -5,11 +7,13 @@ from app.db.session import get_db
 from app.schemas.evacuation import RouteRequest, RouteResponse
 from app.services.evacuation import (
     EvacuationService,
+    InvalidRouteRequestError,
     RouteNotFoundError,
     RoutingUnavailableError,
 )
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 @router.get("/sites")
@@ -75,3 +79,8 @@ def create_route(payload: RouteRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail=str(error)) from error
     except RoutingUnavailableError as error:
         raise HTTPException(status_code=503, detail=str(error)) from error
+    except InvalidRouteRequestError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+    except Exception as error:
+        logger.exception("Unexpected evacuation routing failure")
+        raise HTTPException(status_code=500, detail="Unable to calculate evacuation routes") from error
