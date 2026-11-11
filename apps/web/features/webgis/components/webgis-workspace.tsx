@@ -65,7 +65,7 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
       }}>
         <h1 className="sr-only">Map Interaktif Jawa Barat</h1>
         <InteractiveMap />
-        <RegionSidebar hidden={panels.left !== "regions"} data={data} filters={filters} onChange={updateFilters} />
+        <RegionSidebar hidden={panels.left !== "regions"} filters={filters} onChange={updateFilters} />
         <OptionsSidebar mode="layers" hidden={panels.left !== "layers"} data={data} filters={filters} onChange={updateFilters} />
         <OptionsSidebar mode="legends" hidden={panels.left !== "legends"} data={data} filters={filters} onChange={updateFilters} />
         <TimelineSidebar year={data.year} hidden={panels.left !== "timeline"} filters={filters} onChange={updateFilters} />

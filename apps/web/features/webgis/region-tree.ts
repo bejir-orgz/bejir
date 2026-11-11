@@ -15,6 +15,24 @@ export function toggleSelection(ids: string[], id: string): string[] {
   return ids.includes(id) ? ids.filter((value) => value !== id) : [...ids, id];
 }
 
+/** The closest explicit choice applies, including to descendants that haven't loaded. */
+export function isRegionSelected(choices: readonly string[], id: string): boolean {
+  for (let path = id; path; path = path.slice(0, Math.max(path.lastIndexOf("/"), 0))) {
+    if (choices.includes(path)) return true;
+    if (choices.includes(`!${path}`)) return false;
+  }
+  return false;
+}
+
+export function toggleRegionSelection(choices: string[], id: string): string[] {
+  const next = choices.filter((choice) => {
+    const path = choice.replace(/^!/, "");
+    return path !== id && !path.startsWith(`${id}/`);
+  });
+  const selected = !isRegionSelected(choices, id);
+  return selected === isRegionSelected(next, id) ? next : [...next, selected ? id : `!${id}`];
+}
+
 export const westJavaFilterId = "province:jawa-barat";
 
 export interface DistrictFilterRow {

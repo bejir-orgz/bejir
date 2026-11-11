@@ -7,6 +7,7 @@ export interface WorkspaceFilters {
   date: string;
   /** Optional inclusive end date; `date` remains the start or a single selected day. */
   dateTo?: string;
+  /** Administrative ID paths, with ! marking an explicit deselection. */
   regionIds: string[];
   layerIds: string[];
   legendIds: string[];
@@ -43,11 +44,9 @@ export interface FacilityMetric {
 export interface WorkspaceData {
   source: "dummy" | "backend";
   year: number;
-  regions: RegionNode[];
   layers: LayerOption[];
   legends: { id: string; label: string }[];
   initialFilters: WorkspaceFilters;
-  initiallyExpandedRegions: string[];
   overview: {
     metrics: OverviewMetric[];
     summary: string;

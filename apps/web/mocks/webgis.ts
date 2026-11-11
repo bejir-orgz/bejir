@@ -4,20 +4,6 @@ import type { WorkspaceData } from "@/features/webgis/types";
 export const mockWorkspaceData: WorkspaceData = {
   source: "dummy",
   year: 2026,
-  regions: [
-    { id: "kab-bogor", name: "Kabupaten Bogor", children: [
-      { id: "cibinong", name: "Cibinong" }, { id: "citeureup", name: "Citeureup" },
-    ] },
-    { id: "kota-bogor", name: "Kota Bogor", children: [
-      { id: "tanah-sareal", name: "Tanah Sareal", children: [
-        { id: "cibadak", name: "Cibadak" },
-        { id: "kayumanis", name: "Kayumanis" },
-        { id: "kebonpedes", name: "Kebonpedes" },
-        { id: "kedungbadak", name: "Kedungbadak" },
-        { id: "kedungjaya", name: "Kedungjaya" },
-      ] },
-    ] },
-  ],
   layers: [
     { id: "rainfall", label: "Curah Hujan", count: 5 },
     { id: "evacuation", label: "Titik Evakuasi", count: 1 },
@@ -38,10 +24,9 @@ export const mockWorkspaceData: WorkspaceData = {
     { id: "susceptibility", label: "Flood Risk" },
   ],
   initialFilters: {
-    view: "map", period: "today", date: "", regionIds: ["cibadak"],
+    view: "map", period: "today", date: "", regionIds: [],
     layerIds: ["rainfall", "evacuation", "rivers", "buildings"], legendIds: ["rainfall"],
   },
-  initiallyExpandedRegions: ["kota-bogor", "tanah-sareal"],
   overview: {
     metrics: [
       { id: "floods", label: "Total Kejadian Banjir", value: "286", change: "+15,8% dari 2025", trend: "increase" },

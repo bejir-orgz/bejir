@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createRegionFilterTree, matchesRegionFilter, westJavaFilterId } from "./region-tree.ts";
+import { createRegionFilterTree, isRegionSelected, matchesRegionFilter, toggleRegionSelection, westJavaFilterId } from "./region-tree.ts";
 
 const regions = ["Kota Contoh A", "Kab. Contoh B"];
 const districts = [
@@ -12,6 +12,24 @@ const districts = [
 const tree = createRegionFilterTree(regions, districts);
 const city = tree[0].children.find((node) => node.name === regions[0]);
 const regency = tree[0].children.find((node) => node.name === "Kabupaten Contoh B");
+
+test("map selection applies to unloaded descendants and supports overriding a branch", () => {
+  const citySelection = toggleRegionSelection([], "14");
+  assert.equal(isRegionSelected(citySelection, "14/545/5481"), true);
+  assert.equal(isRegionSelected(citySelection, "140/545/5481"), false);
+
+  const withoutDistrict = toggleRegionSelection(citySelection, "14/545");
+  assert.equal(isRegionSelected(withoutDistrict, "14/545/5481"), false);
+  assert.equal(isRegionSelected(withoutDistrict, "14/546/5482"), true);
+  const withVillage = toggleRegionSelection(withoutDistrict, "14/545/5481");
+  assert.equal(isRegionSelected(withVillage, "14/545/5481"), true);
+  assert.deepEqual(toggleRegionSelection(withVillage, "14/545"), citySelection);
+  assert.deepEqual(toggleRegionSelection(withVillage, "14"), []);
+
+  const districtSelection = toggleRegionSelection([], "14/545");
+  assert.equal(isRegionSelected(districtSelection, "14/545/5481"), true);
+  assert.equal(isRegionSelected(districtSelection, "14/546/5482"), false);
+});
 
 test("region tree uses only provided data and deduplicates districts without mutating input", () => {
   assert.equal(tree[0].id, westJavaFilterId);
