@@ -9,7 +9,7 @@ export function filterHistoryRows(rows: readonly FloodHistoryRow[], year: number
     row.date.startsWith(`${year}-`) &&
     matchesRegionFilter(filters.regionIds, row.region, row.district) &&
     (!query || row.region.toLocaleLowerCase("id-ID").includes(query)) &&
-    (!filters.severities.length || filters.severities.includes(row.severity)) &&
+    (!filters.severities.length || (row.severity !== null && filters.severities.includes(row.severity))) &&
     (!filters.from || row.date >= filters.from) &&
     (!filters.to || row.date <= filters.to)
   );
