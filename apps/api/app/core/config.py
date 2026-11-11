@@ -3,6 +3,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     DATABASE_URL: str
+    ROUTING_ORIGIN_SNAP_TOLERANCE_M: float = 500.0
+    ROUTING_MAX_CANDIDATE_SITES: int = 500
 
     # SECRET_KEY: str
     # ALGORITHM: str = "HS256"
