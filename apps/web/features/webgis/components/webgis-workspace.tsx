@@ -6,7 +6,7 @@ import { IconMap, IconLayoutNavbarCollapse, IconLayoutNavbarCollapseFilled, Icon
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { OverviewButton } from "@/components/ui/overview-button";
-import { DemoAssistant } from "@/features/assistant/components/demo-assistant";
+import { AssistantChat } from "@/features/assistant/components/assistant-chat";
 import { InteractiveMap } from "@/features/map/components/interactive-map";
 import type { WorkspaceFilters, WorkspaceProps } from "../types";
 import { RegionSidebar } from "./region-sidebar";
@@ -83,7 +83,7 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
           <Tabs defaultValue="overview" className="gis-tabs gap-4" onValueChange={() => overviewPanel.current?.scrollTo({ top: 0 })}>
             <OverviewButton className="gis-panel-tabs relative before:content-[''] before:absolute before:inset-x-0 before:top-[calc(-16px_-_1px)] before:h-4 before:bg-white before:pointer-events-none after:content-[''] after:absolute after:inset-x-0 after:top-[calc(100%_+_1px)] after:h-4 after:bg-white after:pointer-events-none" />
             <TabsContent value="overview"><OverviewPanel overview={data.overview} /></TabsContent>
-            <TabsContent value="ai" className="gis-ai-tab [&[data-state=active]]:flex [&[data-state=active]]:min-h-0 [&[data-state=inactive]]:hidden" forceMount><DemoAssistant /></TabsContent>
+            <TabsContent value="ai" className="gis-ai-tab [&[data-state=active]]:flex [&[data-state=active]]:min-h-0 [&[data-state=inactive]]:hidden" forceMount><AssistantChat /></TabsContent>
           </Tabs>
           <p className="gis-data-note text-[var(--gis-muted)] text-[11px] leading-[16px] mt-4">{data.source === "dummy" ? `Contoh tampilan ${data.year}. Pilihan daerah hanya demonstrasi; statistik dan analisis ini adalah dummy.` : "Informasi disediakan oleh backend."}</p>
         </aside>
