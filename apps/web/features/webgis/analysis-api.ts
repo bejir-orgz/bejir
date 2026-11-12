@@ -1,4 +1,6 @@
 import type { AnalysisData, AnalysisRow } from "./analysis-types";
+import { fetchBackend } from "../../lib/api/backend";
+import { getFloodStatistics } from "../floods/api";
 
 interface DistrictHazard {
   district_id: number;
@@ -46,8 +48,7 @@ export function emptyAnalysisData(error?: string): AnalysisData {
 }
 
 async function readAnalysis<T>(path: string): Promise<T[]> {
-  const origin = (process.env.BEJIR_API_URL || "http://80.43.0.180:8000").replace(/\/+$/, "");
-  const response = await fetch(`${origin}/api/v1/${path}`, {
+  const response = await fetchBackend(`/api/v1/${path}`, {
     // Geography includes polygons larger than the Next.js data cache limit.
     ...(path.startsWith("geography/") ? { cache: "no-store" as const } : { next: { revalidate: 300 } }),
     signal: AbortSignal.timeout(30_000),
@@ -101,5 +102,57 @@ export async function getAnalysisData(): Promise<AnalysisData> {
     }));
     rows.push(...batch);
   }
-  return { ...emptyAnalysisData(), rows, regions: rows.map((row) => row.region) };
+  const data = { ...emptyAnalysisData(), rows, regions: rows.map((row) => row.region) };
+  try {
+    const statistics = await getFloodStatistics();
+    data.years = statistics.by_year.map((row) => row.year).sort((a, b) => b - a);
+    if (data.years.length) data.snapshots[data.years[0]] = await getAnalysisSummary(data.years[0], []);
+  } catch {
+    data.error = "Ringkasan histori belum dapat dimuat. Tabel spasial tetap tersedia.";
+  }
+  return data;
+}
+
+export async function getAnalysisSummary(year: number, regencyIds: number[]) {
+  const groups = await Promise.all((regencyIds.length ? [...new Set(regencyIds)] : [undefined]).map(async (id) => {
+    const query = new URLSearchParams();
+    if (id !== undefined) query.set("regency_id", String(id));
+    const period = (value: number) => {
+      const scoped = new URLSearchParams(query);
+      scoped.set("start_date", `${value}-01-01T00:00:00`);
+      scoped.set("end_date", `${value}-12-31T23:59:59.999999`);
+      return scoped.toString();
+    };
+    const [current, previous, history] = await Promise.all([
+      getFloodStatistics(period(year)), getFloodStatistics(period(year - 1)), getFloodStatistics(query.toString()),
+    ]);
+    return { current, previous, history };
+  }));
+  const snapshot = emptyAnalysisData().snapshots[0];
+  const total = groups.reduce((sum, group) => sum + group.current.summary.total_events, 0);
+  const previous = groups.reduce((sum, group) => sum + group.previous.summary.total_events, 0);
+  const change = previous ? (total - previous) / previous * 100 : null;
+  snapshot.metrics[0].value = total.toLocaleString("id-ID");
+  snapshot.metrics[0].change = change === null ? "—" : `${change >= 0 ? "+" : ""}${change.toLocaleString("id-ID", { maximumFractionDigits: 1 })}% dari ${year - 1}`;
+  snapshot.metrics[0].trend = change !== null && change < 0 ? "decrease" : "increase";
+  snapshot.metrics[3].value = (total / 12).toLocaleString("id-ID", { maximumFractionDigits: 1 });
+  snapshot.metrics[3].change = "Total kejadian dibagi 12 bulan";
+  const affected = groups.map((group) => group.current.impacts.affected_displaced);
+  if (affected.every((value) => value !== null)) {
+    snapshot.metrics[2].value = affected.reduce<number>((sum, value) => sum + (value ?? 0), 0).toLocaleString("id-ID") + " jiwa";
+    snapshot.metrics[2].change = "Akumulasi terdampak/mengungsi";
+  }
+  snapshot.frequency = groups.flatMap((group) => group.current.by_regency).map((row) => ({
+    id: String(row.regency_id),
+    region: /^(Kota|Kabupaten)\s/i.test(row.regency_name) ? row.regency_name : `Kabupaten ${row.regency_name}`,
+    events: row.total_events,
+  })).sort((a, b) => b.events - a.events).slice(0, 10);
+  const annual = new Map<number, number>();
+  for (const group of groups) {
+    for (const row of group.history.by_year) annual.set(row.year, (annual.get(row.year) ?? 0) + row.total_events);
+  }
+  snapshot.annualEvents = Array.from({ length: 5 }, (_, index) => ({
+    year: String(year - 4 + index), events: annual.get(year - 4 + index) ?? 0,
+  }));
+  return snapshot;
 }

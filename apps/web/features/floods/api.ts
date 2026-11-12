@@ -1,5 +1,6 @@
 import type { FloodHistoryData, FloodHistoryRow } from "./types";
 import { unavailableSnapshot } from "./history-summary";
+import { fetchBackend } from "../../lib/api/backend";
 
 interface FloodEvent {
   id: number;
@@ -7,9 +8,15 @@ interface FloodEvent {
   regency_id: number | null;
 }
 
-interface FloodStatistics {
+export interface FloodStatistics {
+  summary: { total_events: number };
+  impacts: { affected_displaced: number | null };
   by_year: { year: number; total_events: number }[];
   by_regency: { regency_id: number; regency_name: string; total_events: number }[];
+}
+
+export function getFloodStatistics(query = "") {
+  return readFlood<FloodStatistics>(`statistics${query ? "?" + query : ""}`);
 }
 
 interface FloodDetail extends FloodEvent {
@@ -17,8 +24,7 @@ interface FloodDetail extends FloodEvent {
 }
 
 async function readFlood<T>(path: string): Promise<T> {
-  const origin = (process.env.BEJIR_API_URL || "http://80.43.0.180:8000").replace(/\/+$/, "");
-  const response = await fetch(`${origin}/api/v1/flood/${path}`, {
+  const response = await fetchBackend(`/api/v1/flood/${path}`, {
     next: { revalidate: 300 },
     signal: AbortSignal.timeout(20_000),
   });
@@ -29,12 +35,12 @@ async function readFlood<T>(path: string): Promise<T> {
 const regionName = (name: string) => /^(Kota|Kabupaten)\s/i.test(name) ? name : `Kabupaten ${name}`;
 
 export async function getFloodHistory(requestedYear?: number): Promise<FloodHistoryData> {
-  const statistics = await readFlood<FloodStatistics>("statistics");
+  const statistics = await getFloodStatistics();
   const years = statistics.by_year.map((entry) => entry.year).sort((a, b) => b - a);
   const year = requestedYear ?? years[0] ?? Number(new Intl.DateTimeFormat("en", { year: "numeric", timeZone: "Asia/Jakarta" }).format(new Date()));
   if (!years.includes(year)) years.push(year);
   const dates = (value: number) => `start_date=${value}-01-01T00:00:00&end_date=${value}-12-31T23:59:59.999999`;
-  const previous = await readFlood<FloodStatistics>(`statistics?${dates(year - 1)}`);
+  const previous = await getFloodStatistics(dates(year - 1));
   const events: FloodEvent[] = [];
   for (let offset = 0; ; offset += 100) {
     const page = await readFlood<{ items: FloodEvent[]; total: number }>(`events?${dates(year)}&limit=100&offset=${offset}`);

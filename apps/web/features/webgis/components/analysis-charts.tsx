@@ -13,7 +13,7 @@ export function FrequencyChart({ frequency }: { frequency: Snapshot["frequency"]
   return <Card className="analysis-frequency h-[330px] [&_[data-slot=chart]_.recharts-yAxis-tick-labels_text]:[fill:#171717]"><h2>Frekuensi Banjir</h2>
     <ChartContainer config={eventConfig} className="h-[258px] w-full aspect-auto" aria-label="Frekuensi banjir">
       <BarChart accessibilityLayer layout="vertical" data={frequency} margin={{ top: -4, right: 0, bottom: 0, left: 0 }}>
-        <XAxis type="number" domain={[0, 40]} ticks={[0, 10, 20, 30, 40]} tickLine={false} axisLine={false} height={24} tickMargin={8} />
+        <XAxis type="number" domain={[0, "auto"]} tickLine={false} axisLine={false} height={24} tickMargin={8} />
         <YAxis type="category" dataKey="id" interval={0} tickFormatter={(id) => frequency.find((row) => row.id === id)?.region || ""} tickLine={false} axisLine={false} width={156} tickMargin={16} />
         <ChartTooltip cursor={false} content={<ChartTooltipContent labelFormatter={(_, payload) => payload?.[0]?.payload?.region ?? "Frekuensi Banjir"} />} />
         <Bar dataKey="events" fill="var(--color-events)" radius={[0, 8, 8, 0]} barSize={16} isAnimationActive={false} />
@@ -41,7 +41,7 @@ export function AnnualEventsChart({ annualEvents }: { annualEvents: Snapshot["an
       <BarChart accessibilityLayer data={annualEvents} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey="year" tickLine={false} axisLine={false} interval={0} tickMargin={8} height={24} padding={{ left: -12, right: -12 }} />
-        <YAxis domain={[0, 80]} ticks={[0, 20, 40, 60, 80]} tickLine={false} axisLine={false} width={37} tickMargin={8} />
+        <YAxis domain={[0, "auto"]} tickLine={false} axisLine={false} width={37} tickMargin={8} />
         <ChartTooltip cursor={{ fill: "var(--primary)", opacity: .06 }} content={<ChartTooltipContent />} />
         <Bar dataKey="events" fill="var(--color-events)" maxBarSize={48} isAnimationActive={false} />
       </BarChart>

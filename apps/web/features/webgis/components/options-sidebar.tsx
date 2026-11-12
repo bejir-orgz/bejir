@@ -28,7 +28,7 @@ export function OptionsSidebar({ mode, data, filters, hidden, onChange }: {
           <span>{option.label}</span>
         </Label>
       ))}</div>
-      <p className="sr-only">Pilihan dummy, tanpa layer atau data tematik yang terhubung.</p>
+      <p className="sr-only">Titik Evakuasi terhubung ke API. Layer tematik lainnya masih demonstrasi.</p>
     </aside>
   );
 }

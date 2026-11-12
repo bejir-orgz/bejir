@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { emptyAnalysisData, getAnalysisData } from "./analysis-api.ts";
+import "../../lib/api/test-setup.mjs";
+const { emptyAnalysisData, getAnalysisData } = await import("./analysis-api.ts");
 
 test("regency totals join by district ID, preserve zero and retain unknown coverage", async () => {
   const originalFetch = globalThis.fetch;

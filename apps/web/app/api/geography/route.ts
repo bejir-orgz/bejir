@@ -1,3 +1,5 @@
+import { fetchBackend } from "@/lib/api/backend";
+
 interface GeographyRow {
   id: number;
   name: string;
@@ -15,14 +17,13 @@ export async function GET(request: Request) {
     : regencyId
       ? ["districts", `regency_id=${regencyId}`]
       : ["regencies", "province_code=32"];
-  const origin = (process.env.BEJIR_API_URL || "http://80.43.0.180:8000").replace(/\/+$/, "");
   const limit = 100;
 
   try {
     const regions = [];
     const signal = AbortSignal.any([request.signal, AbortSignal.timeout(20_000)]);
     for (let offset = 0; ; offset += limit) {
-      const response = await fetch(`${origin}/api/v1/geography/${resource}?${filter}&limit=${limit}&offset=${offset}`, { signal, cache: "no-store" });
+      const response = await fetchBackend(`/api/v1/geography/${resource}?${filter}&limit=${limit}&offset=${offset}`, { signal, cache: "no-store" });
       if (!response.ok) throw new Error("Geography request failed");
       const rows: GeographyRow[] = await response.json();
       for (const { id, name } of rows) {

@@ -6,8 +6,13 @@ import { IconMap, IconLayoutNavbarCollapse, IconLayoutNavbarCollapseFilled, Icon
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { OverviewButton } from "@/components/ui/overview-button";
-import { DemoAssistant } from "@/features/assistant/components/demo-assistant";
+import { BejirAssistant } from "@/features/assistant/components/assistant";
 import { InteractiveMap } from "@/features/map/components/interactive-map";
+import { EvacuationLayer } from "@/features/evacuation/evacuation-layer";
+import { useEvacuationSites } from "@/features/evacuation/use-evacuation-sites";
+import { EvacuationRouting } from "@/features/evacuation/evacuation-routing";
+import { BoundaryLayer } from "@/features/regions/boundary-layer";
+import { useOverview } from "../use-overview";
 import type { WorkspaceFilters, WorkspaceProps } from "../types";
 import { RegionSidebar } from "./region-sidebar";
 import { OverviewPanel } from "./overview-panel";
@@ -33,6 +38,11 @@ const getServerSnapshot = () => false;
 
 export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
   const [filters, setFilters] = useState(data.initialFilters);
+  const overview = useOverview(data.overview, filters);
+  const evacuationEnabled = filters.layerIds.includes("evacuation");
+  const evacuation = useEvacuationSites(evacuationEnabled);
+  const [routeStatus, setRouteStatus] = useState<{ message: string }>();
+  const [regionStatus, setRegionStatus] = useState<{ message: string }>();
   const narrow = useSyncExternalStore(subscribeToWidth, getNarrowSnapshot, getServerSnapshot);
   const [panels, dispatch] = useReducer(panelReducer, initialPanelState);
   const lastTrigger = useRef<HTMLButtonElement | null>(null);
@@ -64,7 +74,7 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
         }
       }}>
         <h1 className="sr-only">Map Interaktif Jawa Barat</h1>
-        <InteractiveMap />
+        <InteractiveMap dataStatus={regionStatus ?? routeStatus ?? evacuation.dataStatus}>{(map) => <><EvacuationLayer map={map} sites={evacuation.sites} enabled={evacuationEnabled} /><BoundaryLayer map={map} regionIds={filters.regionIds} onStatus={setRegionStatus} /><EvacuationRouting map={map} enabled={evacuationEnabled} onStatus={setRouteStatus} /></>}</InteractiveMap>
         <RegionSidebar hidden={panels.left !== "regions"} filters={filters} onChange={updateFilters} />
         <OptionsSidebar mode="layers" hidden={panels.left !== "layers"} data={data} filters={filters} onChange={updateFilters} />
         <OptionsSidebar mode="legends" hidden={panels.left !== "legends"} data={data} filters={filters} onChange={updateFilters} />
@@ -82,10 +92,10 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
         <aside ref={overviewPanel} id="gis-overview-panel" hidden={!overviewOpen} className="gis-right [clip-path:inset(0_round_16px_0_0_16px)] [transform:translateX(0)] [transition:transform_var(--gis-slide-duration)_var(--gis-slide-easing),display_var(--gis-slide-duration)_allow-discrete] [&[hidden]]:hidden [&[hidden]]:[transform:translateX(100%)] starting:[&:not([hidden])]:[transform:translateX(100%)] absolute z-2 [inset:0_0_0_auto] w-[var(--overview-width)] border-0 rounded-[16px_0_0_16px] bg-[white] overflow-y-auto p-[16px_16px_28px] max-[999.01px]:bottom-6 max-[639.01px]:p-[15px_8px] [--sb-thumb-color:#8EC5FF] [--sb-size:5px] motion-reduce:[transition:none] [&:has(.gis-ai-tab[data-state=active])]:pb-4 [&:has(.gis-ai-tab[data-state=active])_>_.gis-tabs]:min-h-full [&:has(.gis-ai-tab[data-state=active])_>_.gis-tabs]:min-h-0 [&:has(.gis-ai-tab[data-state=active])_>_.gis-data-note]:hidden [&:has(.gis-ai-tab[data-state=active])_.gis-panel-tabs]:shrink-0 [&:has(.gis-ai-tab[data-state=active])_.gis-panel-tabs]:sticky [&:has(.gis-ai-tab[data-state=active])_.gis-panel-tabs]:top-0 [&:has(.gis-ai-tab[data-state=active])_.gis-panel-tabs]:z-10" aria-label="Ringkasan dan asisten">
           <Tabs defaultValue="overview" className="gis-tabs gap-4" onValueChange={() => overviewPanel.current?.scrollTo({ top: 0 })}>
             <OverviewButton className="gis-panel-tabs relative before:content-[''] before:absolute before:inset-x-0 before:top-[calc(-16px_-_1px)] before:h-4 before:bg-white before:pointer-events-none after:content-[''] after:absolute after:inset-x-0 after:top-[calc(100%_+_1px)] after:h-4 after:bg-white after:pointer-events-none" />
-            <TabsContent value="overview"><OverviewPanel overview={data.overview} /></TabsContent>
-            <TabsContent value="ai" className="gis-ai-tab [&[data-state=active]]:flex [&[data-state=active]]:min-h-0 [&[data-state=inactive]]:hidden" forceMount><DemoAssistant /></TabsContent>
+            <TabsContent value="overview"><OverviewPanel overview={overview} /></TabsContent>
+            <TabsContent value="ai" className="gis-ai-tab [&[data-state=active]]:flex [&[data-state=active]]:min-h-0 [&[data-state=inactive]]:hidden" forceMount><BejirAssistant /></TabsContent>
           </Tabs>
-          <p className="gis-data-note text-[var(--gis-muted)] text-[11px] leading-[16px] mt-4">{data.source === "dummy" ? `Contoh tampilan ${data.year}. Pilihan daerah hanya demonstrasi; statistik dan analisis ini adalah dummy.` : "Informasi disediakan oleh backend."}</p>
+          <p className="gis-data-note text-[var(--gis-muted)] text-[11px] leading-[16px] mt-4">Sumber backend. — menandakan data tidak tersedia. Filter waktu berlaku pada histori kejadian.</p>
         </aside>
       </main>
     </div>

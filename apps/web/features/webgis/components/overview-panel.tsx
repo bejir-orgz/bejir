@@ -14,7 +14,7 @@ export function OverviewPanel({ overview }: { overview: WorkspaceData["overview"
       <Card className="gis-card border-0 [outline:1px_solid_var(--gis-border)] [outline-offset:-1px] p-4 rounded-2xl [&_h2]:text-[16px] [&_h2]:leading-[24px] [&_h2]:font-medium gis-summary-card min-h-51 [&_p]:mt-2 max-[999.01px]:min-h-0"><h2>Ringkasan Kondisi</h2><p>{overview.summary}</p></Card>
       <Card className="gis-card border-0 [outline:1px_solid_var(--gis-border)] [outline-offset:-1px] p-4 rounded-2xl [&_h2]:text-[16px] [&_h2]:leading-[24px] [&_h2]:font-medium gis-risk-card min-h-63 [&_ul]:pl-[21px] [&_ul]:mt-2 [&_ul]:list-disc [&_ul]:flex [&_ul]:flex-col [&_ul]:gap-2 max-[999.01px]:min-h-0">
         <div className="gis-card-heading flex items-center justify-between gap-2"><h2>Status Kerawanan</h2><Badge className="gis-badge inline-flex items-center p-[4px_8px] rounded-lg bg-[#737373] text-[#fff] text-[12px] font-semibold leading-[16px]" style={{ backgroundColor: statusColors[overview.susceptibility.label] ?? "var(--muted)", color: "#111" }}>{overview.susceptibility.label}</Badge></div>
-        <div className="gis-risk-scale flex h-6 gap-1 mt-2 [&_span]:flex-1 [&_span]:rounded-lg" aria-label={`Status kerawanan contoh: ${overview.susceptibility.label}`}>
+        <div className="gis-risk-scale flex h-6 gap-1 mt-2 [&_span]:flex-1 [&_span]:rounded-lg" aria-label={`Status kerawanan: ${overview.susceptibility.label}`}>
           {overview.susceptibility.colors.map((color) => <span key={color} style={{ backgroundColor: color }} />)}
         </div>
         <ul>{overview.susceptibility.notes.map((note) => <li key={note}>{note}</li>)}</ul>

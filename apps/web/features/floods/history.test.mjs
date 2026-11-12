@@ -1,19 +1,6 @@
 import assert from "node:assert/strict";
-import { registerHooks } from "node:module";
+import "../../lib/api/test-setup.mjs";
 import test from "node:test";
-
-registerHooks({
-  resolve(specifier, context, nextResolve) {
-    try {
-      return nextResolve(specifier, context);
-    } catch (error) {
-      if (error.code === "ERR_MODULE_NOT_FOUND" && specifier.startsWith(".") && !specifier.endsWith(".ts")) {
-        return nextResolve(`${specifier}.ts`, context);
-      }
-      throw error;
-    }
-  },
-});
 
 const { getFloodHistory } = await import("./api.ts");
 const { summarizeHistory } = await import("./history-summary.ts");
