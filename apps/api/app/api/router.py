@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.endpoints import assistant, evacuation, flood, geography, spatial_analysis
+from app.api.endpoints import assistant, evacuation, flood, geography, river, spatial_analysis
 
 api_router = APIRouter()
 
@@ -9,6 +9,11 @@ api_router.include_router(
     geography.router,
     prefix="/geography",
     tags=["Geography"],
+)
+api_router.include_router(
+    river.router,
+    prefix="/rivers",
+    tags=["Rivers"],
 )
 api_router.include_router(
     flood.router,
