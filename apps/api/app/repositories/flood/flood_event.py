@@ -1,7 +1,7 @@
 
 from datetime import datetime
 
-from sqlalchemy import Select, func, select
+from sqlalchemy import Select, case, func, or_, select
 from sqlalchemy.orm import Session, joinedload
 
 from app.models.flood import (
@@ -24,6 +24,32 @@ _IMPACT_TOTAL_COLUMNS = (
 
 
 class FloodEventRepository:
+
+    @staticmethod
+    def get_facility_totals(
+        db: Session, *, regency_ids: list[int],
+        start_date: datetime | None = None, end_date: datetime | None = None,
+    ) -> dict:
+        fields = {
+            "health": FloodEventImpact.health_facilities_damaged,
+            "education": FloodEventImpact.schools_damaged,
+            "worship": FloodEventImpact.religious_facilities_damaged,
+        }
+        columns = []
+        for name, column in fields.items():
+            columns.extend([
+                func.coalesce(func.sum(column), 0).label(name),
+                func.coalesce(func.sum(case((or_(column.is_(None), column < 0), 1), else_=0)), 0).label(f"{name}_unknown"),
+            ])
+        statement = select(*columns).select_from(FloodEvent).outerjoin(
+            FloodEventImpact, FloodEventImpact.flood_event_id == FloodEvent.id,
+        )
+        statement = FloodEventRepository._apply_filters(
+            statement, start_date=start_date, end_date=end_date,
+        )
+        if regency_ids:
+            statement = statement.where(FloodEvent.regency_id.in_(regency_ids))
+        return dict(db.execute(statement).one()._mapping)
 
     @staticmethod
     def _apply_filters(
@@ -89,7 +115,7 @@ class FloodEventRepository:
         statement = (
             statement
             .options(joinedload(FloodEvent.event_type))
-            .order_by(FloodEvent.event_datetime.desc().nullslast())
+            .order_by(FloodEvent.event_datetime.desc().nullslast(), FloodEvent.id.desc())
             .limit(limit)
             .offset(offset)
         )

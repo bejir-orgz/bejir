@@ -1,16 +1,6 @@
-import { fetchBackend } from "../../lib/api/backend";
+import { getFloodStatistics } from "../floods/api";
 import type { WorkspaceData } from "./types";
-
-interface Statistics {
-  summary: { total_events: number };
-  impacts: { affected_displaced: number | null };
-}
-
-interface Hazard {
-  landcover_dominan: string | null;
-  mean_elevasi_m: number | null;
-  mean_hujan_mm: number | null;
-}
+import { classLabels, dominantClass, selectedHazards, weightedMean } from "../geography/spatial-data";
 
 export function emptyOverview(message = "Memuat data backend…"): WorkspaceData["overview"] {
   return {
@@ -23,7 +13,7 @@ export function emptyOverview(message = "Memuat data backend…"): WorkspaceData
     summary: message,
     susceptibility: {
       label: "—", colors: ["#3CFF00", "#E1FF00", "#FFD000", "#FF6A00", "#FF0000"],
-      notes: ["Kerawanan tersedia per kecamatan.", "Kelas agregat dan periode spasial belum ditetapkan.", "Paparan dan simulasi tidak menyatakan kejadian banjir historis."],
+      notes: ["Kelas 1–5 menyatakan Sangat Rendah–Sangat Tinggi.", "Kelas wilayah memakai modus kelas dominan kecamatan berbobot n_piksel.", "Fasilitas menghitung akumulasi kerusakan historis dan dapat mencakup fasilitas yang sama berulang kali.", "Periode spasial belum tersedia. Kategori fasilitas umum memerlukan data fungsi dan kepemilikan fasilitas."],
     },
     facilities: [
       { id: "health", label: "Fasilitas Kesehatan", count: null },
@@ -37,18 +27,23 @@ export function emptyOverview(message = "Memuat data backend…"): WorkspaceData
 
 export async function getWorkspaceOverview(regionIds: string[], from: string, to: string) {
   const overview = emptyOverview();
+  const spatial = selectedHazards(regionIds);
   const supported = regionIds.every((id) => /^\d+$/.test(id));
   const scope = from ? `${from} s.d. ${to || from}` : "seluruh periode histori";
-  if (supported) {
-    const ids = [...new Set(regionIds)];
-    const statistics = await Promise.all((ids.length ? ids : [""]).map(async (id) => {
+  const ids = [...new Set(regionIds)];
+  const [spatialResult, historyResult] = await Promise.allSettled([spatial, supported ? Promise.all((ids.length ? ids : [""]).map(async (id) => {
       const query = new URLSearchParams();
       if (id) query.set("regency_id", id);
       if (from) { query.set("start_date", `${from}T00:00:00`); query.set("end_date", `${to || from}T23:59:59.999999`); }
-      const response = await fetchBackend(`/api/v1/flood/statistics?${query}`, { next: { revalidate: 300 } });
-      if (!response.ok) throw new Error("Ringkasan banjir gagal dimuat.");
-      return response.json() as Promise<Statistics>;
-    }));
+      return getFloodStatistics(query.toString());
+    })) : Promise.resolve([])]);
+  const records = spatialResult.status === "fulfilled" ? spatialResult.value : [];
+  const statistics = historyResult.status === "fulfilled" ? historyResult.value : [];
+  overview.errors = [
+    ...(spatialResult.status === "rejected" ? ["Parameter spasial gagal dimuat."] : []),
+    ...(historyResult.status === "rejected" ? ["Ringkasan Flood gagal dimuat."] : []),
+  ];
+  if (supported && historyResult.status === "fulfilled") {
     const total = statistics.reduce((sum, row) => sum + row.summary.total_events, 0);
     overview.metrics[0].value = total.toLocaleString("id-ID");
     overview.metrics[0].change = scope;
@@ -58,18 +53,20 @@ export async function getWorkspaceOverview(regionIds: string[], from: string, to
       overview.metrics[3].change = "Akumulasi terdampak/mengungsi";
     }
     overview.summary = `${total.toLocaleString("id-ID")} kejadian tercatat untuk ${scope}. Penduduk terdampak/mengungsi merupakan akumulasi catatan kejadian dan dapat mencakup orang yang sama.`;
+  } else if (supported) {
+    overview.summary = "Ringkasan Flood gagal dimuat. Parameter spasial tetap tersedia jika berhasil dimuat.";
   } else {
     overview.summary = "Filter histori tersedia pada tingkat kabupaten/kota. Statistik kecamatan atau desa/kelurahan belum tersedia pada API Flood.";
   }
-  if (regionIds.length === 1 && /^\d+\/\d+$/.test(regionIds[0])) {
-    const districtId = regionIds[0].split("/")[1];
-    const response = await fetchBackend(`/api/v1/spatial-analysis/district-hazards/district/${districtId}`, { next: { revalidate: 300 } });
-    if (response.ok) {
-      const hazard: Hazard = await response.json();
-      overview.landCover = [hazard.landcover_dominan || "—"];
-      if (hazard.mean_elevasi_m !== null) overview.elevation = hazard.mean_elevasi_m.toLocaleString("id-ID", { maximumFractionDigits: 1 }) + " meter";
-      if (hazard.mean_hujan_mm !== null) overview.susceptibility.notes.push(`Parameter rata-rata hujan ${hazard.mean_hujan_mm.toLocaleString("id-ID", { maximumFractionDigits: 1 })} mm. Periode belum tersedia.`);
-    }
-  }
+  if (spatialResult.status === "rejected") overview.summary += " Parameter spasial gagal dimuat.";
+  const classification = dominantClass(records);
+  overview.susceptibility.label = classification === null ? "—" : classLabels[classification - 1];
+  const cover = [...new Set(records.map((row) => row.landcover_dominan).filter((value): value is string => Boolean(value)))];
+  overview.landCover = cover.length ? cover.sort((a, b) => a.localeCompare(b, "id-ID")) : ["—"];
+  const elevation = weightedMean(records, "mean_elevasi_m");
+  if (elevation !== null) overview.elevation = elevation.toLocaleString("id-ID", { maximumFractionDigits: 1 }) + " meter";
+  const rainfall = records.length === 1 ? records[0].mean_hujan_mm : null;
+  if (rainfall != null) overview.susceptibility.notes.push(`Parameter rata-rata hujan kecamatan ${rainfall.toLocaleString("id-ID", { maximumFractionDigits: 1 })} mm. Periode belum tersedia.`);
+  else if (records.some((row) => row.mean_hujan_mm == null)) overview.susceptibility.notes.push(`${records.filter((row) => row.mean_hujan_mm == null).length} kecamatan memiliki parameter hujan kosong.`);
   return overview;
 }

@@ -3,6 +3,7 @@ import "../../lib/api/test-setup.mjs";
 import test from "node:test";
 
 const { getFloodHistory } = await import("./api.ts");
+const { listFloodEvents } = await import("./api.ts");
 const { summarizeHistory } = await import("./history-summary.ts");
 const { createRegionFilterTree } = await import("../webgis/region-tree.ts");
 
@@ -17,7 +18,8 @@ test("history loads all pages, sums impacts, preserves unknown values and scopes
     requests.push(url);
     if (url.pathname.endsWith("/statistics")) {
       return Response.json({
-        by_year: [{ year: 2026 }, { year: 2025 }],
+        summary: { total_events: 101 }, impacts: { affected_displaced: null },
+        by_year: [{ year: 2026, total_events: 101 }, { year: 2025, total_events: 0 }],
         by_regency: [
           { regency_id: 4, regency_name: "Bogor", total_events: 2 },
           { regency_id: 14, regency_name: "Kota Bogor", total_events: 50 },
@@ -64,4 +66,11 @@ test("upstream failure rejects history instead of returning an empty success", a
   } finally {
     globalThis.fetch = originalFetch;
   }
+});
+
+test("overlapping pages are rejected before counting duplicate flood events", async () => {
+  const original = globalThis.fetch;
+  globalThis.fetch = async () => Response.json({ total: 101, items: Array.from({ length: 100 }, (_, index) => ({ id: index + 1 })) });
+  try { await assert.rejects(listFloodEvents(""), /ID kejadian berulang/); }
+  finally { globalThis.fetch = original; }
 });

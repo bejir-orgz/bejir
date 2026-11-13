@@ -1,21 +1,6 @@
 import type { AnalysisData, AnalysisRow } from "./analysis-types";
-import { fetchBackend } from "../../lib/api/backend";
-import { getFloodStatistics } from "../floods/api";
-
-interface DistrictHazard {
-  district_id: number;
-  luas_km2: number | null;
-}
-
-interface PopulationExposure {
-  district_id: number;
-  penduduk_est: number | null;
-}
-
-interface Regency {
-  id: number;
-  name: string;
-}
+import { classLabels, dominantClass, getHazardParameters, getSpatialDistricts, nullableSum, susceptibilityDistribution, weightedMean, type DistrictParameters } from "../geography/spatial-data";
+import { getFloodStatistics, type FloodStatistics } from "../floods/api";
 
 export function emptyAnalysisData(error?: string): AnalysisData {
   const classes: AnalysisData["classes"] = [
@@ -47,112 +32,83 @@ export function emptyAnalysisData(error?: string): AnalysisData {
   };
 }
 
-async function readAnalysis<T>(path: string): Promise<T[]> {
-  const response = await fetchBackend(`/api/v1/${path}`, {
-    // Geography includes polygons larger than the Next.js data cache limit.
-    ...(path.startsWith("geography/") ? { cache: "no-store" as const } : { next: { revalidate: 300 } }),
-    signal: AbortSignal.timeout(30_000),
-  });
-  if (!response.ok) throw new Error("Data analisis gagal dimuat.");
-  const rows: unknown = await response.json();
-  if (!Array.isArray(rows)) throw new Error("Respons analisis tidak valid.");
-  return rows;
-}
-
-function nullableSum(values: (number | null)[]): number | null {
-  if (!values.length || values.includes(null)) return null;
-  if (values.some((value) => typeof value !== "number" || !Number.isFinite(value) || value < 0)) {
-    throw new Error("Nilai analisis tidak valid.");
-  }
-  return values.reduce<number>((total, value) => total + (value ?? 0), 0);
-}
-
 export async function getAnalysisData(): Promise<AnalysisData> {
-  const [regencies, exposures] = await Promise.all([
-    readAnalysis<Regency>("geography/regencies?province_code=32&limit=1000"),
-    readAnalysis<PopulationExposure>("spatial-analysis/population-exposures"),
-  ]);
-  const population = new Map<number, number | null>();
-  for (const exposure of exposures) {
-    if (!Number.isSafeInteger(exposure.district_id) || population.has(exposure.district_id)) {
-      throw new Error("ID kecamatan pada paparan penduduk tidak valid.");
-    }
-    population.set(exposure.district_id, exposure.penduduk_est);
-  }
-  const rows: AnalysisRow[] = [];
-  const districtIds = new Set<number>();
-  // The API omits regency_id on spatial rows, so fetch hazards with the documented parent filter.
-  for (let index = 0; index < regencies.length; index += 6) {
-    const batch = await Promise.all(regencies.slice(index, index + 6).map(async (regency) => {
-      if (!Number.isSafeInteger(regency.id) || typeof regency.name !== "string") throw new Error("Wilayah tidak valid.");
-      const hazards = await readAnalysis<DistrictHazard>(`spatial-analysis/district-hazards?regency_id=${regency.id}`);
-      for (const hazard of hazards) {
-        if (!Number.isSafeInteger(hazard.district_id) || districtIds.has(hazard.district_id)) {
-          throw new Error("ID kecamatan pada kerawanan tidak valid.");
-        }
-        districtIds.add(hazard.district_id);
-      }
-      return {
-        id: String(regency.id), year: null,
-        region: /^(Kota|Kabupaten)\s/i.test(regency.name) ? regency.name : `Kabupaten ${regency.name}`,
-        population: nullableSum(hazards.map((hazard) => population.get(hazard.district_id) ?? null)),
-        areaKm2: nullableSum(hazards.map((hazard) => hazard.luas_km2)),
-        susceptibility: null, rivers: null, elevationM: null,
-      };
-    }));
-    rows.push(...batch);
-  }
+  const [spatial, statistics] = await Promise.allSettled([getSpatialDistricts(), getFloodStatistics()]);
+  const { regencies, districts, errors } = spatial.status === "fulfilled" ? spatial.value : { regencies: [], districts: [], errors: ["Tabel spasial gagal dimuat."] };
+  const rows: AnalysisRow[] = regencies.map((regency) => {
+    const records = districts.filter((row) => row.regency_id === regency.id);
+    const classification = dominantClass(records);
+    return {
+      id: String(regency.id), year: null,
+      region: /^(Kota|Kabupaten)\s/i.test(regency.name) ? regency.name : `Kabupaten ${regency.name}`,
+      population: nullableSum(records.map((row) => row.population)),
+      areaKm2: nullableSum(records.map((row) => row.luas_km2)),
+      susceptibility: classification === null ? null : classLabels[classification - 1],
+      rivers: null, elevationM: weightedMean(records, "mean_elevasi_m"),
+    };
+  });
   const data = { ...emptyAnalysisData(), rows, regions: rows.map((row) => row.region) };
-  try {
-    const statistics = await getFloodStatistics();
-    data.years = statistics.by_year.map((row) => row.year).sort((a, b) => b - a);
-    if (data.years.length) data.snapshots[data.years[0]] = await getAnalysisSummary(data.years[0], []);
-  } catch {
-    data.error = "Ringkasan histori belum dapat dimuat. Tabel spasial tetap tersedia.";
+  data.error = errors.join(" ") || undefined;
+  if (statistics.status === "fulfilled") {
+    data.years = statistics.value.by_year.map((row) => row.year).sort((a, b) => b - a);
+    if (data.years.length) {
+      const parameters = spatial.status === "fulfilled" && !errors.some((error) => error.includes("parameter")) ? districts : Promise.reject(new Error("Parameter spasial gagal dimuat."));
+      data.snapshots[data.years[0]] = await getAnalysisSummary(data.years[0], [], parameters, statistics.value);
+    }
+  } else {
+    data.error = [data.error, "Ringkasan histori gagal dimuat."].filter(Boolean).join(" ");
+    if (districts.length) data.snapshots[0].distribution = susceptibilityDistribution(districts).reverse();
   }
   return data;
 }
 
-export async function getAnalysisSummary(year: number, regencyIds: number[]) {
-  const groups = await Promise.all((regencyIds.length ? [...new Set(regencyIds)] : [undefined]).map(async (id) => {
-    const query = new URLSearchParams();
-    if (id !== undefined) query.set("regency_id", String(id));
-    const period = (value: number) => {
-      const scoped = new URLSearchParams(query);
-      scoped.set("start_date", `${value}-01-01T00:00:00`);
-      scoped.set("end_date", `${value}-12-31T23:59:59.999999`);
-      return scoped.toString();
-    };
-    const [current, previous, history] = await Promise.all([
-      getFloodStatistics(period(year)), getFloodStatistics(period(year - 1)), getFloodStatistics(query.toString()),
-    ]);
-    return { current, previous, history };
-  }));
+export async function getAnalysisSummary(year: number, regencyIds: number[], districts?: DistrictParameters[] | Promise<DistrictParameters[]>, allTime?: FloodStatistics) {
+  const spatial = districts ? Promise.resolve(districts) : getHazardParameters(regencyIds);
+  const ids = regencyIds.length ? [...new Set(regencyIds)] : [undefined];
+  const query = (id: number | undefined, period?: number) => {
+    const params = new URLSearchParams();
+    if (id !== undefined) params.set("regency_id", String(id));
+    if (period !== undefined) {
+      params.set("start_date", `${period}-01-01T00:00:00`);
+      params.set("end_date", `${period}-12-31T23:59:59.999999`);
+    }
+    return params.toString();
+  };
+  const [current, previous, history, records] = await Promise.allSettled([
+    Promise.all(ids.map((id) => getFloodStatistics(query(id, year)))),
+    Promise.all(ids.map((id) => getFloodStatistics(query(id, year - 1)))),
+    Promise.all(ids.map((id) => id === undefined && allTime ? Promise.resolve(allTime) : getFloodStatistics(query(id)))), spatial,
+  ]);
   const snapshot = emptyAnalysisData().snapshots[0];
-  const total = groups.reduce((sum, group) => sum + group.current.summary.total_events, 0);
-  const previous = groups.reduce((sum, group) => sum + group.previous.summary.total_events, 0);
-  const change = previous ? (total - previous) / previous * 100 : null;
-  snapshot.metrics[0].value = total.toLocaleString("id-ID");
-  snapshot.metrics[0].change = change === null ? "—" : `${change >= 0 ? "+" : ""}${change.toLocaleString("id-ID", { maximumFractionDigits: 1 })}% dari ${year - 1}`;
-  snapshot.metrics[0].trend = change !== null && change < 0 ? "decrease" : "increase";
-  snapshot.metrics[3].value = (total / 12).toLocaleString("id-ID", { maximumFractionDigits: 1 });
-  snapshot.metrics[3].change = "Total kejadian dibagi 12 bulan";
-  const affected = groups.map((group) => group.current.impacts.affected_displaced);
-  if (affected.every((value) => value !== null)) {
-    snapshot.metrics[2].value = affected.reduce<number>((sum, value) => sum + (value ?? 0), 0).toLocaleString("id-ID") + " jiwa";
-    snapshot.metrics[2].change = "Akumulasi terdampak/mengungsi";
+  snapshot.errors = [
+    ...(current.status === "rejected" ? ["Statistik tahun terpilih gagal dimuat."] : []),
+    ...(previous.status === "rejected" ? ["Perbandingan tahun sebelumnya gagal dimuat."] : []),
+    ...(history.status === "rejected" ? ["Grafik histori gagal dimuat."] : []),
+    ...(records.status === "rejected" ? ["Distribusi spasial gagal dimuat."] : []),
+  ];
+  if (current.status === "fulfilled") {
+    const total = current.value.reduce((sum, group) => sum + group.summary.total_events, 0);
+    const prior = previous.status === "fulfilled" ? previous.value.reduce((sum, group) => sum + group.summary.total_events, 0) : null;
+    const change = prior ? (total - prior) / prior * 100 : null;
+    snapshot.metrics[0].value = total.toLocaleString("id-ID");
+    snapshot.metrics[0].change = change === null ? "—" : `${change >= 0 ? "+" : ""}${change.toLocaleString("id-ID", { maximumFractionDigits: 1 })}% dari ${year - 1}`;
+    snapshot.metrics[0].trend = change !== null && change < 0 ? "decrease" : "increase";
+    snapshot.metrics[3].value = (total / 12).toLocaleString("id-ID", { maximumFractionDigits: 1 });
+    snapshot.metrics[3].change = "Total kejadian dibagi 12 bulan";
+    const affected = current.value.map((group) => group.impacts.affected_displaced);
+    if (affected.every((value) => value !== null)) {
+      snapshot.metrics[2].value = affected.reduce<number>((sum, value) => sum + (value ?? 0), 0).toLocaleString("id-ID") + " jiwa";
+      snapshot.metrics[2].change = "Akumulasi terdampak/mengungsi";
+    }
+    snapshot.frequency = current.value.flatMap((group) => group.by_regency).map((row) => ({
+      id: String(row.regency_id), region: row.regency_name === null ? "—" : /^(Kota|Kabupaten)\s/i.test(row.regency_name) ? row.regency_name : `Kabupaten ${row.regency_name}`, events: row.total_events,
+    })).sort((a, b) => b.events - a.events).slice(0, 10);
   }
-  snapshot.frequency = groups.flatMap((group) => group.current.by_regency).map((row) => ({
-    id: String(row.regency_id),
-    region: /^(Kota|Kabupaten)\s/i.test(row.regency_name) ? row.regency_name : `Kabupaten ${row.regency_name}`,
-    events: row.total_events,
-  })).sort((a, b) => b.events - a.events).slice(0, 10);
-  const annual = new Map<number, number>();
-  for (const group of groups) {
-    for (const row of group.history.by_year) annual.set(row.year, (annual.get(row.year) ?? 0) + row.total_events);
+  if (history.status === "fulfilled") {
+    const annual = new Map<number, number>();
+    for (const group of history.value) for (const row of group.by_year) annual.set(row.year, (annual.get(row.year) ?? 0) + row.total_events);
+    snapshot.annualEvents = Array.from({ length: 5 }, (_, index) => ({ year: String(year - 4 + index), events: annual.get(year - 4 + index) ?? 0 }));
   }
-  snapshot.annualEvents = Array.from({ length: 5 }, (_, index) => ({
-    year: String(year - 4 + index), events: annual.get(year - 4 + index) ?? 0,
-  }));
+  if (records.status === "fulfilled") snapshot.distribution = susceptibilityDistribution(records.value).reverse();
   return snapshot;
 }

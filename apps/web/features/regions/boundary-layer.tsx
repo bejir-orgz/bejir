@@ -3,7 +3,6 @@
 import { useEffect } from "react";
 import type { Map as LeafletMap } from "leaflet";
 import type { GeoJsonObject } from "geojson";
-import { requestBackend } from "../../lib/api/client";
 
 export function BoundaryLayer({ map, regionIds, onStatus }: {
   map: LeafletMap; regionIds: string[];
@@ -16,10 +15,10 @@ export function BoundaryLayer({ map, regionIds, onStatus }: {
     onStatus({ message: "Memuat batas wilayah…" });
     let cleanup: (() => void) | undefined;
     async function draw() {
-      const rows = await Promise.all(ids.map((id) => {
-        const parts = id.split("/");
-        const resource = ["regencies", "districts", "villages"][parts.length - 1];
-        return requestBackend<{ name: string; geom: GeoJsonObject | null }>(`/api/v1/geography/${resource}/${parts.at(-1)}`, { signal: controller.signal });
+      const rows = await Promise.all(ids.map(async (id) => {
+        const response = await fetch(`/api/geography/boundary?region=${encodeURIComponent(id)}`, { signal: controller.signal });
+        if (!response.ok) throw new Error("Batas wilayah gagal dimuat.");
+        return response.json() as Promise<{ name: string; geom: GeoJsonObject | null }>;
       }));
       const L = await import("leaflet");
       if (controller.signal.aborted) return;

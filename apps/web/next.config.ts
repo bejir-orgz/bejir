@@ -1,9 +1,16 @@
 import type { NextConfig } from "next";
+import { resolve } from "node:path";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  outputFileTracingRoot: resolve(__dirname, "../.."),
+  outputFileTracingIncludes: {
+    "/*": ["../../data/processed/web/catalog.json", "../../data/processed/web/boundaries.json", "../../data/processed/web/facilities.json"],
+  },
+  outputFileTracingExcludes: {
+    "/*": ["../../data/processed/web/facilities-progress.json"],
+  },
   turbopack: {
-    root: __dirname,
+    root: resolve(__dirname, "../.."),
   },
 };
 

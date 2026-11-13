@@ -17,7 +17,7 @@ export async function groundAssistantRequest(payload: AssistantChatRequest): Pro
     if (!Number.isSafeInteger(data.summary.total_events)) throw new Error("Metadata histori tidak valid.");
     facts.push(`Total kejadian pada endpoint /flood/statistics adalah ${data.summary.total_events}.`);
   }
-  facts.push("Periode Spatial Analysis dan pemetaan resmi kode kelas kerawanan belum dikonfirmasi. Paparan penduduk dan hasil simulasi harus dijelaskan sesuai jenis datanya.");
+  facts.push("Periode Spatial Analysis belum tersedia. Pemetaan kelas yang disetujui proyek adalah 1 Sangat Rendah, 2 Rendah, 3 Sedang, 4 Tinggi, 5 Sangat Tinggi. Elevasi wilayah memakai rata-rata berbobot n_piksel. Kelas wilayah memakai modus kelas dominan kecamatan berbobot n_piksel, dengan hasil seri tidak tersedia. Paparan penduduk dan hasil simulasi harus dijelaskan sesuai jenis datanya.");
   const messages = payload.messages.slice(-9);
   return {
     ...payload,

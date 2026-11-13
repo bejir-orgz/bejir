@@ -48,6 +48,7 @@ export interface WorkspaceData {
   legends: { id: string; label: string }[];
   initialFilters: WorkspaceFilters;
   overview: {
+    errors?: string[];
     metrics: OverviewMetric[];
     summary: string;
     susceptibility: { label: string; colors: string[]; notes: string[] };

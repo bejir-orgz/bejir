@@ -2,7 +2,7 @@
 import json
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import func, select
+from sqlalchemy import func, literal, select
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
@@ -11,8 +11,15 @@ from app.models.geography.province import Province
 from app.models.geography.regency import Regency
 from app.models.geography.district import District
 from app.models.geography.village import Village
+from app.repositories.geography import GeographyRepository
+from app.schemas.geography.catalog import AdministrativeCatalog
 
 router = APIRouter()
+
+
+@router.get("/catalog", response_model=AdministrativeCatalog)
+def get_catalog(db: Session = Depends(get_db)):
+    return GeographyRepository.get_catalog(db, "32")
 
 
 # =========================================================
@@ -50,7 +57,7 @@ def get_provinces(
         Province.id,
         Province.code,
         Province.name,
-    ).order_by(Province.name)
+    ).order_by(Province.name, Province.id)
 
     statement = paginate_query(statement, limit, offset)
 
@@ -73,6 +80,7 @@ def get_provinces(
 @router.get("/regencies")
 def get_regencies(
     province_code: str | None = Query(default=None),
+    include_geometry: bool = Query(default=True),
     limit: int = Query(default=100, ge=1, le=1000),
     offset: int = Query(default=0, ge=0),
     db: Session = Depends(get_db),
@@ -82,7 +90,7 @@ def get_regencies(
         Regency.code,
         Regency.name,
         Regency.province_code,
-        func.ST_AsGeoJSON(Regency.geom).label("geom"),
+        (func.ST_AsGeoJSON(Regency.geom) if include_geometry else literal(None)).label("geom"),
     )
 
     if province_code is not None:
@@ -90,7 +98,7 @@ def get_regencies(
             Regency.province_code == province_code
         )
 
-    statement = statement.order_by(Regency.name)
+    statement = statement.order_by(Regency.name, Regency.id)
     statement = paginate_query(statement, limit, offset)
 
     results = db.execute(statement).all()
@@ -146,6 +154,7 @@ def get_regency(
 @router.get("/districts")
 def get_districts(
     regency_id: int | None = Query(default=None),
+    include_geometry: bool = Query(default=True),
     limit: int = Query(default=100, ge=1, le=1000),
     offset: int = Query(default=0, ge=0),
     db: Session = Depends(get_db),
@@ -155,7 +164,7 @@ def get_districts(
         District.code,
         District.name,
         District.regency_id,
-        func.ST_AsGeoJSON(District.geom).label("geom"),
+        (func.ST_AsGeoJSON(District.geom) if include_geometry else literal(None)).label("geom"),
     )
 
     if regency_id is not None:
@@ -163,7 +172,7 @@ def get_districts(
             District.regency_id == regency_id
         )
 
-    statement = statement.order_by(District.name)
+    statement = statement.order_by(District.name, District.id)
     statement = paginate_query(statement, limit, offset)
 
     results = db.execute(statement).all()
@@ -219,6 +228,7 @@ def get_district(
 @router.get("/villages")
 def get_villages(
     district_id: int | None = Query(default=None),
+    include_geometry: bool = Query(default=True),
     limit: int = Query(default=100, ge=1, le=1000),
     offset: int = Query(default=0, ge=0),
     db: Session = Depends(get_db),
@@ -228,7 +238,7 @@ def get_villages(
         Village.code,
         Village.name,
         Village.district_id,
-        func.ST_AsGeoJSON(Village.geom).label("geom"),
+        (func.ST_AsGeoJSON(Village.geom) if include_geometry else literal(None)).label("geom"),
     )
 
     if district_id is not None:
@@ -236,7 +246,7 @@ def get_villages(
             Village.district_id == district_id
         )
 
-    statement = statement.order_by(Village.name)
+    statement = statement.order_by(Village.name, Village.id)
     statement = paginate_query(statement, limit, offset)
 
     results = db.execute(statement).all()

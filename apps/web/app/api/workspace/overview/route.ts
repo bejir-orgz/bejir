@@ -10,8 +10,11 @@ export async function GET(request: Request) {
     return Response.json({ error: "Filter tidak valid." }, { status: 422 });
   }
   try {
-    return Response.json(await getWorkspaceOverview(ids, from, to));
-  } catch {
-    return Response.json({ error: "Ringkasan backend gagal dimuat." }, { status: 502 });
+    const data = await getWorkspaceOverview(ids, from, to);
+    if (data.errors?.length) console.warn("workspace.overview.partial", data.errors);
+    return Response.json(data, { status: data.errors?.length === 2 ? 503 : 200 });
+  } catch (error) {
+    console.error("workspace.overview", error instanceof Error ? error.message : "unavailable");
+    return Response.json({ error: "Ringkasan backend gagal dimuat." }, { status: 503 });
   }
 }

@@ -75,3 +75,14 @@ export type ValidationError = {
   "input"?: unknown;
   "ctx"?: Record<string, unknown>;
 };
+
+export interface RegencyMetadata { id: number; name: string }
+export interface DistrictMetadata extends RegencyMetadata { regency_id: number }
+export interface AdministrativeCatalog { regencies: RegencyMetadata[]; districts: DistrictMetadata[] }
+export interface FacilityTotalsResponse {
+  health: number | null;
+  education: number | null;
+  worship: number | null;
+  public: null;
+  data_kind: "historical_damage";
+}

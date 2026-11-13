@@ -11,6 +11,7 @@ import { AnnualEventsChart, FrequencyChart, SusceptibilityChart } from "./analys
 import { AnalysisFiltersBar, AnalysisRegionFilter } from "./analysis-filters";
 import { AnalysisTable } from "./analysis-table";
 import { FacilityRows } from "./facility-rows";
+import { useFacilityTotals } from "../../floods/use-facility-totals";
 import { matchesRegionFilter } from "../region-tree";
 
 export function AnalysisPage({ data }: { data: AnalysisData }) {
@@ -27,9 +28,11 @@ export function AnalysisPage({ data }: { data: AnalysisData }) {
   const summaryKey = query.toString();
   const [liveSummary, setLiveSummary] = useState<{ key: string; snapshot?: AnalysisData["snapshots"][number]; error?: string }>();
   const initialSummary = summaryYear === data.years[0] && !summaryRegionIds.length;
-  const snapshot = data.source !== "backend" ? data.snapshots[summaryYear]
+  const baseSnapshot = data.source !== "backend" ? data.snapshots[summaryYear]
     : liveSummary?.key === summaryKey && liveSummary.snapshot ? liveSummary.snapshot
       : initialSummary ? data.snapshots[summaryYear] ?? data.snapshots[0] : data.snapshots[0];
+  const facilities = useFacilityTotals(selectedRegions.length === data.rows.length ? [] : selectedRegions.map((row) => Number(row.id)), `${summaryYear}-01-01`, `${summaryYear}-12-31`, data.source === "backend" && summaryYear > 0);
+  const snapshot = facilities?.counts ? { ...baseSnapshot, facilities: baseSnapshot.facilities.map((facility) => ({ ...facility, count: facilities.counts![facility.id] })) } : baseSnapshot;
   useEffect(() => {
     if (data.source !== "backend" || !data.years.length || initialSummary) return;
     const controller = new AbortController();
@@ -63,7 +66,7 @@ export function AnalysisPage({ data }: { data: AnalysisData }) {
         <AnalysisFiltersBar filters={filters} regions={data.regions} classes={data.classes} onChange={setFilters} />
         <AnalysisTable rows={rows} />
       </Card>
-      <p className="analysis-data-note mt-4 text-[12px] leading-[16px] text-[#737373]" role="status">{(liveSummary?.key === summaryKey && liveSummary.error) || data.error || "Ringkasan kejadian dari Flood. Tabel penduduk estimasi dan luas cakupan analisis dari Spatial Analysis tanpa periode. Korban terdampak/mengungsi merupakan akumulasi catatan kejadian. Rata-rata bulanan dihitung total/12. Tahun berjalan dapat belum lengkap. — menandakan data tidak tersedia."}</p>
+      <p className="analysis-data-note mt-4 text-[12px] leading-[16px] text-[#737373]" role="status">{[liveSummary?.key === summaryKey && liveSummary.error, data.error, ...(snapshot.errors || []), facilities?.error, facilities?.counts?.prepared_at && `Snapshot fasilitas disiapkan ${new Date(facilities.counts.prepared_at).toLocaleDateString("id-ID")}.`].filter(Boolean).join(" ") + " Ringkasan kejadian dan kerusakan fasilitas dari Flood merupakan akumulasi catatan historis. Spatial Analysis belum memiliki periode. Elevasi memakai rata-rata berbobot n_piksel, kelas wilayah memakai modus kelas dominan kecamatan berbobot n_piksel. Distribusi menghitung kecamatan per kelas 1–5 (Sangat Rendah–Sangat Tinggi). Rata-rata bulanan dihitung total/12. Tahun berjalan dapat belum lengkap. Fasilitas umum belum teridentifikasi sesuai fungsi publik. — menandakan data tidak tersedia."}</p>
     </main>
   </div>;
 }

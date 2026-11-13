@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
@@ -6,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.models.flood import FloodEvent
 from app.schemas.flood import FloodEventFilter
+from app.schemas.flood.facilities import FacilityTotals
 from app.services.flood import (
     FloodEventImpactService,
     FloodEventService,
@@ -13,6 +15,23 @@ from app.services.flood import (
 )
 
 router = APIRouter()
+
+
+@router.get("/facilities", response_model=FacilityTotals)
+def get_facilities(
+    regency_id: list[Annotated[int, Query(gt=0)]] = Query(default=[], max_length=100),
+    start_date: datetime | None = Query(default=None),
+    end_date: datetime | None = Query(default=None),
+    db: Session = Depends(get_db),
+):
+    if start_date is not None and end_date is not None:
+        if (start_date.tzinfo is None) != (end_date.tzinfo is None):
+            raise HTTPException(status_code=422, detail="Date timezones must be consistent")
+        if start_date > end_date:
+            raise HTTPException(status_code=422, detail="start_date must not exceed end_date")
+    return FloodEventService.get_facility_totals(
+        db, regency_ids=regency_id, start_date=start_date, end_date=end_date,
+    )
 
 
 def _event_or_404(db: Session, event_id: int) -> FloodEvent:

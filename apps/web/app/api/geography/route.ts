@@ -1,4 +1,5 @@
 import { fetchBackend } from "@/lib/api/backend";
+import { getCatalog } from "@/features/geography/catalog";
 
 interface GeographyRow {
   id: number;
@@ -12,31 +13,30 @@ export async function GET(request: Request) {
   }
 
   const [regencyId, districtId] = parent?.split("/") ?? [];
-  const [resource, filter] = districtId
-    ? ["villages", `district_id=${districtId}`]
-    : regencyId
-      ? ["districts", `regency_id=${regencyId}`]
-      : ["regencies", "province_code=32"];
-  const limit = 100;
-
   try {
-    const regions = [];
-    const signal = AbortSignal.any([request.signal, AbortSignal.timeout(20_000)]);
-    for (let offset = 0; ; offset += limit) {
-      const response = await fetchBackend(`/api/v1/geography/${resource}?${filter}&limit=${limit}&offset=${offset}`, { signal, cache: "no-store" });
-      if (!response.ok) throw new Error("Geography request failed");
-      const rows: GeographyRow[] = await response.json();
-      for (const { id, name } of rows) {
-        if (!Number.isSafeInteger(id) || id < 1 || typeof name !== "string") throw new Error("Invalid geography row");
-        regions.push({
-          id: parent ? `${parent}/${id}` : String(id),
-          name: parent || /^(Kota|Kabupaten)\s/i.test(name) ? name : `Kabupaten ${name}`,
-        });
+    let rows: GeographyRow[];
+    if (!districtId) {
+      const catalog = await getCatalog();
+      rows = regencyId ? catalog.districts.filter((row) => row.regency_id === Number(regencyId)) : catalog.regencies;
+    } else {
+      rows = [];
+      for (let offset = 0; ; offset += 1000) {
+        const response = await fetchBackend(`/api/v1/geography/villages?district_id=${districtId}&include_geometry=false&limit=1000&offset=${offset}`, { signal: request.signal, next: { revalidate: 3600 } });
+        if (!response.ok) throw new Error("Village metadata failed");
+        const page: GeographyRow[] = await response.json();
+        if (!Array.isArray(page)) throw new Error("Invalid village metadata");
+        rows.push(...page);
+        if (page.length < 1000) break;
       }
-      if (rows.length < limit) break;
     }
-    return Response.json(regions);
-  } catch {
-    return Response.json({ error: "Daerah gagal dimuat." }, { status: 502 });
+    const seen = new Set<number>();
+    return Response.json(rows.map(({ id, name }) => {
+      if (!Number.isSafeInteger(id) || id < 1 || typeof name !== "string" || seen.has(id)) throw new Error("Invalid geography row");
+      seen.add(id);
+      return { id: parent ? `${parent}/${id}` : String(id), name: parent || /^(Kota|Kabupaten)\s/i.test(name) ? name : `Kabupaten ${name}` };
+    }));
+  } catch (error) {
+    console.error("geography.metadata", error instanceof Error ? error.message : "unavailable");
+    return Response.json({ error: "Daerah gagal dimuat." }, { status: 503 });
   }
 }

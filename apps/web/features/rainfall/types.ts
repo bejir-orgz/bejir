@@ -1,14 +1,18 @@
+import type { DistrictParameters } from "../geography/spatial-data";
+
 export type RainfallClass = "Sangat Rendah" | "Rendah" | "Sedang" | "Tinggi" | "Sangat Tinggi";
+export type RainfallParameter = Pick<DistrictParameters, "mean_hujan_mm" | "n_piksel">;
 
 export interface RainfallRow {
   id: string;
-  period: string; // YYYY-MM; these table specimens have monthly, not daily, resolution.
+  period: string | null;
   region: string;
-  classification: RainfallClass;
-  rainfallMm: number;
-  averageMm: number;
-  minimumMm: number;
-  maximumMm: number;
+  classification: RainfallClass | null;
+  rainfallMm: number | null;
+  averageMm: number | null;
+  minimumMm: number | null;
+  maximumMm: number | null;
+  parameters: RainfallParameter[];
 }
 
 export interface RainfallFilters {
@@ -18,8 +22,10 @@ export interface RainfallFilters {
   classifications: RainfallClass[];
 }
 
-/** UI presentation fixtures; not an agreed backend contract or research methodology. */
+/** Presentation values retain missing period and rainfall classification metadata. */
 export interface RainfallPageData {
+  source?: "backend" | "dummy";
+  error?: string;
   years: number[];
   regions: string[];
   rows: RainfallRow[];

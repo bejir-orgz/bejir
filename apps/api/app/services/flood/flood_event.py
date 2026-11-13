@@ -3,6 +3,7 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 
 from app.repositories.flood import FloodEventRepository
+from app.schemas.flood.facilities import FacilityTotals
 from app.schemas.flood import (
     FloodEventDetailResponse,
     FloodEventEventTypeCount,
@@ -18,6 +19,19 @@ from app.schemas.flood import (
 
 
 class FloodEventService:
+
+    @staticmethod
+    def get_facility_totals(
+        db: Session, *, regency_ids: list[int],
+        start_date: datetime | None = None, end_date: datetime | None = None,
+    ) -> FacilityTotals:
+        totals = FloodEventRepository.get_facility_totals(
+            db, regency_ids=sorted(set(regency_ids)), start_date=start_date, end_date=end_date,
+        )
+        return FacilityTotals(**{
+            name: None if totals[f"{name}_unknown"] else totals[name]
+            for name in ("health", "education", "worship")
+        })
 
     @staticmethod
     def list_events(

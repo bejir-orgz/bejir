@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import { HistoryPage } from "@/features/floods/components/history-page";
 import { getFloodHistory } from "@/features/floods/api";
 import { unavailableSnapshot } from "@/features/floods/history-summary";
@@ -7,6 +8,7 @@ import type { FloodHistoryData } from "@/features/floods/types";
 export const metadata: Metadata = { title: "Histori Banjir" };
 
 export default async function Page() {
+  await connection();
   let data: FloodHistoryData;
   try {
     data = await getFloodHistory();

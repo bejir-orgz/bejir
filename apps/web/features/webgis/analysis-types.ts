@@ -28,6 +28,7 @@ export interface AnalysisData {
   rows: AnalysisRow[];
   classes: { label: SusceptibilityClass; color: string }[];
   snapshots: Record<number, {
+    errors?: string[];
     metrics: OverviewMetric[];
     frequency: { id: string; region: string; events: number }[];
     distribution: { label: SusceptibilityClass; value: number | null; color: string }[];

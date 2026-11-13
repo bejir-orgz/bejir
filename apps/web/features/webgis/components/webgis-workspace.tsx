@@ -13,6 +13,7 @@ import { useEvacuationSites } from "@/features/evacuation/use-evacuation-sites";
 import { EvacuationRouting } from "@/features/evacuation/evacuation-routing";
 import { BoundaryLayer } from "@/features/regions/boundary-layer";
 import { useOverview } from "../use-overview";
+import { ThematicLayers } from "@/features/geography/thematic-layers";
 import type { WorkspaceFilters, WorkspaceProps } from "../types";
 import { RegionSidebar } from "./region-sidebar";
 import { OverviewPanel } from "./overview-panel";
@@ -38,17 +39,18 @@ const getServerSnapshot = () => false;
 
 export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
   const [filters, setFilters] = useState(data.initialFilters);
-  const overview = useOverview(data.overview, filters);
   const evacuationEnabled = filters.layerIds.includes("evacuation");
   const evacuation = useEvacuationSites(evacuationEnabled);
   const [routeStatus, setRouteStatus] = useState<{ message: string }>();
   const [regionStatus, setRegionStatus] = useState<{ message: string }>();
+  const [thematicStatus, setThematicStatus] = useState<{ message: string; retry?: () => void }>();
   const narrow = useSyncExternalStore(subscribeToWidth, getNarrowSnapshot, getServerSnapshot);
   const [panels, dispatch] = useReducer(panelReducer, initialPanelState);
   const lastTrigger = useRef<HTMLButtonElement | null>(null);
   const overviewPanel = useRef<HTMLElement>(null);
   const leftOpen = panels.left !== null;
   const overviewOpen = panels.overview && (!narrow || !leftOpen);
+  const overview = useOverview(data.overview, filters, overviewOpen);
   const OverviewIcon = overviewOpen ? IconLayoutNavbarCollapseFilled : IconLayoutNavbarCollapse;
 
   function updateFilters(patch: Partial<WorkspaceFilters>) {
@@ -74,7 +76,7 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
         }
       }}>
         <h1 className="sr-only">Map Interaktif Jawa Barat</h1>
-        <InteractiveMap dataStatus={regionStatus ?? routeStatus ?? evacuation.dataStatus}>{(map) => <><EvacuationLayer map={map} sites={evacuation.sites} enabled={evacuationEnabled} /><BoundaryLayer map={map} regionIds={filters.regionIds} onStatus={setRegionStatus} /><EvacuationRouting map={map} enabled={evacuationEnabled} onStatus={setRouteStatus} /></>}</InteractiveMap>
+        <InteractiveMap dataStatus={regionStatus ?? routeStatus ?? thematicStatus ?? evacuation.dataStatus}>{(map) => <><ThematicLayers map={map} layerIds={filters.layerIds} regionIds={filters.regionIds} onStatus={setThematicStatus} /><EvacuationLayer map={map} sites={evacuation.sites} enabled={evacuationEnabled} /><BoundaryLayer map={map} regionIds={filters.regionIds} onStatus={setRegionStatus} /><EvacuationRouting map={map} enabled={evacuationEnabled} onStatus={setRouteStatus} /></>}</InteractiveMap>
         <RegionSidebar hidden={panels.left !== "regions"} filters={filters} onChange={updateFilters} />
         <OptionsSidebar mode="layers" hidden={panels.left !== "layers"} data={data} filters={filters} onChange={updateFilters} />
         <OptionsSidebar mode="legends" hidden={panels.left !== "legends"} data={data} filters={filters} onChange={updateFilters} />
