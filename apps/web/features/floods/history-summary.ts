@@ -1,4 +1,4 @@
-import { matchesRegionFilter } from "../webgis/region-tree";
+import { hasDistrictSelection, matchesRegionFilter } from "../webgis/region-tree";
 import type { FloodHistoryData } from "./types";
 
 export const unavailableSnapshot: FloodHistoryData["snapshots"][number] = {
@@ -7,6 +7,7 @@ export const unavailableSnapshot: FloodHistoryData["snapshots"][number] = {
 };
 
 export function summarizeHistory(data: FloodHistoryData, regionIds: string[]) {
+  if (hasDistrictSelection(regionIds)) return unavailableSnapshot;
   const rows = data.rows.filter((row) => matchesRegionFilter(regionIds, row.region));
   const previous = data.previousCounts?.filter((row) => matchesRegionFilter(regionIds, row.region))
     .reduce((total, row) => total + row.events, 0) ?? 0;

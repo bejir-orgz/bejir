@@ -1,4 +1,4 @@
-import { matchesRegionFilter } from "@/features/webgis/region-tree";
+import { hasDistrictSelection, matchesRegionFilter } from "../webgis/region-tree";
 import type { FloodHistoryRow, HistoryFilters } from "./types";
 
 export const emptyHistoryFilters: HistoryFilters = { query: "", regionIds: [], severities: [], from: "", to: "" };
@@ -6,6 +6,7 @@ export const emptyHistoryFilters: HistoryFilters = { query: "", regionIds: [], s
 export function filterHistoryRows(rows: readonly FloodHistoryRow[], year: number, filters: HistoryFilters) {
   const query = filters.query.trim().toLocaleLowerCase("id-ID");
   return rows.filter((row) =>
+    (!hasDistrictSelection(filters.regionIds) || Boolean(row.district)) &&
     row.date.startsWith(`${year}-`) &&
     matchesRegionFilter(filters.regionIds, row.region, row.district) &&
     (!query || row.region.toLocaleLowerCase("id-ID").includes(query)) &&

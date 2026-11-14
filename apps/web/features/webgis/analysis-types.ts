@@ -1,3 +1,4 @@
+import type { ScopedDistrict } from "../geography/spatial-data";
 import type { FacilityMetric, OverviewMetric } from "./types";
 
 export type SusceptibilityClass = "Sangat Rendah" | "Rendah" | "Sedang" | "Tinggi" | "Sangat Tinggi";
@@ -11,6 +12,7 @@ export interface AnalysisRow {
   areaKm2: number | null;
   rivers: number | null;
   elevationM: number | null;
+  districts?: ScopedDistrict[];
 }
 
 export interface AnalysisFilters {

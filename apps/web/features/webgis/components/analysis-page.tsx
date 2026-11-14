@@ -1,26 +1,30 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRegionSelection, useRegionalFilters } from "@/features/regions/region-selection";
 import { WebgisHeader } from "@/components/layout/webgis-header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { YearFilterButton } from "@/components/ui/year-filter-button";
 import { emptyAnalysisFilters, filterAnalysisRows } from "../analysis-filter";
 import type { AnalysisData, AnalysisFilters } from "../analysis-types";
+import { susceptibilityDistribution } from "@/features/geography/aggregation";
 import { AnnualEventsChart, FrequencyChart, SusceptibilityChart } from "./analysis-charts";
 import { AnalysisFiltersBar, AnalysisRegionFilter } from "./analysis-filters";
 import { AnalysisTable } from "./analysis-table";
 import { FacilityRows } from "./facility-rows";
 import { useFacilityTotals } from "../../floods/use-facility-totals";
-import { matchesRegionFilter } from "../region-tree";
+import { hasDistrictSelection, hasVillageSelection, matchesRegionFilter } from "../region-tree";
 
 export function AnalysisPage({ data }: { data: AnalysisData }) {
   const [summaryYear, setSummaryYear] = useState(data.years[0] ?? 0);
-  const [summaryRegionIds, setSummaryRegionIds] = useState<string[]>([]);
+  const { regionIds: summaryRegionIds, setRegionIds: setSummaryRegionIds } = useRegionSelection();
   const tableYear = data.years[0] ?? 0;
-  const [filters, setFilters] = useState<AnalysisFilters>(emptyAnalysisFilters);
+  const [filters, setFilters] = useRegionalFilters<AnalysisFilters>(emptyAnalysisFilters);
   const rows = useMemo(() => filterAnalysisRows(data.rows, tableYear, filters), [data.rows, tableYear, filters]);
   const query = new URLSearchParams({ year: String(summaryYear) });
+  const detailed = hasDistrictSelection(summaryRegionIds);
+  const summaryRows = filterAnalysisRows(data.rows, tableYear, { ...emptyAnalysisFilters, regionIds: summaryRegionIds });
   const selectedRegions = data.rows.filter((row) => matchesRegionFilter(summaryRegionIds, row.region));
   if (selectedRegions.length !== data.rows.length) {
     for (const row of selectedRegions) query.append("regency_id", row.id);
@@ -31,10 +35,20 @@ export function AnalysisPage({ data }: { data: AnalysisData }) {
   const baseSnapshot = data.source !== "backend" ? data.snapshots[summaryYear]
     : liveSummary?.key === summaryKey && liveSummary.snapshot ? liveSummary.snapshot
       : initialSummary ? data.snapshots[summaryYear] ?? data.snapshots[0] : data.snapshots[0];
-  const facilities = useFacilityTotals(selectedRegions.length === data.rows.length ? [] : selectedRegions.map((row) => Number(row.id)), `${summaryYear}-01-01`, `${summaryYear}-12-31`, data.source === "backend" && summaryYear > 0);
-  const snapshot = facilities?.counts ? { ...baseSnapshot, facilities: baseSnapshot.facilities.map((facility) => ({ ...facility, count: facilities.counts![facility.id] })) } : baseSnapshot;
+  const facilities = useFacilityTotals(selectedRegions.length === data.rows.length ? [] : selectedRegions.map((row) => Number(row.id)), `${summaryYear}-01-01`, `${summaryYear}-12-31`, data.source === "backend" && summaryYear > 0 && !detailed && selectedRegions.length > 0);
+  const populatedSnapshot = facilities?.counts ? { ...baseSnapshot, facilities: baseSnapshot.facilities.map((facility) => ({ ...facility, count: facilities.counts![facility.id] })) } : baseSnapshot;
+  const summaryDistricts = summaryRows.flatMap((row) => row.districts ?? []);
+  const knownClasses = summaryDistricts.some((row) => row.kelas_dominan_v2 !== null);
+  const snapshot = detailed || !selectedRegions.length ? {
+    ...data.snapshots[0],
+    metrics: data.snapshots[0].metrics.map((metric) => ({ ...metric, value: "—", change: "—" })),
+    frequency: [], annualEvents: [],
+    distribution: hasVillageSelection(summaryRegionIds) || !knownClasses ? data.snapshots[0].distribution.map((entry) => ({ ...entry, value: null })) : susceptibilityDistribution(summaryDistricts).reverse(),
+    facilities: data.snapshots[0].facilities.map((facility) => ({ ...facility, count: null })),
+  } : populatedSnapshot;
+  const regionNote = detailed ? (hasVillageSelection(summaryRegionIds) ? "Analisis belum tersedia pada tingkat kelurahan/desa." : "Parameter spasial diringkas dari kecamatan terpilih; histori dan fasilitas Flood belum mendukung tingkat kecamatan.") : "";
   useEffect(() => {
-    if (data.source !== "backend" || !data.years.length || initialSummary) return;
+    if (data.source !== "backend" || !data.years.length || initialSummary || detailed || !selectedRegions.length) return;
     const controller = new AbortController();
     fetch(`/api/analysis/summary?${summaryKey}`, { signal: controller.signal }).then(async (response) => {
       if (!response.ok) throw new Error("Ringkasan histori gagal dimuat.");
@@ -44,7 +58,7 @@ export function AnalysisPage({ data }: { data: AnalysisData }) {
       if (!controller.signal.aborted) setLiveSummary({ key: summaryKey, error: "Ringkasan histori gagal dimuat." });
     });
     return () => controller.abort();
-  }, [summaryKey, data.source, data.years.length, initialSummary]);
+  }, [summaryKey, data.source, data.years.length, initialSummary, detailed, selectedRegions.length]);
   const active = !!(filters.query || filters.regionIds.length || filters.susceptibility.length);
   return <div className="analysis-page min-h-[100dvh] bg-[#fff] text-[#171717] [&_[data-slot=card]]:border-0 [&_[data-slot=card]]:[outline:1px_solid_#d4d4d4] [&_[data-slot=card]]:[outline-offset:-1px] [&_[data-slot=chart]_.recharts-cartesian-axis-tick-value]:[fill:#a1a1a1] [&_[data-slot=chart]_.recharts-cartesian-axis-tick-value]:text-[12px]"><WebgisHeader mapCanvas dummy={data.source !== "backend"} />
     <main className="analysis-content w-[min(1200px,calc(100%_-_32px))] mx-auto py-4">
@@ -66,7 +80,7 @@ export function AnalysisPage({ data }: { data: AnalysisData }) {
         <AnalysisFiltersBar filters={filters} regions={data.regions} classes={data.classes} onChange={setFilters} />
         <AnalysisTable rows={rows} />
       </Card>
-      <p className="analysis-data-note mt-4 text-[12px] leading-[16px] text-[#737373]" role="status">{[liveSummary?.key === summaryKey && liveSummary.error, data.error, ...(snapshot.errors || []), facilities?.error, facilities?.counts?.prepared_at && `Snapshot fasilitas disiapkan ${new Date(facilities.counts.prepared_at).toLocaleDateString("id-ID")}.`].filter(Boolean).join(" ") + " Ringkasan kejadian dan kerusakan fasilitas dari Flood merupakan akumulasi catatan historis. Spatial Analysis belum memiliki periode. Elevasi memakai rata-rata berbobot n_piksel, kelas wilayah memakai modus kelas dominan kecamatan berbobot n_piksel. Distribusi menghitung kecamatan per kelas 1–5 (Sangat Rendah–Sangat Tinggi). Rata-rata bulanan dihitung total/12. Tahun berjalan dapat belum lengkap. — menandakan data tidak tersedia."}</p>
+      <p className="analysis-data-note mt-4 text-[12px] leading-[16px] text-[#737373]" role="status">{[regionNote, liveSummary?.key === summaryKey && liveSummary.error, data.error, ...(snapshot.errors || []), facilities?.error, facilities?.counts?.prepared_at && `Snapshot fasilitas disiapkan ${new Date(facilities.counts.prepared_at).toLocaleDateString("id-ID")}.`].filter(Boolean).join(" ") + " Ringkasan kejadian dan kerusakan fasilitas dari Flood merupakan akumulasi catatan historis. Spatial Analysis belum memiliki periode. Elevasi memakai rata-rata berbobot n_piksel, kelas wilayah memakai modus kelas dominan kecamatan berbobot n_piksel. Distribusi menghitung kecamatan per kelas 1–5 (Sangat Rendah–Sangat Tinggi). Rata-rata bulanan dihitung total/12. Tahun berjalan dapat belum lengkap. — menandakan data tidak tersedia."}</p>
     </main>
   </div>;
 }

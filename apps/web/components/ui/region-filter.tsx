@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
-import { toggleSelection } from "@/features/webgis/region-tree"
+import { isRegionSelected, toggleRegionSelection, toggleSelection } from "@/features/webgis/region-tree"
 import type { RegionNode } from "@/features/webgis/types"
 
 export interface RegionFilterProps {
@@ -33,7 +33,7 @@ function RegionRows({ regions, value, onValueChange, disabled, prefix, depth, ex
         const branch = region.children !== undefined
         const expanded = expandedIds.includes(region.id)
         const nodeId = `${prefix}-${encodeURIComponent(region.id)}`
-        const checked = value.includes(region.id)
+        const checked = isRegionSelected(value, region.id)
 
         return (
           <li key={region.id}>
@@ -64,7 +64,7 @@ function RegionRows({ regions, value, onValueChange, disabled, prefix, depth, ex
                     disabled={disabled}
                     checked={checked}
                     onCheckedChange={(next) => {
-                      if ((next === true) !== checked) onValueChange(toggleSelection([...value], region.id))
+                      if ((next === true) !== checked) onValueChange(toggleRegionSelection([...value], region.id))
                     }}
                     className="size-5 rounded-[2px] border-2 border-neutral-400 bg-white disabled:opacity-100 [&_svg]:size-4"
                   />
@@ -84,7 +84,7 @@ function RegionRows({ regions, value, onValueChange, disabled, prefix, depth, ex
   )
 }
 
-/** Figma 306:8767. Selection records explicit node IDs; expanding never changes selection. */
+/** Figma 306:8767. Parent choices apply to descendants; expanding never changes selection. */
 export function RegionFilter({ regions, value, onValueChange, defaultExpandedIds = [], disabled = false, className }: RegionFilterProps) {
   const id = useId()
   const [expandedIds, setExpandedIds] = useState<string[]>(() => [...defaultExpandedIds])

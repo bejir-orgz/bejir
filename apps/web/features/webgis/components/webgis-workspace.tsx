@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useReducer, useRef, useSyncExternalStore } from "react";
+import { useEffect, useState, useReducer, useRef, useSyncExternalStore } from "react";
+import { useRegionSelection } from "@/features/regions/region-selection";
 import { WebgisHeader } from "@/components/layout/webgis-header";
 import { IconMap, IconLayoutNavbarCollapse, IconLayoutNavbarCollapseFilled, IconStackFront, IconStack3Filled, IconInfoCircle, IconInfoCircleFilled, IconCalendarWeek, IconCalendarWeekFilled } from "@tabler/icons-react";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
@@ -38,7 +39,12 @@ const getNarrowSnapshot = () => window.matchMedia(narrowQuery).matches;
 const getServerSnapshot = () => false;
 
 export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
-  const [filters, setFilters] = useState(data.initialFilters);
+  const { mapRegionIds, dataRegionIds, setMapRegionIds } = useRegionSelection();
+  const [localFilters, setFilters] = useState(data.initialFilters);
+  const filters = { ...localFilters, regionIds: mapRegionIds };
+  useEffect(() => {
+    if (data.initialFilters.regionIds.length) setMapRegionIds(data.initialFilters.regionIds);
+  }, [data.initialFilters.regionIds, setMapRegionIds]);
   const evacuationEnabled = filters.layerIds.includes("evacuation");
   const evacuation = useEvacuationSites(evacuationEnabled);
   const [routeStatus, setRouteStatus] = useState<{ message: string }>();
@@ -50,12 +56,18 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
   const overviewPanel = useRef<HTMLElement>(null);
   const leftOpen = panels.left !== null;
   const overviewOpen = panels.overview && (!narrow || !leftOpen);
-  const overview = useOverview(data.overview, filters, overviewOpen);
+  const overview = useOverview(data.overview, { ...filters, regionIds: dataRegionIds }, overviewOpen);
   const OverviewIcon = overviewOpen ? IconLayoutNavbarCollapseFilled : IconLayoutNavbarCollapse;
 
   function updateFilters(patch: Partial<WorkspaceFilters>) {
     const next = { ...filters, ...patch };
     setFilters(next);
+    if (patch.regionIds) {
+      setMapRegionIds(patch.regionIds);
+      const query = new URLSearchParams();
+      for (const id of patch.regionIds) query.append("region", id);
+      window.history.replaceState(null, "", query.size ? `/map?${query}` : "/map");
+    }
     onFiltersChange?.(next);
   }
 

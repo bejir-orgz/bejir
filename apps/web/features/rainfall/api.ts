@@ -29,7 +29,7 @@ export async function getRainfallPageData(): Promise<RainfallPageData> {
   const { regencies, districts, errors } = await getSpatialDistricts(false);
   if (!regencies.length || !districts.length) throw new Error("Parameter hujan belum tersedia.");
   const rows = regencies.map((regency) => {
-    const parameters = districts.filter((row) => row.regency_id === regency.id).map(({ mean_hujan_mm, n_piksel }) => ({ mean_hujan_mm, n_piksel }));
+    const parameters = districts.filter((row) => row.regency_id === regency.id).map(({ mean_hujan_mm, n_piksel, district_name }) => ({ mean_hujan_mm, n_piksel, district_name }));
     const totals = aggregateRainfall(parameters);
     return {
       id: String(regency.id), period: null, classification: null,

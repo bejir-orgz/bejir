@@ -53,3 +53,18 @@ Evacuation sites currently remain independent of region and timeline filters. Ro
 Rainfall pages render at request time so upstream failures are not saved as prerendered empty output. Successful normalized rainfall data remains cached for five minutes. Verification covered the 27-row table, regional summary filtering, missing values, zero rainfall and weighted aggregation.
 
 The automated gateway test covers every documented operation and all fourteen schemas, including invalid requests and sanitized failures. Feature tests cover pagination, null values, regional aggregation, date scope and chat context. Live verification uses read-only requests for GET operations. Route and chat POST tests create real requests on the configured backend.
+
+### Shared region selection
+
+The root region provider uses the lightweight administrative catalog to translate
+map ID paths into named filter paths. The active region is shared across the map,
+flood history, rainfall and analysis during client navigation in the same tab.
+Header and table region filters use the same selection. Parent choices include
+all descendants, with explicit child exclusions taking priority. Expanding a
+branch does not change its selection.
+
+District selections recompute rainfall and spatial table values from the selected
+district parameters, retaining the existing regency/city table layout. Historical
+Flood counts and facility damage do not have district locations and remain
+unavailable for district/village selections. Village spatial aggregates are also
+unavailable. The UI states these limits instead of borrowing parent totals.

@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "Map Interaktif" };
 
 export default async function MapPage({ searchParams }: { searchParams: Promise<{ region?: string | string[] }> }) {
   const { region } = await searchParams;
-  const regionId = typeof region === "string" && /^\d+$/.test(region) ? region : undefined;
-  const data = regionId ? { ...workspaceData, initialFilters: { ...workspaceData.initialFilters, regionIds: [regionId] } } : workspaceData;
-  return <WebgisWorkspace key={regionId ?? "map"} data={data} />;
+  const regionIds = (Array.isArray(region) ? region : region ? [region] : []).filter((id) => /^!?\d+(?:\/\d+){0,2}$/.test(id));
+  const data = regionIds.length ? { ...workspaceData, initialFilters: { ...workspaceData.initialFilters, regionIds } } : workspaceData;
+  return <WebgisWorkspace key={regionIds.join(",") || "map"} data={data} />;
 }

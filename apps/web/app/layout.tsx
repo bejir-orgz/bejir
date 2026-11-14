@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Google_Sans_Flex } from "next/font/google";
 import "./globals.css";
+import { RegionSelectionProvider } from "@/features/regions/region-selection";
+import { getCatalog } from "@/features/geography/catalog";
 import { Scrollbar } from "@/components/ui/scrollbar";
 
 const googleSans = Google_Sans_Flex({
@@ -16,7 +18,8 @@ export const metadata: Metadata = {
   description: "Kenali riwayat banjir dan kondisi geografis Jawa Barat melalui Bejir, platform WebGIS untuk mendukung pemantauan dan mitigasi banjir.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const catalog = await getCatalog();
   return (
     <Scrollbar asChild>
       <html
@@ -25,7 +28,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         suppressHydrationWarning
       >
         <body className="min-h-full flex flex-col" suppressHydrationWarning>
-          {children}
+          <RegionSelectionProvider catalog={catalog}>{children}</RegionSelectionProvider>
         </body>
       </html>
     </Scrollbar>

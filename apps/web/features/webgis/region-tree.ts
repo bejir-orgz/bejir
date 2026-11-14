@@ -21,10 +21,11 @@ export function isRegionSelected(choices: readonly string[], id: string): boolea
     if (choices.includes(path)) return true;
     if (choices.includes(`!${path}`)) return false;
   }
-  return false;
+  return choices.includes(westJavaFilterId) && !choices.includes(`!${westJavaFilterId}`);
 }
 
 export function toggleRegionSelection(choices: string[], id: string): string[] {
+  if (id === westJavaFilterId) return choices.includes(id) ? [] : [id];
   const next = choices.filter((choice) => {
     const path = choice.replace(/^!/, "");
     return path !== id && !path.startsWith(`${id}/`);
@@ -40,8 +41,12 @@ export interface DistrictFilterRow {
   district: string;
 }
 
-const regionFilterId = (name: string) => `region:${encodeURIComponent(name)}`;
-const districtFilterId = (region: string, district: string) => `${regionFilterId(region)}/district:${encodeURIComponent(district)}`;
+const normalizeRegionName = (name: string) => {
+  const full = name.replace(/^Kab\.\s*/, "Kabupaten ");
+  return /^(Kabupaten|Kota)\s/i.test(full) ? full : `Kabupaten ${full}`;
+};
+export const regionFilterId = (name: string) => `region:${encodeURIComponent(normalizeRegionName(name))}`;
+export const districtFilterId = (region: string, district: string) => `${regionFilterId(region)}/district:${encodeURIComponent(district)}`;
 
 /** Build only the administrative levels supplied by the presentation data. */
 export function createRegionFilterTree(regions: readonly string[], rows: readonly DistrictFilterRow[] = []): RegionNode[] {
@@ -49,9 +54,9 @@ export function createRegionFilterTree(regions: readonly string[], rows: readonl
   return [{
     id: westJavaFilterId,
     name: "Jawa Barat",
-    children: [...new Set(regions)].sort((a, b) => a.localeCompare(b, "id-ID")).map((region) => ({
+    children: [...new Set(regions)].sort((a, b) => normalizeRegionName(a).localeCompare(normalizeRegionName(b), "id-ID")).map((region) => ({
       id: regionFilterId(region),
-      name: region.replace(/^Kab\.\s*/, "Kabupaten "),
+      name: normalizeRegionName(region),
       children: [...new Set(rows.filter((row) => row.region === region).map((row) => row.district).filter(Boolean))]
         .sort((a, b) => a.localeCompare(b, "id-ID"))
         .map((district) => ({ id: districtFilterId(region, district), name: `Kecamatan ${district}` })),
@@ -61,6 +66,8 @@ export function createRegionFilterTree(regions: readonly string[], rows: readonl
 
 /** Selected nodes are combined with OR; all other table filters still apply with AND. */
 export function matchesRegionFilter(ids: readonly string[], region: string, district?: string): boolean {
-  return !ids.length || ids.includes(westJavaFilterId) || ids.includes(regionFilterId(region)) ||
-    (district !== undefined && ids.includes(districtFilterId(region, district)));
+  return !ids.length || isRegionSelected(ids, district ? districtFilterId(region, district) : regionFilterId(region));
 }
+
+export const hasDistrictSelection = (ids: readonly string[]) => ids.some((id) => id.includes("/district:"));
+export const hasVillageSelection = (ids: readonly string[]) => ids.some((id) => id.includes("/village:"));

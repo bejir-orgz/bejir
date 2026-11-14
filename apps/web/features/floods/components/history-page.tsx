@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRegionSelection, useRegionalFilters } from "@/features/regions/region-selection";
 import { WebgisHeader } from "@/components/layout/webgis-header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -10,13 +11,14 @@ import type { FloodHistoryData, HistoryFilters } from "../types";
 import { CasualtyChart, TimelineChart } from "./history-charts";
 import { HistoryFiltersBar, RegionFilter } from "./history-filters";
 import { HistoryTable } from "./history-table";
+import { hasDistrictSelection } from "@/features/webgis/region-tree";
 import { summarizeHistory, unavailableSnapshot } from "../history-summary";
 
 export function HistoryPage({ data }: { data: FloodHistoryData }) {
   const [summaryYear, setSummaryYear] = useState(data.years[0]);
-  const [summaryRegionIds, setSummaryRegionIds] = useState<string[]>([]);
+  const { regionIds: summaryRegionIds, setRegionIds: setSummaryRegionIds } = useRegionSelection();
   const [tableYear, setTableYear] = useState(data.years[0]);
-  const [filters, setFilters] = useState<HistoryFilters>(emptyHistoryFilters);
+  const [filters, setFilters] = useRegionalFilters<HistoryFilters>(emptyHistoryFilters);
   const [cache, setCache] = useState<Record<number, FloodHistoryData>>({ [data.years[0]]: data });
   const [error, setError] = useState(data.error ?? "");
   const summaryData = cache[summaryYear];
@@ -62,7 +64,7 @@ export function HistoryPage({ data }: { data: FloodHistoryData }) {
         <HistoryFiltersBar districtRows={data.rows} year={tableYear} years={data.years} onYearChange={(value) => { setTableYear(value); setFilters((current) => ({ ...current, from: "", to: "" })); }} filters={filters} regions={data.regions} onChange={setFilters} />
         <HistoryTable rows={rows} />
       </Card>
-      <p className="history-data-note mt-4 text-[12px] leading-[16px] text-[#737373]" role="status">{error || (loading ? "Memuat histori banjir…" : "Sumber API Flood. Kecamatan, desa/kelurahan, keparahan, dan luas terdampak belum tersedia. — menandakan data tidak tersedia.")}</p>
+      <p className="history-data-note mt-4 text-[12px] leading-[16px] text-[#737373]" role="status">{(hasDistrictSelection(summaryRegionIds) ? "Histori Flood belum memiliki lokasi kecamatan/kelurahan. Ringkasan dan tabel untuk pilihan ini belum tersedia." : "") || error || (loading ? "Memuat histori banjir…" : "Sumber API Flood. Kecamatan, desa/kelurahan, keparahan, dan luas terdampak belum tersedia. — menandakan data tidak tersedia.")}</p>
     </main>
   </div>;
 }

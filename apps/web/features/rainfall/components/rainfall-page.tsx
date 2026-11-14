@@ -1,11 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRegionSelection, useRegionalFilters } from "@/features/regions/region-selection";
 import { WebgisHeader } from "@/components/layout/webgis-header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { YearFilterButton } from "@/components/ui/year-filter-button";
 import { emptyRainfallFilters, filterRainfallRows } from "../filter";
+import { hasDistrictSelection, hasVillageSelection } from "@/features/webgis/region-tree";
 import { rainfallSnapshot } from "../summary";
 import type { RainfallFilters, RainfallPageData } from "../types";
 import { RainfallChart } from "./rainfall-chart";
@@ -15,17 +17,18 @@ import { RainfallTable } from "./rainfall-table";
 /** Route-provided presentation data keeps this screen independent of future API transport. */
 export function RainfallPage({ data }: { data: RainfallPageData }) {
   const [summaryYear, setSummaryYear] = useState(data.years[0] ?? 0);
-  const [summaryRegionIds, setSummaryRegionIds] = useState<string[]>([]);
+  const { regionIds: summaryRegionIds, setRegionIds: setSummaryRegionIds } = useRegionSelection();
   const [tableYear, setTableYear] = useState(data.years[0] ?? 0);
-  const [filters, setFilters] = useState<RainfallFilters>(emptyRainfallFilters);
+  const [filters, setFilters] = useRegionalFilters<RainfallFilters>(emptyRainfallFilters);
   const rows = useMemo(() => filterRainfallRows(data.rows, tableYear, filters), [data.rows, tableYear, filters]);
   const snapshot = data.source === "backend"
     ? rainfallSnapshot(filterRainfallRows(data.rows, summaryYear, { ...emptyRainfallFilters, regionIds: summaryRegionIds }))
     : data.snapshots[summaryYear] ?? data.snapshots[0];
   function changeTableYear(value: number) {
     setTableYear(value);
-    setFilters(emptyRainfallFilters);
+    setFilters({ ...emptyRainfallFilters, regionIds: summaryRegionIds });
   }
+  const regionNote = hasVillageSelection(summaryRegionIds) ? "Parameter hujan belum tersedia pada tingkat kelurahan/desa." : hasDistrictSelection(summaryRegionIds) ? "Nilai kabupaten/kota diringkas hanya dari kecamatan terpilih." : "";
   const active = tableYear !== (data.years[0] ?? 0) || !!(filters.query || filters.regionIds.length || filters.month || filters.classifications.length);
 
   return <div className="rainfall-page min-h-[100dvh] bg-[#fff] text-[#171717] [&_[data-slot=card]]:border-0 [&_[data-slot=card]]:[outline:1px_solid_#d4d4d4] [&_[data-slot=card]]:[outline-offset:-1px]"><WebgisHeader mapCanvas dummy={data.source !== "backend"} />
@@ -45,7 +48,7 @@ export function RainfallPage({ data }: { data: RainfallPageData }) {
         <RainfallFiltersBar filters={filters} regions={data.regions} legend={data.legend} year={tableYear} years={data.years} onYearChange={changeTableYear} onChange={setFilters} />
         <RainfallTable rows={rows} error={data.error} />
       </Card>
-      <p className="rainfall-data-note mt-4 text-[12px] leading-[16px] text-[#737373]" role="status">{data.error || "Data parameter hujan dari Spatial Analysis. Rata-rata wilayah berbobot jumlah piksel memakai kecamatan dengan nilai tersedia. Minimum dan maksimum merupakan nilai rata-rata kecamatan terendah dan tertinggi. Periode pengamatan, seri bulanan/tahunan, dan ambang klasifikasi hujan belum tersedia. — menandakan data tidak tersedia."}</p>
+      <p className="rainfall-data-note mt-4 text-[12px] leading-[16px] text-[#737373]" role="status">{regionNote + " " + (data.error || "Data parameter hujan dari Spatial Analysis. Rata-rata wilayah berbobot jumlah piksel memakai kecamatan dengan nilai tersedia. Minimum dan maksimum merupakan nilai rata-rata kecamatan terendah dan tertinggi. Periode pengamatan, seri bulanan/tahunan, dan ambang klasifikasi hujan belum tersedia. — menandakan data tidak tersedia.")}</p>
     </main>
   </div>;
 }

@@ -38,7 +38,7 @@ export async function getAnalysisData(): Promise<AnalysisData> {
     const records = districts.filter((row) => row.regency_id === regency.id);
     const classification = dominantClass(records);
     return {
-      id: String(regency.id), year: null,
+      id: String(regency.id), year: null, districts: records,
       region: /^(Kota|Kabupaten)\s/i.test(regency.name) ? regency.name : `Kabupaten ${regency.name}`,
       population: nullableSum(records.map((row) => row.population)),
       areaKm2: nullableSum(records.map((row) => row.luas_km2)),

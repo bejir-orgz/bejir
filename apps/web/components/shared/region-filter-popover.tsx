@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { RegionFilter } from "@/components/ui/region-filter"
 import { createRegionFilterTree, westJavaFilterId, type DistrictFilterRow } from "@/features/webgis/region-tree"
+import { useRegionSelection } from "@/features/regions/region-selection"
 import type { RegionNode } from "@/features/webgis/types"
 
 function findName(nodes: readonly RegionNode[], id: string): string | undefined {
@@ -23,10 +24,14 @@ export function RegionFilterPopover({ regions, districtRows, value, onChange, ic
   onChange: (ids: string[]) => void
   iconOnly?: boolean
 }) {
-  const nodes = useMemo(() => createRegionFilterTree(regions, districtRows), [regions, districtRows])
-  const label = value.length === 1 ? findName(nodes, value[0]) ?? "1 daerah" : value.length ? `${value.length} daerah` : "Daerah"
+  const { tree } = useRegionSelection()
+  const fallback = useMemo(() => createRegionFilterTree(regions, districtRows), [regions, districtRows])
+  const nodes = tree.length ? tree : fallback
+  const selected = value.filter((id) => !id.startsWith("!"))
+  const name = (id: string) => findName(nodes, id) ?? (id.includes("/village:") ? "Kelurahan/desa terpilih" : "Daerah terpilih")
+  const label = selected.length === 1 ? name(selected[0]) : selected.length ? `${selected.length} daerah` : "Daerah"
 
-  const headerLabel = value.length ? value.map((id) => findName(nodes, id)).filter(Boolean).join(", ") || "Jawa Barat" : "Jawa Barat"
+  const headerLabel = value.length ? selected.map(name).join(", ") || "Jawa Barat" : "Jawa Barat"
 
   return (
     <>

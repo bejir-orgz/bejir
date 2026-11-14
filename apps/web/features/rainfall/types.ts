@@ -1,7 +1,7 @@
 import type { DistrictParameters } from "../geography/spatial-data";
 
 export type RainfallClass = "Sangat Rendah" | "Rendah" | "Sedang" | "Tinggi" | "Sangat Tinggi";
-export type RainfallParameter = Pick<DistrictParameters, "mean_hujan_mm" | "n_piksel">;
+export type RainfallParameter = Pick<DistrictParameters, "mean_hujan_mm" | "n_piksel"> & { district_name?: string | null };
 
 export interface RainfallRow {
   id: string;
