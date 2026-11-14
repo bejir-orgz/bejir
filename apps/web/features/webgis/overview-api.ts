@@ -13,12 +13,11 @@ export function emptyOverview(message = "Memuat data backend…"): WorkspaceData
     summary: message,
     susceptibility: {
       label: "—", colors: ["#3CFF00", "#E1FF00", "#FFD000", "#FF6A00", "#FF0000"],
-      notes: ["Kelas 1–5 menyatakan Sangat Rendah–Sangat Tinggi.", "Kelas wilayah memakai modus kelas dominan kecamatan berbobot n_piksel.", "Fasilitas menghitung akumulasi kerusakan historis dan dapat mencakup fasilitas yang sama berulang kali.", "Periode spasial belum tersedia. Kategori fasilitas umum memerlukan data fungsi dan kepemilikan fasilitas."],
+      notes: ["Kelas 1–5 menyatakan Sangat Rendah–Sangat Tinggi.", "Kelas wilayah memakai modus kelas dominan kecamatan berbobot n_piksel.", "Fasilitas menghitung akumulasi kerusakan historis dan dapat mencakup fasilitas yang sama berulang kali.", "Periode spasial belum tersedia."],
     },
     facilities: [
       { id: "health", label: "Fasilitas Kesehatan", count: null },
       { id: "education", label: "Fasilitas Pendidikan", count: null },
-      { id: "public", label: "Fasilitas Umum", count: null },
       { id: "worship", label: "Tempat Ibadah", count: null },
     ],
     landCover: ["—"], elevation: "—", rivers: "—",

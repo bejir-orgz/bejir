@@ -45,7 +45,7 @@ export function RainfallPage({ data }: { data: RainfallPageData }) {
         <RainfallFiltersBar filters={filters} regions={data.regions} legend={data.legend} year={tableYear} years={data.years} onYearChange={changeTableYear} onChange={setFilters} />
         <RainfallTable rows={rows} error={data.error} />
       </Card>
-      <p className="rainfall-data-note mt-4 text-[12px] leading-[16px] text-[#737373]" role="status">{data.error || "Data parameter hujan dari Spatial Analysis. Rata-rata wilayah berbobot jumlah piksel memakai kecamatan dengan nilai tersedia. Minimum dan maksimum merupakan nilai rata-rata kecamatan terendah dan tertinggi. Kolom Curah Hujan dan Rata-Rata memakai parameter yang sama. Periode pengamatan, seri bulanan/tahunan, dan ambang klasifikasi hujan belum tersedia. — menandakan data tidak tersedia."}</p>
+      <p className="rainfall-data-note mt-4 text-[12px] leading-[16px] text-[#737373]" role="status">{data.error || "Data parameter hujan dari Spatial Analysis. Rata-rata wilayah berbobot jumlah piksel memakai kecamatan dengan nilai tersedia. Minimum dan maksimum merupakan nilai rata-rata kecamatan terendah dan tertinggi. Periode pengamatan, seri bulanan/tahunan, dan ambang klasifikasi hujan belum tersedia. — menandakan data tidak tersedia."}</p>
     </main>
   </div>;
 }

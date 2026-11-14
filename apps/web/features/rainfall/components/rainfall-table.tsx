@@ -11,7 +11,6 @@ import type { RainfallClass, RainfallRow } from "../types";
 
 const periodFormatter = new Intl.DateTimeFormat("id-ID", { month: "long", year: "numeric" });
 const integerFormatter = new Intl.NumberFormat("id-ID");
-const decimalFormatter = new Intl.NumberFormat("id-ID", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const classOrder: RainfallClass[] = ["Sangat Rendah", "Rendah", "Sedang", "Tinggi", "Sangat Tinggi"];
 
 const columns: ColumnDef<RainfallRow>[] = [
@@ -19,7 +18,6 @@ const columns: ColumnDef<RainfallRow>[] = [
   { accessorKey: "region", header: ({ column }) => <SortHeader column={column} title="Kota/Kabupaten" /> },
   { accessorKey: "classification", header: ({ column }) => <SortHeader column={column} title="Klasifikasi" />, cell: ({ row }) => row.original.classification ?? "—", sortingFn: (a, b) => (a.original.classification === null ? -1 : classOrder.indexOf(a.original.classification)) - (b.original.classification === null ? -1 : classOrder.indexOf(b.original.classification)) },
   { accessorKey: "rainfallMm", header: ({ column }) => <SortHeader column={column} title="Curah Hujan" />, cell: ({ row }) => row.original.rainfallMm === null ? "—" : `${integerFormatter.format(row.original.rainfallMm)} mm` },
-  { accessorKey: "averageMm", header: ({ column }) => <SortHeader column={column} title="Rata-Rata" />, cell: ({ row }) => row.original.averageMm === null ? "—" : `${decimalFormatter.format(row.original.averageMm)} mm` },
   { accessorKey: "minimumMm", header: ({ column }) => <SortHeader column={column} title="Minimum" />, cell: ({ row }) => row.original.minimumMm === null ? "—" : `${integerFormatter.format(row.original.minimumMm)} mm` },
   { accessorKey: "maximumMm", header: ({ column }) => <SortHeader column={column} title="Maksimum" />, cell: ({ row }) => row.original.maximumMm === null ? "—" : `${integerFormatter.format(row.original.maximumMm)} mm` },
 ];

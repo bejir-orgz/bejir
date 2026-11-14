@@ -24,7 +24,6 @@ export function emptyAnalysisData(error?: string): AnalysisData {
         facilities: [
           { id: "health", label: "Fasilitas Kesehatan", count: null },
           { id: "education", label: "Fasilitas Pendidikan", count: null },
-          { id: "public", label: "Fasilitas Umum", count: null },
           { id: "worship", label: "Tempat Ibadah", count: null },
         ],
       },

@@ -1,10 +1,9 @@
-import { IconBuilding, IconBuildingHospital, IconMosque, IconSchool } from "@tabler/icons-react";
+import { IconBuildingHospital, IconMosque, IconSchool } from "@tabler/icons-react";
 import type { FacilityMetric } from "../types";
 
 const facilityStyles = {
   health: { icon: IconBuildingHospital, background: "#FFD2D2", color: "#FF0000" },
   education: { icon: IconSchool, background: "var(--facility-education-background, #DBEAFE)", color: "var(--primary)" },
-  public: { icon: IconBuilding, background: "#FFE4CD", color: "#FF6A00" },
   worship: { icon: IconMosque, background: "#D7FFD9", color: "#2BB600" },
 };
 

@@ -4,9 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { webgisNavigation } from "@/config/navigation";
+import { RegionSearch } from "@/features/regions/region-search";
+import type { RegionNode } from "@/features/webgis/types";
 import "./webgis-header.css";
 
-export function WebgisHeader({ dummy = true, mapCanvas = false }: { dummy?: boolean; mapCanvas?: boolean }) {
+export function WebgisHeader({ dummy = true, mapCanvas = false, onRegionSelect }: { dummy?: boolean; mapCanvas?: boolean; onRegionSelect?: (region: RegionNode) => void }) {
   const pathname = usePathname();
   return (
     <header className="gis-header" data-canvas={mapCanvas}>
@@ -16,6 +18,7 @@ export function WebgisHeader({ dummy = true, mapCanvas = false }: { dummy?: bool
           <Link href={item.href} aria-current={pathname === item.href ? "page" : undefined}>{item.label}</Link>
         </Button>
       ))}</nav>
+      <RegionSearch onSelect={onRegionSelect} />
       {dummy ? <span className="gis-dummy-label">DATA DUMMY</span> : null}
     </header>
   );

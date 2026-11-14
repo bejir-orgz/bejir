@@ -40,7 +40,6 @@ for (const year of years) {
     facilities: [
       { id: "health", label: "Fasilitas Kesehatan", count: [42, 39, 36][offset] },
       { id: "education", label: "Fasilitas Pendidikan", count: [186, 178, 165][offset] },
-      { id: "public", label: "Fasilitas Umum", count: [73, 68, 61][offset] },
       { id: "worship", label: "Tempat Ibadah", count: [129, 121, 110][offset] },
     ],
   };
