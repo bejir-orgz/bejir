@@ -1,0 +1,37 @@
+services:
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    container_name: sibajawa-api
+    restart: unless-stopped
+
+    ports:
+      - "8000:8000"
+
+    environment:
+      ENVIRONMENT: production
+      DATABASE_URL: ${DATABASE_URL}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.1-flash-lite}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+
+    networks:
+      - sibajawa-network
+
+    command:
+      - uvicorn
+      - app.main:app
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+      - --workers
+      - "1"
+
+    init: true
+
+networks:
+  sibajawa-network:
+    external: true
+    name: sibajawa-network

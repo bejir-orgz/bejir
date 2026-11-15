@@ -1,6 +1,10 @@
+import logging
+import math
+
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.models.evacuation import RouteDestination, RouteSegment
 from app.repositories.evacuation import EvacuationRepository
 from app.schemas.evacuation import (
@@ -12,12 +16,18 @@ from app.schemas.evacuation import (
     RouteSegmentResponse,
 )
 
+logger = logging.getLogger(__name__)
+
 
 class RouteNotFoundError(Exception):
     pass
 
 
 class RoutingUnavailableError(Exception):
+    pass
+
+
+class InvalidRouteRequestError(Exception):
     pass
 
 
@@ -95,47 +105,47 @@ class EvacuationService:
         *,
         origin_longitude: float,
         origin_latitude: float,
-        evacuation_site_id: int,
+        evacuation_site_id: int | None,
         travel_mode: str,
+        limit: int = 3,
     ) -> RouteResponse:
-        site = EvacuationRepository.get_site(db, evacuation_site_id)
-        if site is None:
-            raise RouteNotFoundError("Evacuation site not found")
-
+        if (
+            not math.isfinite(origin_longitude)
+            or not math.isfinite(origin_latitude)
+            or not -180 <= origin_longitude <= 180
+            or not -90 <= origin_latitude <= 90
+        ):
+            raise InvalidRouteRequestError("Origin coordinates must be valid EPSG:4326 longitude/latitude values")
         route_request = EvacuationRepository.create_route_request(
             db,
             longitude=origin_longitude,
             latitude=origin_latitude,
             travel_mode=travel_mode,
         )
-        start_node = EvacuationRepository.nearest_road_node(
-            db,
-            longitude=origin_longitude,
-            latitude=origin_latitude,
-        )
-        end_node = EvacuationRepository.nearest_road_node(
-            db,
-            longitude=site["longitude"],
-            latitude=site["latitude"],
-        )
-        if start_node is None or end_node is None:
-            EvacuationRepository.set_route_request_status(
-                route_request,
-                status="failed",
-                error_message="No routable road node is available for this route.",
-            )
-            db.commit()
-            raise RoutingUnavailableError(
-                "The road network topology has not been prepared for routing."
-            )
-
         try:
-            path = EvacuationRepository.find_shortest_path(
+            routes = EvacuationRepository.find_augmented_routes(
                 db,
-                start_node=start_node,
-                end_node=end_node,
+                longitude=origin_longitude,
+                latitude=origin_latitude,
+                destination_limit=1 if evacuation_site_id is not None else limit,
+                candidate_limit=max(settings.ROUTING_MAX_CANDIDATE_SITES, limit),
+                snap_tolerance_m=settings.ROUTING_ORIGIN_SNAP_TOLERANCE_M,
+                evacuation_site_id=evacuation_site_id,
             )
+        except LookupError as error:
+            EvacuationRepository.set_route_request_status(route_request, status="failed", error_message=str(error))
+            db.commit()
+            raise RouteNotFoundError(str(error)) from error
+        except ValueError as error:
+            EvacuationRepository.set_route_request_status(route_request, status="failed", error_message=str(error))
+            db.commit()
+            raise InvalidRouteRequestError(str(error)) from error
         except DBAPIError as error:
+            logger.error(
+                "Evacuation routing database operation failed (SQLSTATE %s): %s",
+                getattr(error.orig, "sqlstate", None),
+                error.orig,
+            )
             db.rollback()
             failed_request = EvacuationRepository.create_route_request(
                 db,
@@ -153,66 +163,62 @@ class EvacuationService:
                 "pgRouting is unavailable or the road network is not routable."
             ) from error
 
-        if not path:
+        if not routes:
             EvacuationRepository.set_route_request_status(
                 route_request,
                 status="failed",
-                error_message="No route connects the origin to the evacuation site.",
+                error_message="No connected evacuation site is reachable over the road network.",
             )
             db.commit()
             raise RouteNotFoundError(
-                "No route connects the origin to the evacuation site."
+                "No connected evacuation site is reachable over the road network."
             )
-
-        distance_m = sum(segment["distance_m"] for segment in path)
-        speeds_available = all(
-            segment["speed_kmh"] is not None and segment["speed_kmh"] > 0
-            for segment in path
-        )
-        duration_minutes = (
-            sum(
-                segment["distance_m"] / (segment["speed_kmh"] * 1000) * 60
-                for segment in path
+        response_routes = []
+        for route in routes:
+            site = route["site"]
+            destination = RouteDestination(
+                route_request_id=route_request.id,
+                evacuation_site_id=site["id"],
+                distance_m=route["distance_m"],
+                duration_minutes=route["duration_minutes"],
+                rank=route["rank"],
             )
-            if speeds_available
-            else None
-        )
-        destination = RouteDestination(
-            route_request_id=route_request.id,
-            evacuation_site_id=evacuation_site_id,
-            distance_m=distance_m,
-            duration_minutes=duration_minutes,
-            rank=1,
-        )
-        db.add(destination)
-        db.flush()
-        db.add_all(
-            [
-                RouteSegment(
-                    route_destination_id=destination.id,
-                    road_segment_id=segment["road_segment_id"],
-                    sequence=segment["sequence"] + 1,
-                    distance_m=segment["distance_m"],
-                )
-                for segment in path
-            ]
-        )
+            db.add(destination)
+            db.flush()
+            db.add_all([RouteSegment(
+                route_destination_id=destination.id,
+                road_segment_id=segment["road_id"],
+                sequence=segment["sequence"],
+                distance_m=segment["distance_m"],
+            ) for segment in route["path"]])
+            response_routes.append({
+                "evacuation_site": {
+                    "id": site["id"], "name": site["display_name"] or site["name"],
+                    "category": site["category"], "district_id": site["district_id"],
+                    "longitude": site["longitude"], "latitude": site["latitude"],
+                },
+                "distance_m": route["distance_m"],
+                "duration_minutes": route["duration_minutes"],
+                "rank": route["rank"], "geometry": route["geometry"],
+                "segment_count": len(route["path"]),
+                "segments": [RouteSegmentResponse(
+                    sequence=segment["sequence"], road_segment_id=segment["road_id"],
+                    name=segment["name"], distance_m=segment["distance_m"],
+                    geometry=segment["geometry"],
+                ) for segment in route["path"]],
+            })
         EvacuationRepository.set_route_request_status(route_request, status="completed")
         db.commit()
 
         return RouteResponse(
             route_request_id=route_request.id,
-            evacuation_site=site,
-            distance_m=distance_m,
-            duration_minutes=duration_minutes,
-            segments=[
-                RouteSegmentResponse(
-                    sequence=segment["sequence"] + 1,
-                    road_segment_id=segment["road_segment_id"],
-                    name=segment["name"],
-                    distance_m=segment["distance_m"],
-                    geometry=segment["geometry"],
-                )
-                for segment in path
-            ],
+            origin_longitude=origin_longitude,
+            origin_latitude=origin_latitude,
+            travel_mode=travel_mode,
+            reachable_destinations=routes[0]["reachable_count"],
+            routes=response_routes,
+            evacuation_site=response_routes[0]["evacuation_site"],
+            distance_m=response_routes[0]["distance_m"],
+            duration_minutes=response_routes[0]["duration_minutes"],
+            segments=response_routes[0]["segments"],
         )
