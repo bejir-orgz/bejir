@@ -1678,11 +1678,12 @@
                 "flood_history",
                 "flood_susceptibility",
                 "population_exposure",
-                "evacuation_sites"
+                "evacuation_sites",
+                "rivers"
               ]
             },
             "type": "array",
-            "maxItems": 4,
+            "maxItems": 5,
             "minItems": 1,
             "title": "Sources"
           }
@@ -1708,7 +1709,8 @@
                 "flood_history",
                 "flood_susceptibility",
                 "population_exposure",
-                "evacuation_sites"
+                "evacuation_sites",
+                "rivers"
               ]
             },
             "type": "array",

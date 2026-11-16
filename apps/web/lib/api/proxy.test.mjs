@@ -96,3 +96,27 @@ test("chat context preserves alternating roles, latest question and verified dat
     assert.equal(response.status, 200);
   } finally { globalThis.fetch = originalFetch; }
 });
+
+test("river source reaches chat and its response passes the web contract", async () => {
+  const originalFetch = globalThis.fetch;
+  try {
+    globalThis.fetch = async (input, init) => {
+      assert.equal(new URL(input).pathname, "/api/v1/assistant/chat");
+      const body = JSON.parse(init.body);
+      assert.deepEqual(body.sources, ["rivers"]);
+      assert.equal(body.messages.at(-1).content, "Sungai di Depok");
+      return Response.json({ answer: "Ringkasan segmen sungai.", sources: ["rivers"], model: "test" });
+    };
+    const response = await proxyBackend(new Request("http://localhost", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messages: [{ role: "user", content: "Sungai di Depok" }], sources: ["rivers"] }),
+    }), "/api/v1/assistant/chat");
+    assert.equal(response.status, 200);
+    assert.deepEqual((await response.json()).sources, ["rivers"]);
+    const schema = contract.components.schemas.AssistantChatRequest;
+    assert.deepEqual(validateSchema(schema, {
+      messages: [{ role: "user", content: "Data Bejir" }],
+      sources: ["rivers", "flood_history", "flood_susceptibility", "population_exposure", "evacuation_sites"],
+    }, contract.components.schemas), []);
+  } finally { globalThis.fetch = originalFetch; }
+});

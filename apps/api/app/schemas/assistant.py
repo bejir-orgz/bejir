@@ -8,6 +8,7 @@ AssistantSource = Literal[
     "flood_susceptibility",
     "population_exposure",
     "evacuation_sites",
+    "rivers",
 ]
 
 
@@ -22,7 +23,7 @@ class AssistantChatRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     messages: list[AssistantMessage] = Field(min_length=1, max_length=12)
-    sources: list[AssistantSource] = Field(min_length=1, max_length=4)
+    sources: list[AssistantSource] = Field(min_length=1, max_length=5)
 
     @model_validator(mode="after")
     def last_message_must_be_user(self):

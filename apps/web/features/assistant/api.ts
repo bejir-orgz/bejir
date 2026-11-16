@@ -5,6 +5,7 @@ import type { AssistantLayerId } from "./data/sources";
 export function assistantSources(ids: AssistantLayerId[]): AssistantChatRequest["sources"] {
   const sources = new Set<AssistantChatRequest["sources"][number]>();
   for (const id of ids) {
+    if (id === "rivers") sources.add("rivers");
     if (id === "evacuation") sources.add("evacuation_sites");
     if (id === "flood-area") sources.add("flood_history");
     if (["rainfall", "dem", "susceptibility", "land-cover"].includes(id)) sources.add("flood_susceptibility");

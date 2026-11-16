@@ -1,10 +1,43 @@
 from sqlalchemy import Select, func, select
 from sqlalchemy.orm import Session
+from sqlalchemy.sql.elements import ColumnElement
 
+from app.models.geography.district import District
+from app.models.geography.regency import Regency
 from app.models.geography.river import River
 
 
 class RiverRepository:
+    @staticmethod
+    def get_assistant_summary(
+        db: Session, *, location_filter: ColumnElement[bool] | None = None,
+    ) -> dict:
+        segments = select(River.id, River.name, River.river_type)
+        if location_filter is not None:
+            # Transform the small boundary set, keeping the river geometry index usable.
+            matching_boundary = (
+                select(District.id)
+                .join(Regency, Regency.id == District.regency_id)
+                .where(location_filter)
+                .where(func.ST_Intersects(River.geom, func.ST_Transform(District.geom, 3857)))
+                .correlate(River)
+                .exists()
+            )
+            segments = segments.where(matching_boundary)
+        scoped = segments.subquery()
+        total = db.scalar(select(func.count()).select_from(scoped)) or 0
+        groups = db.execute(
+            select(scoped.c.name, scoped.c.river_type, func.count().label("segment_count"))
+            .group_by(scoped.c.name, scoped.c.river_type)
+            .order_by(func.count().desc(), scoped.c.name.asc().nullslast(), scoped.c.river_type.asc().nullslast())
+            .limit(8)
+        ).mappings().all()
+        return {
+            "segment_count": total,
+            "top_name_type_groups": [dict(row) for row in groups],
+            "groups_limit": 8,
+        }
+
     @staticmethod
     def get_all(
         db: Session,

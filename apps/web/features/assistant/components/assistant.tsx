@@ -83,13 +83,13 @@ export function BejirAssistant({ defaultLayerIds }: { defaultLayerIds: readonly 
               </DropdownMenuTrigger>
               <DropdownMenuContent side="top" align="start" alignOffset={-8} sideOffset={sourceMenuOffset} className="gis-ai-layer-menu flex flex-col gap-2 w-52 max-w-[calc(100vw_-_32px)] p-4 rounded-2xl">
                 <DropdownMenuLabel className="gis-ai-source-title p-0 text-[16px] leading-[24px] font-normal">Sumber</DropdownMenuLabel>
-                {assistantLayers.map((layer) => <DropdownMenuCheckboxItem className="gis-ai-source-item min-h-6 p-[0_24px_0_0] gap-4 rounded-sm text-[12px] leading-[16px] cursor-pointer [&[data-state=checked]]:text-[#000] [&[data-state=unchecked]]:text-[#a1a1a1] [&_>_span:first-child]:left-auto [&_>_span:first-child]:right-0 [&_>_span:first-child]:w-6 [&_>_span:first-child]:h-6 [&_>_span:first-child_svg]:w-6 [&_>_span:first-child_svg]:h-6" key={layer.id} disabled={layer.id === "rivers"} checked={sourceLayerIds.includes(layer.id)} onSelect={(event) => event.preventDefault()} onCheckedChange={(checked) => setSelectedLayerIds(checked ? [...sourceLayerIds, layer.id] : sourceLayerIds.filter((id) => id !== layer.id))}><IconBoxMultiple className="size-6" aria-hidden="true" /><span>{layer.label}</span></DropdownMenuCheckboxItem>)}
+                {assistantLayers.map((layer) => <DropdownMenuCheckboxItem className="gis-ai-source-item min-h-6 p-[0_24px_0_0] gap-4 rounded-sm text-[12px] leading-[16px] cursor-pointer [&[data-state=checked]]:text-[#000] [&[data-state=unchecked]]:text-[#a1a1a1] [&_>_span:first-child]:left-auto [&_>_span:first-child]:right-0 [&_>_span:first-child]:w-6 [&_>_span:first-child]:h-6 [&_>_span:first-child_svg]:w-6 [&_>_span:first-child_svg]:h-6" key={layer.id} checked={sourceLayerIds.includes(layer.id)} onSelect={(event) => event.preventDefault()} onCheckedChange={(checked) => setSelectedLayerIds(checked ? [...sourceLayerIds, layer.id] : sourceLayerIds.filter((id) => id !== layer.id))}><IconBoxMultiple className="size-6" aria-hidden="true" /><span>{layer.label}</span></DropdownMenuCheckboxItem>)}
               </DropdownMenuContent>
             </DropdownMenu>
             <Button type="submit" size="icon" className="gis-ai-send" disabled={!question.trim() || pending || !assistantSources(sourceLayerIds).length} aria-label="Kirim pertanyaan"><IconBrandTelegram className="size-6" aria-hidden="true" /></Button>
           </div>
         </form>
-        <p className="gis-ai-demo-note shrink-0 m-0 text-[#737373] text-[10px] leading-[14px] text-center" id="gis-ai-demo-note">Pilihan awal mengikuti layer peta; sumber AI dapat diatur terpisah. Sumber AI sungai belum didukung API chat. Kerawanan mencakup paparan penduduk.</p>
+        <p className="gis-ai-demo-note shrink-0 m-0 text-[#737373] text-[10px] leading-[14px] text-center" id="gis-ai-demo-note">Pilihan awal mengikuti layer peta; sumber AI dapat diatur terpisah. Kerawanan mencakup paparan penduduk.</p>
       </div>
     </div>
   );

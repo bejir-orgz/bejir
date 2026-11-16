@@ -11,5 +11,6 @@ test("no active map layers means no AI retrieval sources", () => {
 
 test("active layers map to supported datasets without duplicate retrieval sources", () => {
   assert.deepEqual(assistantSources(["rainfall", "dem", "land-cover", "susceptibility", "evacuation", "flood-area"]), ["flood_susceptibility", "population_exposure", "evacuation_sites", "flood_history"]);
-  assert.deepEqual(assistantSources(["rivers"]), []);
+  assert.deepEqual(assistantSources(["rivers"]), ["rivers"]);
+  assert.deepEqual(assistantSources(["rivers", "rivers", "susceptibility", "evacuation", "flood-area"]), ["rivers", "flood_susceptibility", "population_exposure", "evacuation_sites", "flood_history"]);
 });

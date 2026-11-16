@@ -7,6 +7,7 @@ from app.models.evacuation import EvacuationSite
 from app.models.flood import FloodEvent
 from app.models.geography.district import District
 from app.models.geography.regency import Regency
+from app.repositories.geography.river import RiverRepository
 from app.models.spatial_analysis import (
     DistrictHazardStatistics,
     PopulationExposure,
@@ -68,6 +69,24 @@ class AssistantRepository:
         context: dict[str, object] = {}
         district_names, regency_names = _mentioned_locations(db, question)
         location_filter = _location_filter(district_names, regency_names)
+
+        if "rivers" in sources:
+            context["rivers"] = {
+                **RiverRepository.get_assistant_summary(db, location_filter=location_filter),
+                "scope": {
+                    "districts": district_names,
+                    "regencies": regency_names,
+                    "coverage": "mentioned_regions" if location_filter is not None else "entire_dataset",
+                },
+                "note": (
+                    "Inventaris jaringan sungai Jawa Barat, bukan kondisi real-time. "
+                    "Jumlah adalah segmen rekaman, bukan jumlah sungai bernama unik. "
+                    "Segmen yang berpotongan dengan beberapa kecamatan dihitung sekali. "
+                    "Kelompok nama/jenis hanya cuplikan terbesar; nama kosong berarti tidak tersedia. "
+                    "Jika tidak ada daerah dikenali, cakupan adalah seluruh dataset, bukan daerah yang ditanyakan. "
+                    "Data tidak memuat debit, tinggi muka air, atau status luapan."
+                ),
+            }
 
         if "flood_history" in sources:
             event_count = db.scalar(select(func.count(FloodEvent.id))) or 0

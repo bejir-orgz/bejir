@@ -1,13 +1,13 @@
-// Generated from the live OpenAPI contract on 2026-11-12.
+// Generated from OpenAPI; assistant sources include the local rivers extension.
 
 export type AssistantChatRequest = {
   "messages": Array<AssistantMessage>;
-  "sources": Array<"flood_history" | "flood_susceptibility" | "population_exposure" | "evacuation_sites">;
+  "sources": Array<"flood_history" | "flood_susceptibility" | "population_exposure" | "evacuation_sites" | "rivers">;
 };
 
 export type AssistantChatResponse = {
   "answer": string;
-  "sources": Array<"flood_history" | "flood_susceptibility" | "population_exposure" | "evacuation_sites">;
+  "sources": Array<"flood_history" | "flood_susceptibility" | "population_exposure" | "evacuation_sites" | "rivers">;
   "model": string;
 };
 
