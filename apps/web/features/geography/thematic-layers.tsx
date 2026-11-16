@@ -3,19 +3,16 @@
 import { useEffect, useState } from "react";
 import type { Map as LeafletMap } from "leaflet";
 import { isRegionSelected } from "../webgis/region-tree";
+import { landCoverColor } from "./land-cover-colors";
 import { classColors, classLabels } from "./aggregation";
 import type { ThematicCollection, ThematicProperties } from "./thematic-geometry";
 
 const labels: Record<string, string> = { rainfall: "Parameter rata-rata hujan", dem: "Rata-rata elevasi", susceptibility: "Kelas kerawanan", "land-cover": "Tutupan lahan dominan" };
-const coverColors: Record<string, string> = {
-  "Badan Air": "#2563eb", "Hutan Lahan Kering Primer": "#166534", "Hutan Lahan Kering Sekunder": "#15803d",
-  "Hutan Tanaman": "#65a30d", Pemukiman: "#ef4444", Perkebunan: "#a16207", "Pertanian Lahan Kering": "#eab308",
-  "Pertanian Lahan Kering Campur": "#d97706", Sawah: "#84cc16", Tambak: "#06b6d4", "Tanah Terbuka": "#a8a29e",
-};
+
 
 function color(id: string, row: ThematicProperties, range: [number, number]) {
   if (id === "susceptibility") return row.kelas_dominan_v2 == null ? "#a3a3a3" : classColors[row.kelas_dominan_v2 - 1] ?? "#a3a3a3";
-  if (id === "land-cover") return coverColors[row.landcover_dominan || ""] || "#a3a3a3";
+  if (id === "land-cover") return landCoverColor(row.landcover_dominan);
   const field = id === "dem" ? "mean_elevasi_m" : "mean_hujan_mm";
   const value = row[field];
   if (value == null) return "#a3a3a3";

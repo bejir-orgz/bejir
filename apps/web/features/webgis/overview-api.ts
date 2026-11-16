@@ -1,3 +1,4 @@
+import { getRiverSummary } from "../rivers/api";
 import { getFloodStatistics } from "../floods/api";
 import type { WorkspaceData } from "./types";
 import { classLabels, dominantClass, selectedHazards, weightedMean } from "../geography/spatial-data";
@@ -30,12 +31,13 @@ export async function getWorkspaceOverview(regionIds: string[], from: string, to
   const supported = regionIds.every((id) => /^\d+$/.test(id));
   const scope = from ? `${from} s.d. ${to || from}` : "seluruh periode histori";
   const ids = [...new Set(regionIds)];
-  const [spatialResult, historyResult] = await Promise.allSettled([spatial, supported ? Promise.all((ids.length ? ids : [""]).map(async (id) => {
+  const [spatialResult, historyResult, riversResult] = await Promise.allSettled([spatial, supported ? Promise.all((ids.length ? ids : [""]).map(async (id) => {
       const query = new URLSearchParams();
       if (id) query.set("regency_id", id);
       if (from) { query.set("start_date", `${from}T00:00:00`); query.set("end_date", `${to || from}T23:59:59.999999`); }
       return getFloodStatistics(query.toString());
-    })) : Promise.resolve([])]);
+    })) : Promise.resolve([]), getRiverSummary(regionIds)]);
+  if (riversResult.status === "fulfilled" && riversResult.value.total !== null) overview.rivers = `${riversResult.value.total.toLocaleString("id-ID")} segmen`;
   const records = spatialResult.status === "fulfilled" ? spatialResult.value : [];
   const statistics = historyResult.status === "fulfilled" ? historyResult.value : [];
   overview.errors = [
@@ -67,5 +69,8 @@ export async function getWorkspaceOverview(regionIds: string[], from: string, to
   const rainfall = records.length === 1 ? records[0].mean_hujan_mm : null;
   if (rainfall != null) overview.susceptibility.notes.push(`Parameter rata-rata hujan kecamatan ${rainfall.toLocaleString("id-ID", { maximumFractionDigits: 1 })} mm. Periode belum tersedia.`);
   else if (records.some((row) => row.mean_hujan_mm == null)) overview.susceptibility.notes.push(`${records.filter((row) => row.mean_hujan_mm == null).length} kecamatan memiliki parameter hujan kosong.`);
+  overview.susceptibility.notes.push("Jumlah sungai menghitung rekaman segmen API yang berpotongan dengan wilayah, bukan sungai bernama unik. Segmen lintas kecamatan dihitung satu kali dalam cakupan pilihan.");
+  if (riversResult.status === "fulfilled") overview.susceptibility.notes.push(`Data sungai disiapkan ${new Date(riversResult.value.prepared_at).toLocaleDateString("id-ID", { timeZone: "Asia/Jakarta" })}.`);
+  if (riversResult.status === "rejected") overview.errors?.push("Ringkasan sungai gagal dimuat.");
   return overview;
 }

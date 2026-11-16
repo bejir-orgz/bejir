@@ -87,3 +87,13 @@ environment variables.
 - `422`: invalid message, role, or source selection.
 - `503`: Gemini is not configured, selected database data is unavailable, or
   Gemini is unreachable / quota-limited.
+
+## Map layer selection
+
+The map workspace passes its active layer IDs as defaults to `BejirAssistant`.
+Until the user edits AI sources, they follow the map layers, including an empty
+selection. After the first edit, AI sources are independent and remain selected
+when switching Overview/AI tabs; they never change the map layers. With zero sources,
+sending a question is disabled. Unsupported river retrieval also keeps sending
+disabled when it is the only selected layer. Layers sharing a backend dataset
+are deduplicated by `assistantSources` before the request is sent.

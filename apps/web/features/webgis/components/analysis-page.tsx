@@ -13,15 +13,17 @@ import { AnnualEventsChart, FrequencyChart, SusceptibilityChart } from "./analys
 import { AnalysisFiltersBar, AnalysisRegionFilter } from "./analysis-filters";
 import { AnalysisTable } from "./analysis-table";
 import { FacilityRows } from "./facility-rows";
+import { useRiverSummary } from "@/features/rivers/use-river-summary";
 import { useFacilityTotals } from "../../floods/use-facility-totals";
 import { hasDistrictSelection, hasVillageSelection, matchesRegionFilter } from "../region-tree";
 
 export function AnalysisPage({ data }: { data: AnalysisData }) {
   const [summaryYear, setSummaryYear] = useState(data.years[0] ?? 0);
-  const { regionIds: summaryRegionIds, setRegionIds: setSummaryRegionIds } = useRegionSelection();
+  const { regionIds: summaryRegionIds, setRegionIds: setSummaryRegionIds, dataRegionIds } = useRegionSelection();
   const tableYear = data.years[0] ?? 0;
   const [filters, setFilters] = useRegionalFilters<AnalysisFilters>(emptyAnalysisFilters);
-  const rows = useMemo(() => filterAnalysisRows(data.rows, tableYear, filters), [data.rows, tableYear, filters]);
+  const riverSummary = useRiverSummary(dataRegionIds, data.source === "backend");
+  const rows = useMemo(() => filterAnalysisRows(data.rows, tableYear, filters).map((row) => ({ ...row, rivers: riverSummary?.data && riverSummary.data.total !== null ? riverSummary.data.by_regency[row.id] ?? 0 : null })), [data.rows, tableYear, filters, riverSummary]);
   const query = new URLSearchParams({ year: String(summaryYear) });
   const detailed = hasDistrictSelection(summaryRegionIds);
   const summaryRows = filterAnalysisRows(data.rows, tableYear, { ...emptyAnalysisFilters, regionIds: summaryRegionIds });
@@ -80,7 +82,7 @@ export function AnalysisPage({ data }: { data: AnalysisData }) {
         <AnalysisFiltersBar filters={filters} regions={data.regions} classes={data.classes} onChange={setFilters} />
         <AnalysisTable rows={rows} />
       </Card>
-      <p className="analysis-data-note mt-4 text-[12px] leading-[16px] text-[#737373]" role="status">{[regionNote, liveSummary?.key === summaryKey && liveSummary.error, data.error, ...(snapshot.errors || []), facilities?.error, facilities?.counts?.prepared_at && `Snapshot fasilitas disiapkan ${new Date(facilities.counts.prepared_at).toLocaleDateString("id-ID")}.`].filter(Boolean).join(" ") + " Ringkasan kejadian dan kerusakan fasilitas dari Flood merupakan akumulasi catatan historis. Spatial Analysis belum memiliki periode. Elevasi memakai rata-rata berbobot n_piksel, kelas wilayah memakai modus kelas dominan kecamatan berbobot n_piksel. Distribusi menghitung kecamatan per kelas 1–5 (Sangat Rendah–Sangat Tinggi). Rata-rata bulanan dihitung total/12. Tahun berjalan dapat belum lengkap. — menandakan data tidak tersedia."}</p>
+      <p className="analysis-data-note mt-4 text-[12px] leading-[16px] text-[#737373]" role="status">{[riverSummary?.error, riverSummary?.data?.prepared_at && `Data sungai disiapkan ${new Date(riverSummary.data.prepared_at).toLocaleDateString("id-ID", { timeZone: "Asia/Jakarta" })}.`, regionNote, liveSummary?.key === summaryKey && liveSummary.error, data.error, ...(snapshot.errors || []), facilities?.error, facilities?.counts?.prepared_at && `Snapshot fasilitas disiapkan ${new Date(facilities.counts.prepared_at).toLocaleDateString("id-ID")}.`].filter(Boolean).join(" ") + " Jumlah sungai menghitung rekaman segmen API yang berpotongan dengan wilayah, bukan nama sungai unik. Ringkasan kejadian dan kerusakan fasilitas dari Flood merupakan akumulasi catatan historis. Spatial Analysis belum memiliki periode. Elevasi memakai rata-rata berbobot n_piksel, kelas wilayah memakai modus kelas dominan kecamatan berbobot n_piksel. Distribusi menghitung kecamatan per kelas 1–5 (Sangat Rendah–Sangat Tinggi). Rata-rata bulanan dihitung total/12. Tahun berjalan dapat belum lengkap. — menandakan data tidak tersedia."}</p>
     </main>
   </div>;
 }

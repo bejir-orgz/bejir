@@ -39,7 +39,7 @@ test("district spatial facts keep their source scale and don't substitute for un
     assert.equal(result.elevation, "265 meter");
     assert.deepEqual(result.landCover, ["Pemukiman"]);
     assert.equal(result.metrics[2].value, "—");
-    assert.match(result.susceptibility.notes.at(-1), /Periode belum tersedia/);
+    assert.ok(result.susceptibility.notes.some((note) => /Periode belum tersedia/.test(note)));
   } finally { globalThis.fetch = originalFetch; }
 });
 

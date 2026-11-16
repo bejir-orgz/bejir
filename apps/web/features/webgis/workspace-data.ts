@@ -8,7 +8,7 @@ export const workspaceData: WorkspaceData = {
   layers: [
     { id: "rainfall", label: "Curah Hujan", count: 1 },
     { id: "evacuation", label: "Titik Evakuasi", count: 1 },
-    { id: "rivers", label: "Jaringan Sungai", count: 0 },
+    { id: "rivers", label: "Jaringan Sungai", count: 1 },
     { id: "flood-area", label: "Area Banjir", count: 0 },
     { id: "dem", label: "DEM", count: 1 },
     { id: "susceptibility", label: "Kerawanan Banjir", count: 1 },

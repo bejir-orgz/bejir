@@ -1,12 +1,12 @@
 # Web API integration
 
-The web app uses the live OpenAPI contract retrieved on 12 November 2026 from http://80.43.0.180:8000/openapi.json, plus two additive repository contracts for lightweight administrative metadata and facility aggregates. The extended snapshot is stored in `apps/web/lib/api/openapi.json`, with fourteen component schemas and matching TypeScript definitions. The two extensions require backend deployment. The web supports the older live backend through explicitly dated prepared data, not request-time detail enumeration.
+The web app uses the live OpenAPI contract retrieved on 12 November 2026 and extended with the live rivers operation on 15 November 2026 from http://80.43.0.180:8000/openapi.json, plus two additive repository contracts for lightweight administrative metadata and facility aggregates. The extended snapshot is stored in `apps/web/lib/api/openapi.json`, with fourteen component schemas and matching TypeScript definitions. The two extensions require backend deployment. The web supports the older live backend through explicitly dated prepared data, not request-time detail enumeration.
 
 Copy `apps/web/.env.example` to `apps/web/.env.local` and set the server-side `BEJIR_API_URL` to change the backend origin. The default is the documented server. Deployments require that origin to run the API version described by the snapshot.
 
 ## Endpoint coverage
 
-The original 26 live operations and two additive repository operations are available through the same-origin web gateway. The older live deployment can return 404 for the two extensions until deployed. Append the backend path to `/api/backend`. For example, `/api/backend/api/v1/flood/statistics` forwards to `/api/v1/flood/statistics`. The API root is available at `/api/backend`.
+The 27 live operations and two additive repository operations are available through the same-origin web gateway. The older live deployment can return 404 for the two extensions until deployed. Append the backend path to `/api/backend`. For example, `/api/backend/api/v1/flood/statistics` forwards to `/api/v1/flood/statistics`. The API root is available at `/api/backend`.
 
 | Group | Operations | Coverage |
 | --- | --- | --- |
@@ -16,6 +16,7 @@ The original 26 live operations and two additive repository operations are avail
 | Spatial Analysis | 6 GET | Hazard and exposure lists, record detail and district detail |
 | Evacuation | 4 GET, 1 POST | Sites, nearby sites, site detail, roads and routes |
 | Assistant | 1 POST | Chat |
+| Rivers | 1 GET | Filtered paginated source records; prepared viewport layer and regional segment summaries |
 
 Only paths and methods from the snapshot are forwarded. Requests preserve query filters and backend response statuses. JSON request bodies and typed responses are checked against their documented schemas. Backend 5xx details are replaced with a generic message. Most GET success responses currently have an empty OpenAPI schema, so their response structure is checked by the consuming feature where needed.
 
@@ -30,13 +31,13 @@ Only paths and methods from the snapshot are forwarded. Requests preserve query 
 - Analisis retains regency rows. Population estimates and raster coverage areas are summed from districts. Elevation uses the pixel-weighted mean. Regional susceptibility uses the pixel-weighted mode of district dominant classes, with ties unavailable. The project approved class labels 1–5 as Sangat Rendah, Rendah, Sedang, Tinggi, Sangat Tinggi. This summarizes district dominant classes and is not a pixel-level reclassification. Distribution counts districts by dominant class. Its summary, frequency chart and annual chart use Flood statistics for the selected year and regencies. Monthly averages divide the annual total by twelve. The spatial table has no assigned year.
 - Facility cards use one filtered backend SQL aggregate of schools_damaged, health_facilities_damaged and religious_facilities_damaged for the chosen date/regency scope. On the old backend they read a dated prepared projection. They never enumerate event details during web requests. These are cumulative historical damage records, which may include the same facility repeatedly. Missing inputs propagate as unavailable. Public facilities require government offices, parks or other publicly usable facilities. The API does not identify that subset, so this category remains unavailable.
 - Curah Hujan loads 27 regency/city rows by joining Geography to district hazard parameters. The approved regional mean is weighted by n_piksel, and minimum/maximum are extrema of district means. Aggregation uses available rainfall values and displays the known/total district count (620/627 at verification). Missing rainfall values remain absent and zero remains valid. Header region choices recompute summary cards independently of table filters. The rainfall and average columns refer to the same spatial mean parameter. Temporal filters and rainfall classification remain unavailable. The monthly chart explicitly explains the missing series. Normalized page data is cached for five minutes. The demonstration fixture has been removed.
-- The existing Aji composer sends live messages and selected sources. The source choices retain their layout. Curah Hujan, DEM and Tutupan Lahan retrieve spatial susceptibility context. Kerawanan Banjir also retrieves population exposure. Area Banjir retrieves flood history, and Titik Evakuasi retrieves evacuation sites. River and building sources are disabled because the API has no matching data source.
+- The existing Aji composer sends live messages and selected sources. The source choices retain their layout. Curah Hujan, DEM and Tutupan Lahan retrieve spatial susceptibility context. Kerawanan Banjir also retrieves population exposure. Area Banjir retrieves flood history, and Titik Evakuasi retrieves evacuation sites. River retrieval is not an accepted source in the chat contract, so that AI source remains disabled even though the river map layer is connected.
 
 Chat requests include verified dataset totals retrieved from the selected data endpoints. This prevents a retrieval sample count from being the only available total. This application context uses alternating user/model messages and preserves the latest user question. Up to nine recent conversation messages are retained alongside that context to meet the twelve-message backend limit. Provider failures are shown in the conversation.
 
 ## Data gaps
 
-The contract has no monthly rainfall series, river geometries, building dataset, flood extent geometries, operational shelter verification, or spatial facility exposure endpoint. Flood events have no district/village references, severity or affected area. Historical affected-area cards remain unavailable. Spatial dataset period and public-facility taxonomy remain missing.
+The contract has no monthly rainfall series, building dataset, flood extent geometries, operational shelter verification, or spatial facility exposure endpoint. Flood events have no district/village references, severity or affected area. Historical affected-area cards remain unavailable. Spatial dataset period and public-facility taxonomy remain missing.
 
 ## Display geometry and caching
 
@@ -52,7 +53,7 @@ Evacuation sites currently remain independent of region and timeline filters. Ro
 
 Rainfall pages render at request time so upstream failures are not saved as prerendered empty output. Successful normalized rainfall data remains cached for five minutes. Verification covered the 27-row table, regional summary filtering, missing values, zero rainfall and weighted aggregation.
 
-The automated gateway test covers every documented operation and all fourteen schemas, including invalid requests and sanitized failures. Feature tests cover pagination, null values, regional aggregation, date scope and chat context. Live verification uses read-only requests for GET operations. Route and chat POST tests create real requests on the configured backend.
+The automated gateway test covers every documented operation and all fourteen schemas, including invalid requests and sanitized failures. Feature tests cover pagination, null values, regional aggregation, date scope and chat context. Live verification uses read-only requests for GET operations. This verification did not send paid chat requests or create route requests.
 
 ### Shared region selection
 
@@ -68,3 +69,14 @@ district parameters, retaining the existing regency/city table layout. Historica
 Flood counts and facility damage do not have district locations and remain
 unavailable for district/village selections. Village spatial aggregates are also
 unavailable. The UI states these limits instead of borrowing parent totals.
+
+### River layer and counts
+
+`GET /api/v1/rivers` exposes 114,304 source records at verification. The web
+registers this operation in its gateway. Run `npm run prepare:rivers` after
+preparing the administrative catalog, and ship `rivers.json` with the other
+prepared artifacts. See [river preparation](../deployment/river-layer.md).
+The existing river checkbox loads a bounded canvas overlay for the current
+viewport. Overview and Analysis use full regional segment counts, independently
+of map rendering limits. These counts do not measure river length, flood impact,
+or unique named watercourses.

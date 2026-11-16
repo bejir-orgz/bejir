@@ -1,3 +1,4 @@
+import { landCoverTagStyle } from "@/features/geography/land-cover-colors";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import type { WorkspaceData } from "../types";
@@ -23,7 +24,7 @@ export function OverviewPanel({ overview }: { overview: WorkspaceData["overview"
         <h2>Fasilitas Terdampak</h2>
         <FacilityRows facilities={overview.facilities} />
       </Card>
-      <Card className="gis-card border-0 [outline:1px_solid_var(--gis-border)] [outline-offset:-1px] p-4 rounded-2xl [&_h2]:text-[16px] [&_h2]:leading-[24px] [&_h2]:font-medium gis-land-card min-h-22"><h2>Tutupan Lahan</h2><div className="gis-tags flex flex-wrap gap-2 mt-2">{overview.landCover.map((label) => <Badge key={label} className="gis-badge inline-flex items-center p-[4px_8px] rounded-lg bg-[#737373] text-[#fff] text-[12px] font-semibold leading-[16px]">{label}</Badge>)}</div></Card>
+      <Card className="gis-card border-0 [outline:1px_solid_var(--gis-border)] [outline-offset:-1px] p-4 rounded-2xl [&_h2]:text-[16px] [&_h2]:leading-[24px] [&_h2]:font-medium gis-land-card min-h-22"><h2>Tutupan Lahan</h2><div className="gis-tags flex flex-wrap gap-2 mt-2">{overview.landCover.map((label) => <Badge key={label} style={landCoverTagStyle(label)} className="gis-badge inline-flex items-center p-[4px_8px] rounded-lg bg-[#737373] text-[#fff] text-[12px] font-semibold leading-[16px]">{label}</Badge>)}</div></Card>
       <Card className="gis-card border-0 [outline:1px_solid_var(--gis-border)] [outline-offset:-1px] p-4 rounded-2xl [&_h2]:text-[16px] [&_h2]:leading-[24px] [&_h2]:font-medium gis-inline-card [&_strong]:font-semibold flex justify-between items-center gap-2"><h2>Elevasi (DEM)</h2><strong>{overview.elevation}</strong></Card>
       <Card className="gis-card border-0 [outline:1px_solid_var(--gis-border)] [outline-offset:-1px] p-4 rounded-2xl [&_h2]:text-[16px] [&_h2]:leading-[24px] [&_h2]:font-medium gis-inline-card [&_strong]:font-semibold flex justify-between items-center gap-2"><h2>Jaringan Sungai</h2><strong>{overview.rivers}</strong></Card>
     </div>

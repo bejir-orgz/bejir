@@ -14,6 +14,7 @@ import { useEvacuationSites } from "@/features/evacuation/use-evacuation-sites";
 import { EvacuationRouting } from "@/features/evacuation/evacuation-routing";
 import { BoundaryLayer } from "@/features/regions/boundary-layer";
 import { useOverview } from "../use-overview";
+import { RiverLayer } from "@/features/rivers/river-layer";
 import { ThematicLayers } from "@/features/geography/thematic-layers";
 import type { WorkspaceFilters, WorkspaceProps } from "../types";
 import { RegionSidebar } from "./region-sidebar";
@@ -49,6 +50,7 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
   const evacuation = useEvacuationSites(evacuationEnabled);
   const [routeStatus, setRouteStatus] = useState<{ message: string }>();
   const [regionStatus, setRegionStatus] = useState<{ message: string }>();
+  const [riverStatus, setRiverStatus] = useState<{ message: string; retry?: () => void }>();
   const [thematicStatus, setThematicStatus] = useState<{ message: string; retry?: () => void }>();
   const narrow = useSyncExternalStore(subscribeToWidth, getNarrowSnapshot, getServerSnapshot);
   const [panels, dispatch] = useReducer(panelReducer, data.initialFilters.regionIds.length ? { left: null, overview: true } : initialPanelState);
@@ -91,7 +93,7 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
         }
       }}>
         <h1 className="sr-only">Map Interaktif Jawa Barat</h1>
-        <InteractiveMap dataStatus={regionStatus ?? routeStatus ?? thematicStatus ?? evacuation.dataStatus}>{(map) => <><ThematicLayers map={map} layerIds={filters.layerIds} regionIds={filters.regionIds} onStatus={setThematicStatus} /><EvacuationLayer map={map} sites={evacuation.sites} enabled={evacuationEnabled} /><BoundaryLayer map={map} regionIds={filters.regionIds} onStatus={setRegionStatus} /><EvacuationRouting map={map} enabled={evacuationEnabled} onStatus={setRouteStatus} /></>}</InteractiveMap>
+        <InteractiveMap dataStatus={regionStatus ?? routeStatus ?? riverStatus ?? thematicStatus ?? evacuation.dataStatus}>{(map) => <><RiverLayer map={map} enabled={filters.layerIds.includes("rivers")} regionIds={filters.regionIds} onStatus={setRiverStatus} /><ThematicLayers map={map} layerIds={filters.layerIds} regionIds={filters.regionIds} onStatus={setThematicStatus} /><EvacuationLayer map={map} sites={evacuation.sites} enabled={evacuationEnabled} /><BoundaryLayer map={map} regionIds={filters.regionIds} onStatus={setRegionStatus} /><EvacuationRouting map={map} enabled={evacuationEnabled} onStatus={setRouteStatus} /></>}</InteractiveMap>
         <RegionSidebar hidden={panels.left !== "regions"} filters={filters} onChange={updateFilters} />
         <OptionsSidebar mode="layers" hidden={panels.left !== "layers"} data={data} filters={filters} onChange={updateFilters} />
         <OptionsSidebar mode="legends" hidden={panels.left !== "legends"} data={data} filters={filters} onChange={updateFilters} />
@@ -110,7 +112,7 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
           <Tabs defaultValue="overview" className="gis-tabs gap-4" onValueChange={() => overviewPanel.current?.scrollTo({ top: 0 })}>
             <OverviewButton className="gis-panel-tabs relative before:content-[''] before:absolute before:inset-x-0 before:top-[calc(-16px_-_1px)] before:h-4 before:bg-white before:pointer-events-none after:content-[''] after:absolute after:inset-x-0 after:top-[calc(100%_+_1px)] after:h-4 after:bg-white after:pointer-events-none" />
             <TabsContent value="overview"><OverviewPanel overview={overview} /></TabsContent>
-            <TabsContent value="ai" className="gis-ai-tab [&[data-state=active]]:flex [&[data-state=active]]:min-h-0 [&[data-state=inactive]]:hidden" forceMount><BejirAssistant /></TabsContent>
+            <TabsContent value="ai" className="gis-ai-tab [&[data-state=active]]:flex [&[data-state=active]]:min-h-0 [&[data-state=inactive]]:hidden" forceMount><BejirAssistant defaultLayerIds={filters.layerIds} /></TabsContent>
           </Tabs>
           <p className="gis-data-note text-[var(--gis-muted)] text-[11px] leading-[16px] mt-4">Sumber backend. — menandakan data tidak tersedia. Filter waktu berlaku pada histori kejadian.</p>
         </aside>

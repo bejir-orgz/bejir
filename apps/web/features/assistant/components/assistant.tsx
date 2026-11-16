@@ -6,13 +6,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { assistantLayers, defaultAssistantLayerIds, type AssistantLayerId } from "../data/sources";
+import { assistantLayers } from "../data/sources";
 import { askAssistant, assistantSources } from "../api";
 import type { AssistantMessage } from "../../../lib/api/schemas";
 
-export function BejirAssistant() {
+export function BejirAssistant({ defaultLayerIds }: { defaultLayerIds: readonly string[] }) {
   const [question, setQuestion] = useState("");
-  const [layerIds, setLayerIds] = useState<AssistantLayerId[]>(defaultAssistantLayerIds);
+  const [selectedLayerIds, setSelectedLayerIds] = useState<readonly string[] | null>(null);
+  const sourceLayerIds = assistantLayers.filter((layer) => (selectedLayerIds ?? defaultLayerIds).includes(layer.id)).map((layer) => layer.id);
   const [exchanges, setExchanges] = useState<{ id: number; question: string; answer: string; error?: boolean }[]>([]);
   const [pending, setPending] = useState(false);
   const request = useRef<AbortController | null>(null);
@@ -28,7 +29,7 @@ export function BejirAssistant() {
 
   async function submitQuestion() {
     const text = question.trim();
-    const sources = assistantSources(layerIds);
+    const sources = assistantSources(sourceLayerIds);
     if (!text || pending || !sources.length) return;
     const history: AssistantMessage[] = exchanges.filter((item) => !item.error).flatMap((item) => [
       { role: "user" as const, content: item.question },
@@ -76,19 +77,19 @@ export function BejirAssistant() {
               }
             }}>
               <DropdownMenuTrigger asChild>
-                <Button ref={sourceTrigger} type="button" variant="secondary" className="gis-ai-layer-trigger gap-[10px] text-[16px] leading-[24px] font-medium [&[data-state=closed]_.gis-ai-source-caret]:[transform:rotate(180deg)]" data-has-sources={layerIds.length > 0} aria-label={`Pilih sumber, ${layerIds.length} dipilih`}>
-                  <IconFolders className="size-6" aria-hidden="true" /><span>{layerIds.length}</span><IconCaretUpFilled className="gis-ai-source-caret size-4" aria-hidden="true" />
+                <Button ref={sourceTrigger} type="button" variant="secondary" className="gis-ai-layer-trigger gap-[10px] text-[16px] leading-[24px] font-medium [&[data-state=closed]_.gis-ai-source-caret]:[transform:rotate(180deg)]" data-has-sources={sourceLayerIds.length > 0} aria-label={`Pilih sumber, ${sourceLayerIds.length} dipilih`}>
+                  <IconFolders className="size-6" aria-hidden="true" /><span>{sourceLayerIds.length}</span><IconCaretUpFilled className="gis-ai-source-caret size-4" aria-hidden="true" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent side="top" align="start" alignOffset={-8} sideOffset={sourceMenuOffset} className="gis-ai-layer-menu flex flex-col gap-2 w-52 max-w-[calc(100vw_-_32px)] p-4 rounded-2xl">
                 <DropdownMenuLabel className="gis-ai-source-title p-0 text-[16px] leading-[24px] font-normal">Sumber</DropdownMenuLabel>
-                {assistantLayers.map((layer) => <DropdownMenuCheckboxItem className="gis-ai-source-item min-h-6 p-[0_24px_0_0] gap-4 rounded-sm text-[12px] leading-[16px] cursor-pointer [&[data-state=checked]]:text-[#000] [&[data-state=unchecked]]:text-[#a1a1a1] [&_>_span:first-child]:left-auto [&_>_span:first-child]:right-0 [&_>_span:first-child]:w-6 [&_>_span:first-child]:h-6 [&_>_span:first-child_svg]:w-6 [&_>_span:first-child_svg]:h-6" key={layer.id} disabled={layer.id === "rivers" || layer.id === "buildings"} checked={layerIds.includes(layer.id)} onSelect={(event) => event.preventDefault()} onCheckedChange={(checked) => setLayerIds((previous) => checked ? [...previous, layer.id] : previous.filter((id) => id !== layer.id))}><IconBoxMultiple className="size-6" aria-hidden="true" /><span>{layer.label}</span></DropdownMenuCheckboxItem>)}
+                {assistantLayers.map((layer) => <DropdownMenuCheckboxItem className="gis-ai-source-item min-h-6 p-[0_24px_0_0] gap-4 rounded-sm text-[12px] leading-[16px] cursor-pointer [&[data-state=checked]]:text-[#000] [&[data-state=unchecked]]:text-[#a1a1a1] [&_>_span:first-child]:left-auto [&_>_span:first-child]:right-0 [&_>_span:first-child]:w-6 [&_>_span:first-child]:h-6 [&_>_span:first-child_svg]:w-6 [&_>_span:first-child_svg]:h-6" key={layer.id} disabled={layer.id === "rivers"} checked={sourceLayerIds.includes(layer.id)} onSelect={(event) => event.preventDefault()} onCheckedChange={(checked) => setSelectedLayerIds(checked ? [...sourceLayerIds, layer.id] : sourceLayerIds.filter((id) => id !== layer.id))}><IconBoxMultiple className="size-6" aria-hidden="true" /><span>{layer.label}</span></DropdownMenuCheckboxItem>)}
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button type="submit" size="icon" className="gis-ai-send" disabled={!question.trim() || pending || !assistantSources(layerIds).length} aria-label="Kirim pertanyaan"><IconBrandTelegram className="size-6" aria-hidden="true" /></Button>
+            <Button type="submit" size="icon" className="gis-ai-send" disabled={!question.trim() || pending || !assistantSources(sourceLayerIds).length} aria-label="Kirim pertanyaan"><IconBrandTelegram className="size-6" aria-hidden="true" /></Button>
           </div>
         </form>
-        <p className="gis-ai-demo-note shrink-0 m-0 text-[#737373] text-[10px] leading-[14px] text-center" id="gis-ai-demo-note">Terhubung API Bejir. Sumber sungai dan bangunan belum tersedia. Kerawanan mencakup paparan penduduk.</p>
+        <p className="gis-ai-demo-note shrink-0 m-0 text-[#737373] text-[10px] leading-[14px] text-center" id="gis-ai-demo-note">Pilihan awal mengikuti layer peta; sumber AI dapat diatur terpisah. Sumber AI sungai belum didukung API chat. Kerawanan mencakup paparan penduduk.</p>
       </div>
     </div>
   );
