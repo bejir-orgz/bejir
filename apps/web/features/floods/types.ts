@@ -7,6 +7,7 @@ export interface FloodHistoryRow {
   district: string;
   village: string;
   severity: FloodSeverity | null;
+  floodType: string | null;
   areaKm2: number | null;
   deaths: number | null;
   missing: number | null;
@@ -15,7 +16,7 @@ export interface FloodHistoryRow {
 export interface HistoryFilters {
   query: string;
   regionIds: string[];
-  severities: FloodSeverity[];
+  floodTypes: string[];
   from: string;
   to: string;
 }

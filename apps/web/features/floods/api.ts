@@ -26,7 +26,7 @@ export async function getFloodStatistics(query = ""): Promise<FloodStatistics> {
   return data;
 }
 
-interface FloodDetail extends FloodEvent { impacts: FloodImpact[] }
+interface FloodDetail extends FloodEvent { impacts: FloodImpact[]; event_type?: { name: string | null } | null }
 
 export interface FloodImpact {
   fatalities: number | null;
@@ -100,6 +100,7 @@ export async function getFloodHistory(requestedYear?: number): Promise<FloodHist
         date: event.event_datetime?.slice(0, 10) ?? "",
         region: names.get(event.regency_id ?? -1) ?? "—",
         district: "", village: "", severity: null, areaKm2: null,
+        floodType: detail.event_type?.name ?? null,
         deaths: sum("fatalities"), missing: sum("missing"),
       };
     }));

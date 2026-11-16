@@ -21,6 +21,7 @@ const rows: FloodHistoryRow[] = years.flatMap((year) => Array.from({ length: 240
   const day = new Date(year, 8, 21 - index);
   return {
     ...samples[index % samples.length],
+    floodType: null,
     id: `dummy-${year}-${index + 1}`,
     date: `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`,
   };

@@ -5,21 +5,16 @@ import { id } from "date-fns/locale";
 import { RegionFilterPopover as RegionFilter } from "@/components/shared/region-filter-popover";
 import { Button } from "@/components/ui/button";
 import { CalendarBase } from "@/components/ui/calendar-base";
-import { CategoryFilter, type CategoryFilterOption } from "@/components/ui/category-filter";
+import { CategoryFilter } from "@/components/ui/category-filter";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { localDateString } from "../history";
-import type { FloodHistoryRow, FloodSeverity, HistoryFilters } from "../types";
-
-const severityOptions: readonly CategoryFilterOption<FloodSeverity>[] = [
-  { value: "Rendah", label: "Rendah" },
-  { value: "Sedang", label: "Sedang" },
-  { value: "Tinggi", label: "Tinggi" },
-];
+import type { FloodHistoryRow, HistoryFilters } from "../types";
 
 export { RegionFilter };
 
 export function HistoryFiltersBar({ filters, regions, districtRows, year, years, onYearChange, onChange }: { filters: HistoryFilters; regions: string[]; districtRows: readonly FloodHistoryRow[]; year: number; years: readonly number[]; onYearChange: (year: number) => void; onChange: (filters: HistoryFilters) => void }) {
+  const floodTypeOptions = [...new Set(districtRows.flatMap((row) => row.floodType ? [row.floodType] : []))].sort((a, b) => a.localeCompare(b, "id-ID")).map((value) => ({ value, label: value }));
   const range = filters.from ? { from: new Date(`${filters.from}T12:00:00`), to: filters.to ? new Date(`${filters.to}T12:00:00`) : undefined } : undefined;
   const dateLabel = filters.from ? `${filters.from.slice(8)}/${filters.from.slice(5, 7)}${filters.to ? ` – ${filters.to.slice(8)}/${filters.to.slice(5, 7)}` : ""}` : "Tanggal";
 
@@ -65,9 +60,9 @@ export function HistoryFiltersBar({ filters, regions, districtRows, year, years,
 
       <Popover>
         <PopoverTrigger asChild>
-          <Button variant={!!filters.severities.length ? "outline" : "filter"} className="history-filter rounded-2xl" data-active={!!filters.severities.length}>
+          <Button variant={!!filters.floodTypes.length ? "outline" : "filter"} className="history-filter rounded-2xl" data-active={!!filters.floodTypes.length}>
             <IconAlertTriangle className="size-6" />
-            <span>{filters.severities.length ? `${filters.severities.length} keparahan` : "Keparahan"}</span>
+            <span>{filters.floodTypes.length ? `${filters.floodTypes.length} jenis` : "Jenis Banjir"}</span>
           </Button>
         </PopoverTrigger>
         <PopoverContent
@@ -76,10 +71,10 @@ export function HistoryFiltersBar({ filters, regions, districtRows, year, years,
           className="w-auto max-w-[calc(100vw-32px)] rounded-2xl border-0 bg-transparent p-0"
         >
           <CategoryFilter
-            variant="keparahan"
-            options={severityOptions}
-            value={filters.severities}
-            onValueChange={(severities) => onChange({ ...filters, severities })}
+            variant="jenis-banjir"
+            options={floodTypeOptions}
+            value={filters.floodTypes}
+            onValueChange={(floodTypes) => onChange({ ...filters, floodTypes })}
           />
         </PopoverContent>
       </Popover>

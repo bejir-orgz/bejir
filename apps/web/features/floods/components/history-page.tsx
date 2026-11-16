@@ -45,7 +45,7 @@ export function HistoryPage({ data }: { data: FloodHistoryData }) {
     });
     return () => controller.abort();
   }, [data.source, summaryYear, tableYear, cache]);
-  const active = tableYear !== data.years[0] || !!(filters.query || filters.regionIds.length || filters.severities.length || filters.from || filters.to);
+  const active = tableYear !== data.years[0] || !!(filters.query || filters.regionIds.length || filters.floodTypes.length || filters.from || filters.to);
   return <div className="history-page min-h-[100dvh] bg-[#fff] text-[#171717] [&_[data-slot=card]]:border-0 [&_[data-slot=card]]:[outline:1px_solid_#d4d4d4] [&_[data-slot=card]]:[outline-offset:-1px]"><WebgisHeader mapCanvas dummy={data.source !== "backend"} />
     <main className="history-content w-[min(1200px,calc(100%_-_32px))] mx-auto py-4">
       <div className="history-heading min-h-10 flex items-center justify-between gap-4 [&_h1]:text-[36px] [&_h1]:leading-[40px] [&_h1]:font-medium max-[700.01px]:items-start max-[700.01px]:flex-wrap max-[700.01px]:[&_h1]:text-[28px] max-[700.01px]:[&_h1]:leading-[36px]"><div className="history-heading-scope flex items-center gap-4 max-[700.01px]:gap-2 max-[700.01px]:flex-wrap"><h1>Histori Banjir</h1><span className="history-heading-divider mx-2 h-10 w-0.5 shrink-0 bg-neutral-300 max-[700.01px]:h-7" aria-hidden="true" /><RegionFilter iconOnly regions={data.regions} districtRows={data.rows} value={summaryRegionIds} onChange={setSummaryRegionIds} /></div>
@@ -64,7 +64,7 @@ export function HistoryPage({ data }: { data: FloodHistoryData }) {
         <HistoryFiltersBar districtRows={data.rows} year={tableYear} years={data.years} onYearChange={(value) => { setTableYear(value); setFilters((current) => ({ ...current, from: "", to: "" })); }} filters={filters} regions={data.regions} onChange={setFilters} />
         <HistoryTable rows={rows} />
       </Card>
-      <p className="history-data-note mt-4 text-[12px] leading-[16px] text-[#737373]" role="status">{(hasDistrictSelection(summaryRegionIds) ? "Histori Flood belum memiliki lokasi kecamatan/kelurahan. Ringkasan dan tabel untuk pilihan ini belum tersedia." : "") || error || (loading ? "Memuat histori banjir…" : "Sumber API Flood. Kecamatan, desa/kelurahan, keparahan, dan luas terdampak belum tersedia. — menandakan data tidak tersedia.")}</p>
+      <p className="history-data-note mt-4 text-[12px] leading-[16px] text-[#737373]" role="status">{(hasDistrictSelection(summaryRegionIds) ? "Histori Flood belum memiliki lokasi kecamatan/kelurahan. Ringkasan dan tabel untuk pilihan ini belum tersedia." : "") || error || (loading ? "Memuat histori banjir…" : "Sumber API Flood. Jenis banjir berasal dari jenis kejadian API. Luas terdampak belum tersedia. — menandakan data tidak tersedia.")}</p>
     </main>
   </div>;
 }

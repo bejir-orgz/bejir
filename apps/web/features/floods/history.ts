@@ -1,7 +1,7 @@
 import { hasDistrictSelection, matchesRegionFilter } from "../webgis/region-tree";
 import type { FloodHistoryRow, HistoryFilters } from "./types";
 
-export const emptyHistoryFilters: HistoryFilters = { query: "", regionIds: [], severities: [], from: "", to: "" };
+export const emptyHistoryFilters: HistoryFilters = { query: "", regionIds: [], floodTypes: [], from: "", to: "" };
 
 export function filterHistoryRows(rows: readonly FloodHistoryRow[], year: number, filters: HistoryFilters) {
   const query = filters.query.trim().toLocaleLowerCase("id-ID");
@@ -10,7 +10,7 @@ export function filterHistoryRows(rows: readonly FloodHistoryRow[], year: number
     row.date.startsWith(`${year}-`) &&
     matchesRegionFilter(filters.regionIds, row.region, row.district) &&
     (!query || row.region.toLocaleLowerCase("id-ID").includes(query)) &&
-    (!filters.severities.length || (row.severity !== null && filters.severities.includes(row.severity))) &&
+    (!filters.floodTypes.length || (row.floodType !== null && filters.floodTypes.includes(row.floodType))) &&
     (!filters.from || row.date >= filters.from) &&
     (!filters.to || row.date <= filters.to)
   );

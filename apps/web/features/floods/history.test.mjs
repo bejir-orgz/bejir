@@ -6,6 +6,7 @@ const { getFloodHistory } = await import("./api.ts");
 const { listFloodEvents } = await import("./api.ts");
 const { summarizeHistory } = await import("./history-summary.ts");
 const { createRegionFilterTree } = await import("../webgis/region-tree.ts");
+const { filterHistoryRows, emptyHistoryFilters } = await import("./history.ts");
 
 test("history loads all pages, sums impacts, preserves unknown values and scopes summary independently", async () => {
   const originalFetch = globalThis.fetch;
@@ -32,6 +33,7 @@ test("history loads all pages, sums impacts, preserves unknown values and scopes
     }
     const id = Number(url.pathname.split("/").at(-1));
     return Response.json({
+      event_type: id === 1 ? { name: "Banjir Bandang" } : id === 2 ? null : { name: "Banjir" },
       impacts: id === 1 ? [{ fatalities: 2, missing: 1 }, { fatalities: 1, missing: 0 }]
         : id === 2 ? [] : [{ fatalities: 0, missing: 0 }],
     });
@@ -43,6 +45,10 @@ test("history loads all pages, sums impacts, preserves unknown values and scopes
     assert.equal(data.rows[0].deaths, 3);
     assert.equal(data.rows[0].missing, 1);
     assert.equal(data.rows[0].severity, null);
+    assert.equal(data.rows[0].floodType, "Banjir Bandang");
+    assert.equal(data.rows[1].floodType, null);
+    assert.deepEqual(filterHistoryRows(data.rows, 2026, { ...emptyHistoryFilters, floodTypes: ["Banjir Bandang"] }).map((row) => row.id), ["1"]);
+    assert.equal(filterHistoryRows(data.rows, 2026, emptyHistoryFilters).length, 101);
     assert.equal(data.rows[0].areaKm2, null);
     assert.equal(data.rows[1].deaths, null);
     const selection = createRegionFilterTree(data.regions)[0].children.find((node) => node.name === "Kabupaten Bogor").id;
