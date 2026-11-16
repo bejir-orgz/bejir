@@ -12,7 +12,9 @@ Use Node.js 24 and the configured public API origin. From `apps/web` run
 npm run prepare:data
 ```
 
-This writes three ignored, derived artifacts to `data/processed/web`.
+This writes three derived artifacts to `data/processed/web`. The small
+`catalog.json` is tracked in Git so fresh clones can start. Geometry and facility
+artifacts remain ignored.
 
 | File | Contents | Refresh |
 | --- | --- | --- |
@@ -42,7 +44,7 @@ node --env-file-if-exists=.env.local scripts/prepare-web-data.mjs facilities
 ## Deploy
 
 1. Prepare the artifacts before packaging the web app. Next.js file tracing
-   includes the three artifacts from the monorepo. They remain out of Git.
+   includes the three artifacts from the monorepo. Only the small catalog is tracked in Git.
 2. Preserve `data/processed/web` in the deployed filesystem, or mount it and set
    server-only `BEJIR_PREPARED_DATA_DIR` to its absolute location. Both preparation
    and the web app must use the same configured API origin and directory.
@@ -57,7 +59,15 @@ node --env-file-if-exists=.env.local scripts/prepare-web-data.mjs facilities
 | GET /api/v1/flood/facilities | One filtered SQL aggregate. Repeated regency_id values form a union and are deduplicated |
 
 The web uses the prepared catalog when present, otherwise the lightweight catalog
-endpoint. All pages share the same all-district hazard list and metadata join.
+endpoint. The tracked `data/processed/web/catalog.json` contains 27 regencies/cities
+and 627 districts, prepared from the Geography API on 2026-11-13 (timestamp in the
+file). This 29 KB metadata-only catalog lets a fresh clone render while the legacy
+API lacks `/geography/catalog`. It contains no geometry, flood statistics, or
+credentials. Commit catalog updates after validated geography preparation when
+administrative IDs/names change. Different API origins must provide their own
+catalog or prepared artifacts. Invalid artifacts/responses are never replaced
+with an empty catalog. No separate backup snapshot is bundled.
+All pages share the same all-district hazard list and metadata join.
 There are no 27 per-regency hazard requests. Selected administrative outlines use
 the same prepared boundaries. Village outlines remain targeted detail requests.
 
