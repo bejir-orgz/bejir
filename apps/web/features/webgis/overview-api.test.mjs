@@ -6,6 +6,29 @@ import test from "node:test";
 const { getWorkspaceOverview } = await import("./overview-api.ts");
 const { getAnalysisSummary } = await import("./analysis-api.ts");
 
+test("initial Overview requests only the current year without changing region scope", async () => {
+  const original = globalThis.fetch;
+  const { getOverviewDateRange } = await import("./timeline.ts");
+  const period = getOverviewDateRange("", "");
+  let statistics = 0;
+  globalThis.fetch = async (input) => {
+    const url = new URL(input);
+    if (!url.pathname.endsWith("/statistics")) return new Response(null, { status: 503 });
+    statistics++;
+    assert.equal(url.searchParams.get("start_date"), `${period.from}T00:00:00`);
+    assert.equal(url.searchParams.get("end_date"), `${period.to}T23:59:59.999999`);
+    assert.equal(url.searchParams.has("regency_id"), false);
+    return Response.json({ summary: { total_events: 0 }, impacts: { affected_displaced: 0, houses_flooded: 0 }, by_year: [], by_regency: [] });
+  };
+  try {
+    const overview = await getWorkspaceOverview([], "", "");
+    assert.equal(statistics, 1);
+    assert.equal(overview.metrics[1].value, "0 unit");
+    assert.ok(overview.summary.includes(`${period.from} s.d. ${period.to}`));
+    assert.ok(!overview.summary.includes("seluruh periode"));
+  } finally { globalThis.fetch = original; }
+});
+
 test("flooded houses sum distinct selected regencies and preserve unknown or invalid counts", async () => {
   const original = globalThis.fetch;
   const { getFloodStatistics } = await import("../floods/api.ts");

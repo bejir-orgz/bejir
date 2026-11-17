@@ -1,6 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { getCurrentTimelineDate, getCurrentTimelinePeriod, getTimelineMonths } from "./timeline.ts";
+import { getCurrentTimelineDate, getCurrentTimelinePeriod, getOverviewDateRange, getTimelineMonths } from "./timeline.ts";
+
+test("Overview defaults to the Jakarta current year and keeps explicit dates", () => {
+  assert.deepEqual(getOverviewDateRange("", "", new Date("2026-12-31T16:59:59Z")), { from: "2026-01-01", to: "2026-12-31" });
+  assert.deepEqual(getOverviewDateRange("", "", new Date("2026-12-31T17:00:00Z")), { from: "2027-01-01", to: "2027-12-31" });
+  assert.deepEqual(getOverviewDateRange("2020-02-29", ""), { from: "2020-02-29", to: "2020-02-29" });
+  assert.deepEqual(getOverviewDateRange("2020-01-01", "2020-03-31"), { from: "2020-01-01", to: "2020-03-31" });
+});
 
 test("timeline shows the current month descending through January only", () => {
   const months = getTimelineMonths(2026, 9);

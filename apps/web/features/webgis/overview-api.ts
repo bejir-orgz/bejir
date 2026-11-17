@@ -1,6 +1,7 @@
 import { getRiverSummary } from "../rivers/api";
 import { getFloodStatistics } from "../floods/api";
 import type { WorkspaceData } from "./types";
+import { getOverviewDateRange } from "./timeline";
 import { classLabels, dominantClass, selectedHazards, weightedMean } from "../geography/spatial-data";
 
 export function emptyOverview(message = "Memuat data backend…"): WorkspaceData["overview"] {
@@ -27,15 +28,17 @@ export function emptyOverview(message = "Memuat data backend…"): WorkspaceData
 }
 
 export async function getWorkspaceOverview(regionIds: string[], from: string, to: string) {
+  const period = getOverviewDateRange(from, to);
   const overview = emptyOverview();
   const spatial = selectedHazards(regionIds);
   const supported = regionIds.every((id) => /^\d+$/.test(id));
-  const scope = from ? `${from} s.d. ${to || from}` : "seluruh periode histori";
+  const scope = `${period.from} s.d. ${period.to}`;
   const ids = [...new Set(regionIds)];
   const [spatialResult, historyResult, riversResult] = await Promise.allSettled([spatial, supported ? Promise.all((ids.length ? ids : [""]).map(async (id) => {
       const query = new URLSearchParams();
       if (id) query.set("regency_id", id);
-      if (from) { query.set("start_date", `${from}T00:00:00`); query.set("end_date", `${to || from}T23:59:59.999999`); }
+      query.set("start_date", `${period.from}T00:00:00`);
+      query.set("end_date", `${period.to}T23:59:59.999999`);
       return getFloodStatistics(query.toString());
     })) : Promise.resolve([]), getRiverSummary(regionIds)]);
   if (riversResult.status === "fulfilled" && riversResult.value.total !== null) overview.rivers = `${riversResult.value.total.toLocaleString("id-ID")} segmen`;

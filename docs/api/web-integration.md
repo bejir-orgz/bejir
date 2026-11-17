@@ -83,3 +83,5 @@ of map rendering limits. These counts do not measure river length, flood impact,
 or unique named watercourses.
 
 - The former affected-area cards in Map Interaktif, Histori Banjir and Analisis now show flooded houses from `houses_flooded`, in units. Labels use the requested “Rumah Terpendam”; this means flooded houses, not buried houses. Map and Analisis use the existing filtered statistics response, while history sums the existing event-detail rows and replaces its Area table column. No additional API requests are introduced. Missing values remain unavailable and zero remains valid; repeated flood events can count the same house again. Administrative `areaKm2` in the spatial analysis table remains the total region area, not flood extent or susceptible-class area.
+
+- With no explicit Timeline date, Map Overview defaults historical metrics and facility impacts to 1 January–31 December of the current year in Asia/Jakarta. User date selections override this range; clearing dates restores the current-year default. Spatial parameters retain their dataset scope because the API does not support year filtering for them.
