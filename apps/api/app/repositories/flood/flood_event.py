@@ -22,6 +22,14 @@ _IMPACT_TOTAL_COLUMNS = (
     "houses_flooded",
 )
 
+_ALL_IMPACT_COLUMNS = _IMPACT_TOTAL_COLUMNS + (
+    "schools_damaged",
+    "religious_facilities_damaged",
+    "health_facilities_damaged",
+    "offices_damaged",
+    "bridges_damaged",
+)
+
 
 class FloodEventRepository:
 
@@ -361,3 +369,100 @@ class FloodEventRepository:
             column: getattr(row, column)
             for column in _IMPACT_TOTAL_COLUMNS
         }
+
+    @staticmethod
+    def get_impact_totals_all(
+        db: Session,
+        *,
+        regency_ids: list[int],
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
+    ) -> dict:
+        statement = select(
+            *[
+                func.coalesce(
+                    func.sum(getattr(FloodEventImpact, column)),
+                    0,
+                ).label(column)
+                for column in _ALL_IMPACT_COLUMNS
+            ]
+        )
+        statement = (
+            statement
+            .select_from(FloodEventImpact)
+            .join(
+                FloodEvent,
+                FloodEvent.id == FloodEventImpact.flood_event_id,
+            )
+        )
+        statement = FloodEventRepository._apply_filters(
+            statement,
+            start_date=start_date,
+            end_date=end_date,
+        )
+        if regency_ids:
+            statement = statement.where(
+                FloodEvent.regency_id.in_(regency_ids)
+            )
+
+        row = db.execute(statement).one()
+
+        return {
+            column: getattr(row, column)
+            for column in _ALL_IMPACT_COLUMNS
+        }
+
+    @staticmethod
+    def get_impact_totals_by_regency(
+        db: Session,
+        *,
+        regency_ids: list[int],
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
+    ) -> list[dict]:
+        statement = (
+            select(
+                FloodEvent.regency_id.label("regency_id"),
+                Regency.name.label("regency_name"),
+                *[
+                    func.coalesce(
+                        func.sum(getattr(FloodEventImpact, column)),
+                        0,
+                    ).label(column)
+                    for column in _ALL_IMPACT_COLUMNS
+                ],
+            )
+            .select_from(FloodEventImpact)
+            .join(
+                FloodEvent,
+                FloodEvent.id == FloodEventImpact.flood_event_id,
+            )
+            .join(Regency, Regency.id == FloodEvent.regency_id)
+            .where(FloodEvent.regency_id.is_not(None))
+        )
+        statement = FloodEventRepository._apply_filters(
+            statement,
+            start_date=start_date,
+            end_date=end_date,
+        )
+        if regency_ids:
+            statement = statement.where(
+                FloodEvent.regency_id.in_(regency_ids)
+            )
+
+        statement = (
+            statement
+            .group_by(FloodEvent.regency_id, Regency.name)
+            .order_by(Regency.name.asc())
+        )
+
+        rows = db.execute(statement).all()
+
+        return [
+            {
+                "regency_id": row.regency_id,
+                "regency_name": row.regency_name,
+                **{column: getattr(row, column) for column in _ALL_IMPACT_COLUMNS},
+            }
+            for row in rows
+        ]

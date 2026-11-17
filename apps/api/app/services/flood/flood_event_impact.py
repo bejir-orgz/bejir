@@ -1,10 +1,46 @@
+from datetime import datetime
+
 from sqlalchemy.orm import Session
 
-from app.repositories.flood import FloodEventImpactRepository
-from app.schemas.flood import FloodEventImpactResponse
+from app.repositories.flood import FloodEventImpactRepository, FloodEventRepository
+from app.schemas.flood import (
+    FloodEventImpactResponse,
+    FloodImpactTotals,
+    FloodImpactsResponse,
+    FloodRegencyImpacts,
+)
 
 
 class FloodEventImpactService:
+
+    @staticmethod
+    def get_impacts(
+        db: Session,
+        *,
+        regency_ids: list[int],
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
+    ) -> FloodImpactsResponse:
+        regency_ids = sorted(set(regency_ids))
+        overall = FloodEventRepository.get_impact_totals_all(
+            db,
+            regency_ids=regency_ids,
+            start_date=start_date,
+            end_date=end_date,
+        )
+        by_regency = FloodEventRepository.get_impact_totals_by_regency(
+            db,
+            regency_ids=regency_ids,
+            start_date=start_date,
+            end_date=end_date,
+        )
+
+        return FloodImpactsResponse(
+            overall=FloodImpactTotals(**overall),
+            by_regency=[
+                FloodRegencyImpacts(**item) for item in by_regency
+            ],
+        )
 
     @staticmethod
     def list_impacts_by_event(

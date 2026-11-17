@@ -14,6 +14,7 @@ from app.main import app
 from app.repositories.flood.flood_event import FloodEventRepository
 from app.schemas.flood import FloodEventResponse
 from app.services.flood.flood_event import FloodEventService
+from app.services.flood.flood_event_impact import FloodEventImpactService
 
 
 @pytest.fixture
@@ -25,13 +26,17 @@ def db():
             "CREATE TABLE core.regency (id INTEGER PRIMARY KEY, code TEXT, name TEXT, province_code TEXT, geom TEXT)",
             "CREATE TABLE core.districts (id INTEGER PRIMARY KEY, code TEXT, name TEXT, regency_id INTEGER, geom TEXT)",
             "CREATE TABLE core.flood_events (id INTEGER PRIMARY KEY, regency_id INTEGER, event_type_id INTEGER, event_datetime DATETIME)",
-            "CREATE TABLE core.flood_event_impacts (id INTEGER PRIMARY KEY, flood_event_id INTEGER, schools_damaged INTEGER, health_facilities_damaged INTEGER, religious_facilities_damaged INTEGER)",
+            "CREATE TABLE core.flood_event_impacts (id INTEGER PRIMARY KEY, flood_event_id INTEGER, fatalities INTEGER, missing INTEGER, injured INTEGER, affected_displaced INTEGER, houses_heavily_damaged INTEGER, houses_moderately_damaged INTEGER, houses_slightly_damaged INTEGER, houses_flooded INTEGER, schools_damaged INTEGER, religious_facilities_damaged INTEGER, health_facilities_damaged INTEGER, offices_damaged INTEGER, bridges_damaged INTEGER)",
         ]:
             connection.exec_driver_sql(sql)
         connection.exec_driver_sql("INSERT INTO core.regency VALUES (14, '1', 'Kota Bogor', '32', 'large geometry'), (4, '2', 'Bogor', '32', 'large geometry')")
         connection.exec_driver_sql("INSERT INTO core.districts VALUES (545, '1', 'Tanah Sareal', 14, 'large geometry')")
         connection.exec_driver_sql("INSERT INTO core.flood_events VALUES (1,14,1,'2010-05-01 12:00:00.000000'), (2,14,1,'2010-06-01 12:00:00.000000'), (3,4,1,'2025-01-01 12:00:00.000000'), (4,4,1,'2026-01-01 12:00:00.000000')")
-        connection.exec_driver_sql("INSERT INTO core.flood_event_impacts VALUES (1,1,2,0,1), (2,1,1,0,0), (3,2,0,NULL,2), (4,3,10,5,8)")
+        connection.exec_driver_sql(
+            "INSERT INTO core.flood_event_impacts "
+            "(id, flood_event_id, schools_damaged, health_facilities_damaged, religious_facilities_damaged) "
+            "VALUES (1,1,2,0,1), (2,1,1,0,0), (3,2,0,NULL,2), (4,3,10,5,8)"
+        )
         connection.commit()
         queries = []
         event.listen(engine, "before_cursor_execute", lambda conn, cursor, statement, parameters, context, many: queries.append(statement))
@@ -57,6 +62,27 @@ def test_facilities_one_query_filters_dates_and_preserves_null(db):
     assert (empty.health, empty.education, empty.worship) == (0, 0, 0)
 
 
+def test_impacts_overall_and_by_regency(db):
+    result = FloodEventImpactService.get_impacts(db, regency_ids=[])
+    assert result.overall.schools_damaged == 13
+    assert result.overall.health_facilities_damaged == 5
+    assert result.overall.religious_facilities_damaged == 11
+    assert [(row.regency_id, row.regency_name) for row in result.by_regency] == [
+        (4, "Bogor"),
+        (14, "Kota Bogor"),
+    ]
+    bogor = result.by_regency[0]
+    assert (bogor.schools_damaged, bogor.health_facilities_damaged) == (10, 5)
+    assert len(db.info["queries"]) == 2
+
+    filtered = FloodEventImpactService.get_impacts(
+        db, regency_ids=[14], start_date=datetime(2010, 1, 1), end_date=datetime(2010, 12, 31),
+    )
+    assert filtered.overall.schools_damaged == 3
+    assert filtered.overall.health_facilities_damaged == 0
+    assert [row.regency_id for row in filtered.by_regency] == [14]
+
+
 def test_metadata_never_selects_geometry_and_dates_validate(db):
     app.dependency_overrides[get_db] = lambda: db
     try:
@@ -73,8 +99,17 @@ def test_metadata_never_selects_geometry_and_dates_validate(db):
             assert all("ST_AsGeoJSON" not in query for query in db.info["queries"])
             response = client.get("/api/v1/flood/facilities?regency_id=14&regency_id=14")
             assert response.status_code == 200 and response.json()["education"] == 3
+            response = client.get("/api/v1/flood/impacts?regency_id=14")
+            assert response.status_code == 200
+            assert response.json()["overall"]["schools_damaged"] == 3
+            assert response.json()["by_regency"][0]["regency_name"] == "Kota Bogor"
+            response = client.get("/api/v1/flood/impacts")
+            assert response.status_code == 200
+            assert response.json()["overall"]["schools_damaged"] == 13
+            assert len(response.json()["by_regency"]) == 2
             for query in ["regency_id=0", "start_date=2026-02-01&end_date=2026-01-01", "start_date=2026-01-01T00:00:00Z&end_date=2026-12-31"]:
                 assert client.get("/api/v1/flood/facilities?" + query).status_code == 422
+                assert client.get("/api/v1/flood/impacts?" + query).status_code == 422
     finally:
         app.dependency_overrides.clear()
 

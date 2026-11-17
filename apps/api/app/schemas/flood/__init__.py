@@ -7,7 +7,12 @@ from app.schemas.flood.flood_event import (
     FloodEventFilter,
 )
 
-from app.schemas.flood.flood_event_impact import FloodEventImpactResponse
+from app.schemas.flood.flood_event_impact import (
+    FloodEventImpactResponse,
+    FloodImpactTotals,
+    FloodRegencyImpacts,
+    FloodImpactsResponse,
+)
 
 from app.schemas.flood.statistics import (
     FloodEventStatisticsSummary,
@@ -25,6 +30,9 @@ __all__ = [
     "FloodEventListResponse",
     "FloodEventFilter",
     "FloodEventImpactResponse",
+    "FloodImpactTotals",
+    "FloodRegencyImpacts",
+    "FloodImpactsResponse",
     "FloodEventStatisticsSummary",
     "FloodEventYearCount",
     "FloodEventRegencyCount",
