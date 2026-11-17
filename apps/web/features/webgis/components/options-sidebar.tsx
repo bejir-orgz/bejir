@@ -27,7 +27,7 @@ export function OptionsSidebar({ mode, data, filters, hidden, onChange }: {
           <span>{option.label}</span>
         </Label>
       ))}</div>
-      <p className="sr-only">Titik evakuasi, parameter hujan, rata-rata elevasi, kerawanan, dan tutupan lahan dominan terhubung ke API. Data parameter ditampilkan per kecamatan. Jaringan sungai ditampilkan per area peta. Layer area kejadian banjir belum memiliki geometri pada API.</p>
+      <p className="sr-only">Titik evakuasi, parameter hujan, rata-rata elevasi, kerawanan, dan tutupan lahan dominan terhubung ke API. Data parameter ditampilkan per kecamatan. Jaringan sungai ditampilkan per area peta.</p>
     </aside>
   );
 }

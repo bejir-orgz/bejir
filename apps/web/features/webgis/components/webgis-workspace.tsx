@@ -3,7 +3,7 @@
 import { useEffect, useState, useReducer, useRef, useSyncExternalStore } from "react";
 import { useRegionSelection } from "@/features/regions/region-selection";
 import { WebgisHeader } from "@/components/layout/webgis-header";
-import { IconMap, IconLayoutNavbarCollapse, IconLayoutNavbarCollapseFilled, IconStackFront, IconStack3Filled, IconCalendarWeek, IconCalendarWeekFilled } from "@tabler/icons-react";
+import { IconMap, IconLayoutNavbarCollapse, IconLayoutNavbarCollapseFilled, IconStackFront, IconStack3Filled, IconCalendarWeek, IconCalendarWeekFilled, IconListDetails } from "@tabler/icons-react";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { OverviewButton } from "@/components/ui/overview-button";
@@ -20,13 +20,14 @@ import type { WorkspaceFilters, WorkspaceProps } from "../types";
 import { RegionSidebar } from "./region-sidebar";
 import { OverviewPanel } from "./overview-panel";
 import { OptionsSidebar } from "./options-sidebar";
-import { LegendBar } from "./legend-bar";
+import { LegendSidebar } from "./legend-sidebar";
 import { TimelineSidebar } from "./timeline-sidebar";
 import { initialPanelState, panelReducer, type LeftPanel } from "../panel-state";
 
 const leftTools = [
   { id: "regions", label: "daerah", icon: IconMap, filledIcon: IconMap },
   { id: "layers", label: "layer", icon: IconStackFront, filledIcon: IconStack3Filled },
+  { id: "legends", label: "legenda", icon: IconListDetails, filledIcon: IconListDetails },
   { id: "timeline", label: "timeline", icon: IconCalendarWeek, filledIcon: IconCalendarWeekFilled },
 ] as const;
 
@@ -97,6 +98,7 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
         <RegionSidebar hidden={panels.left !== "regions"} filters={filters} onChange={updateFilters} />
         <OptionsSidebar mode="layers" hidden={panels.left !== "layers"} data={data} filters={filters} onChange={updateFilters} />
         <TimelineSidebar year={data.year} hidden={panels.left !== "timeline"} filters={filters} onChange={updateFilters} />
+        <LegendSidebar layers={data.layers} hidden={panels.left !== "legends"} />
         <div className="gis-left-toolbar absolute top-4 left-0 flex flex-col gap-4 pointer-events-none [&_.gis-panel-toggle]:relative [&_.gis-panel-toggle]:z-1 [&_.gis-panel-toggle]:rounded-[0_16px_16px_0] [&_.gis-panel-toggle]:pointer-events-auto [&_.gis-panel-toggle]:[opacity:1] [&_.gis-panel-toggle]:[transform:translateX(0)] [&_.gis-panel-toggle]:[transition:transform_var(--gis-slide-duration)_var(--gis-slide-easing),opacity_120ms_ease] [&_.gis-panel-toggle[aria-expanded=true]]:z-3 [&_.gis-panel-toggle[aria-expanded=true]]:[transform:translateX(264px)] [&_.gis-panel-toggle[aria-expanded=true]]:bg-[white] max-[999.01px]:gap-2 motion-reduce:[&_.gis-panel-toggle]:[transition:none]" role="group" aria-label="Alat peta">{leftTools.map(({ id, label, icon, filledIcon }) => {
           const expanded = panels.left === id;
           const Icon = expanded ? filledIcon : icon;
@@ -117,7 +119,6 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
           <p className="gis-data-note text-[var(--gis-muted)] text-[11px] leading-[16px] mt-4">Sumber backend. — menandakan data tidak tersedia. Filter waktu berlaku pada histori kejadian.</p>
           </div>
         </aside>
-        <LegendBar layers={data.layers} />
       </main>
     </div>
   );
