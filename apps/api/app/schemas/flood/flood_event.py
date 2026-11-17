@@ -18,12 +18,12 @@ class FloodEventResponse(BaseModel):
 
     event_type_code: int | None = None
     event_type_id: int
+    event_type: FloodEventTypeResponse
 
     event_count: bool | None = None
 
 
 class FloodEventDetailResponse(FloodEventResponse):
-    event_type: FloodEventTypeResponse
     impacts: list[FloodEventImpactResponse] = []
 
 

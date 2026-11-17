@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.main import app
 from app.repositories.flood.flood_event import FloodEventRepository
+from app.schemas.flood import FloodEventResponse
 from app.services.flood.flood_event import FloodEventService
 
 
@@ -91,3 +92,25 @@ def test_event_pagination_has_unique_id_tiebreaker():
 
     FloodEventRepository.get_all(Database(), limit=100, offset=100)
     assert "event_datetime DESC NULLS LAST, core.flood_events.id DESC" in statements[0]
+
+
+def test_flood_event_response_includes_event_type():
+    event = SimpleNamespace(
+        id=1,
+        event_id="BNJ-001",
+        event_datetime=None,
+        regency_code=None,
+        regency_id=14,
+        event_type_code=1,
+        event_type_id=1,
+        event_count=True,
+        event_type=SimpleNamespace(id=1, code=1, name="Banjir"),
+    )
+
+    response = FloodEventResponse.model_validate(event)
+
+    assert response.model_dump()["event_type"] == {
+        "id": 1,
+        "code": 1,
+        "name": "Banjir",
+    }
