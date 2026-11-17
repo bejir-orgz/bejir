@@ -16,7 +16,7 @@ export function emptyAnalysisData(error?: string): AnalysisData {
       0: {
         metrics: [
           { id: "events", label: "Total Kejadian Banjir", value: "—", change: "—", trend: "increase" },
-          { id: "area", label: "Total Area Terdampak", value: "—", change: "—", trend: "increase" },
+          { id: "housesFlooded", label: "Total Rumah Terpendam", value: "—", change: "—", trend: "increase" },
           { id: "population", label: "Penduduk Terdampak", value: "—", change: "—", trend: "decrease" },
           { id: "average", label: "Rata-Rata Kejadian/Bulan", value: "—", change: "—", trend: "increase" },
         ],
@@ -95,6 +95,11 @@ export async function getAnalysisSummary(year: number, regencyIds: number[], dis
     snapshot.metrics[0].trend = change !== null && change < 0 ? "decrease" : "increase";
     snapshot.metrics[3].value = (total / 12).toLocaleString("id-ID", { maximumFractionDigits: 1 });
     snapshot.metrics[3].change = "Total kejadian dibagi 12 bulan";
+    const houses = current.value.map((group) => group.impacts.houses_flooded);
+    if (houses.every((value) => value != null)) {
+      snapshot.metrics[1].value = houses.reduce<number>((sum, value) => sum + (value ?? 0), 0).toLocaleString("id-ID") + " unit";
+      snapshot.metrics[1].change = "Akumulasi rumah terendam banjir";
+    }
     const affected = current.value.map((group) => group.impacts.affected_displaced);
     if (affected.every((value) => value !== null)) {
       snapshot.metrics[2].value = affected.reduce<number>((sum, value) => sum + (value ?? 0), 0).toLocaleString("id-ID") + " jiwa";

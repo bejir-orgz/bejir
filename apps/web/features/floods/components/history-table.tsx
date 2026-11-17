@@ -10,13 +10,13 @@ import { getPageItems as historyPageItems } from "@/lib/pagination";
 import type { FloodHistoryRow } from "../types";
 
 const dateFormatter = new Intl.DateTimeFormat("id-ID", { day: "2-digit", month: "short", year: "numeric" });
-const areaFormatter = new Intl.NumberFormat("id-ID", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const countFormatter = new Intl.NumberFormat("id-ID");
 
 const columns: ColumnDef<FloodHistoryRow>[] = [
   { accessorKey: "date", header: ({ column }) => <SortHeader column={column} title="Tanggal" />, cell: ({ row }) => row.original.date ? dateFormatter.format(new Date(`${row.original.date}T12:00:00`)) : "—" },
   { accessorKey: "region", header: ({ column }) => <SortHeader column={column} title="Kota/Kabupaten" /> },
   { accessorKey: "floodType", header: ({ column }) => <SortHeader column={column} title="Jenis Banjir" />, cell: ({ row }) => row.original.floodType ?? "—" },
-  { accessorKey: "areaKm2", header: ({ column }) => <SortHeader column={column} title="Area" />, cell: ({ row }) => row.original.areaKm2 === null ? "—" : `${areaFormatter.format(row.original.areaKm2)} km²` },
+  { accessorKey: "housesFlooded", header: ({ column }) => <SortHeader column={column} title="Rumah Terpendam" />, cell: ({ row }) => row.original.housesFlooded === null ? "—" : `${countFormatter.format(row.original.housesFlooded)} unit` },
   { accessorKey: "deaths", header: ({ column }) => <SortHeader column={column} title="Korban Meninggal" />, cell: ({ row }) => row.original.deaths ?? "—" },
   { accessorKey: "missing", header: ({ column }) => <SortHeader column={column} title="Korban Menghilang" />, cell: ({ row }) => row.original.missing ?? "—" },
   { id: "total", accessorFn: (row) => row.deaths === null || row.missing === null ? null : row.deaths + row.missing, cell: ({ getValue }) => getValue<number | null>() ?? "—", header: ({ column }) => <SortHeader column={column} title="Total Korban" className="gap-1 whitespace-nowrap" /> },

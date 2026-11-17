@@ -34,8 +34,8 @@ test("history loads all pages, sums impacts, preserves unknown values and scopes
     const id = Number(url.pathname.split("/").at(-1));
     return Response.json({
       event_type: id === 1 ? { name: "Banjir Bandang" } : id === 2 ? null : { name: "Banjir" },
-      impacts: id === 1 ? [{ fatalities: 2, missing: 1 }, { fatalities: 1, missing: 0 }]
-        : id === 2 ? [] : [{ fatalities: 0, missing: 0 }],
+      impacts: id === 1 ? [{ fatalities: 2, missing: 1, houses_flooded: 10 }, { fatalities: 1, missing: 0, houses_flooded: 2 }]
+        : id === 2 ? [] : [{ fatalities: 0, missing: 0, houses_flooded: 0 }],
     });
   };
   try {
@@ -49,15 +49,22 @@ test("history loads all pages, sums impacts, preserves unknown values and scopes
     assert.equal(data.rows[1].floodType, null);
     assert.deepEqual(filterHistoryRows(data.rows, 2026, { ...emptyHistoryFilters, floodTypes: ["Banjir Bandang"] }).map((row) => row.id), ["1"]);
     assert.equal(filterHistoryRows(data.rows, 2026, emptyHistoryFilters).length, 101);
-    assert.equal(data.rows[0].areaKm2, null);
+    assert.equal(data.rows[0].housesFlooded, 12);
+    assert.equal(data.rows[1].housesFlooded, null);
+    assert.equal(data.rows[2].housesFlooded, 0);
     assert.equal(data.rows[1].deaths, null);
     const selection = createRegionFilterTree(data.regions)[0].children.find((node) => node.name === "Kabupaten Bogor").id;
     const snapshot = summarizeHistory(data, [selection]);
     assert.equal(snapshot.events, "1");
+    assert.equal(snapshot.housesFlooded, "12 unit");
+    assert.match(snapshot.housesFloodedNote, /Akumulasi/);
     assert.equal(snapshot.deaths, 3);
     assert.equal(snapshot.timeline[1].events, 1);
     assert.match(snapshot.eventChange, /-50/);
     assert.equal(summarizeHistory(data, []).deaths, null);
+    assert.equal(summarizeHistory(data, []).housesFlooded, "—");
+    const city = createRegionFilterTree(data.regions)[0].children.find((node) => node.name === "Kota Bogor").id;
+    assert.equal(summarizeHistory({ ...data, rows: data.rows.slice(2) }, [city]).housesFlooded, "0 unit");
     assert.equal(data.rows.length, 101);
   } finally {
     globalThis.fetch = originalFetch;

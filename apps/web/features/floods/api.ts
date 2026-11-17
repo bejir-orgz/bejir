@@ -10,7 +10,7 @@ export interface FloodEvent {
 
 export interface FloodStatistics {
   summary: { total_events: number };
-  impacts: { affected_displaced: number | null };
+  impacts: { affected_displaced: number | null; houses_flooded?: number | null };
   by_year: { year: number; total_events: number }[];
   by_regency: { regency_id: number; regency_name: string | null; total_events: number }[];
 }
@@ -19,6 +19,7 @@ export async function getFloodStatistics(query = ""): Promise<FloodStatistics> {
   const data = await readFlood<FloodStatistics>(`statistics${query ? "?" + query : ""}`);
   const count = (value: unknown) => typeof value === "number" && Number.isSafeInteger(value) && value >= 0;
   if (!data || !count(data.summary?.total_events) || !data.impacts || (data.impacts.affected_displaced !== null && !count(data.impacts.affected_displaced)) ||
+      (data.impacts.houses_flooded != null && !count(data.impacts.houses_flooded)) ||
       !Array.isArray(data.by_year) || data.by_year.some((row) => !Number.isSafeInteger(row.year) || row.year < 1 || !count(row.total_events)) ||
       !Array.isArray(data.by_regency) || data.by_regency.some((row) => !Number.isSafeInteger(row.regency_id) || row.regency_id < 1 || (row.regency_name !== null && typeof row.regency_name !== "string") || !count(row.total_events))) {
     throw new Error("Respons statistik Flood tidak valid.");
@@ -31,6 +32,7 @@ interface FloodDetail extends FloodEvent { impacts: FloodImpact[]; event_type?: 
 export interface FloodImpact {
   fatalities: number | null;
   missing: number | null;
+  houses_flooded?: number | null;
   schools_damaged?: number | null;
   religious_facilities_damaged?: number | null;
   health_facilities_damaged?: number | null;
@@ -90,16 +92,16 @@ export async function getFloodHistory(requestedYear?: number): Promise<FloodHist
   for (let index = 0; index < events.length; index += 6) {
     const batch = await Promise.all(events.slice(index, index + 6).map(async (event) => {
       const detail = await getFloodDetail(event.id);
-      const sum = (field: "fatalities" | "missing") => {
+      const sum = (field: "fatalities" | "missing" | "houses_flooded") => {
         const values = detail.impacts.map((impact) => impact[field]);
-        return values.length && values.every((value) => value !== null)
+        return values.length && values.every((value) => Number.isSafeInteger(value) && value! >= 0)
           ? values.reduce<number>((total, value) => total + (value ?? 0), 0) : null;
       };
       return {
         id: String(event.id),
         date: event.event_datetime?.slice(0, 10) ?? "",
         region: names.get(event.regency_id ?? -1) ?? "—",
-        district: "", village: "", severity: null, areaKm2: null,
+        district: "", village: "", severity: null, housesFlooded: sum("houses_flooded"),
         floodType: detail.event_type?.name ?? null,
         deaths: sum("fatalities"), missing: sum("missing"),
       };

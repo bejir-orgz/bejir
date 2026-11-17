@@ -28,7 +28,7 @@ for (const year of years) {
   snapshots[year] = {
     metrics: [
       { id: "events", label: "Total Kejadian Banjir", value: ["286", "247", "228"][offset], change: [`+15,8% dari ${previous}`, `+8,3% dari ${previous}`, `+4,6% dari ${previous}`][offset], trend: "increase" },
-      { id: "area", label: "Total Area Terdampak", value: ["13,4 km²", "11,7 km²", "11,0 km²"][offset], change: [`+14,5% dari ${previous}`, `+6,4% dari ${previous}`, `+3,8% dari ${previous}`][offset], trend: "increase" },
+      { id: "housesFlooded", label: "Total Rumah Terpendam", value: "—", change: "—", trend: "increase" },
       { id: "population", label: "Penduduk Terdampak", value: ["18.640 jiwa", "19.872 jiwa", "20.400 jiwa"][offset], change: [`−6,2% dari ${previous}`, `−2,6% dari ${previous}`, `−1,5% dari ${previous}`][offset], trend: "decrease" },
       { id: "average", label: "Rata-Rata Kejadian/Bulan", value: ["23,8", "20,6", "19,0"][offset], change: [`+15,8% dari ${previous}`, `+8,3% dari ${previous}`, `+4,6% dari ${previous}`][offset], trend: "increase" },
     ],

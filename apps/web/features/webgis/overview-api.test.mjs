@@ -6,6 +6,26 @@ import test from "node:test";
 const { getWorkspaceOverview } = await import("./overview-api.ts");
 const { getAnalysisSummary } = await import("./analysis-api.ts");
 
+test("flooded houses sum distinct selected regencies and preserve unknown or invalid counts", async () => {
+  const original = globalThis.fetch;
+  const { getFloodStatistics } = await import("../floods/api.ts");
+  try {
+    globalThis.fetch = async (input) => {
+      const id = new URL(input).searchParams.get("regency_id");
+      return Response.json({ summary: { total_events: 1 }, impacts: { affected_displaced: 0, houses_flooded: id === "4" ? 10 : 2 }, by_year: [], by_regency: [] });
+    };
+    assert.equal((await getAnalysisSummary(2026, [4, 14, 4], [])).metrics[1].value, "12 unit");
+    for (const houses of [null, undefined]) {
+      globalThis.fetch = async () => Response.json({ summary: { total_events: 1 }, impacts: { affected_displaced: 0, houses_flooded: houses }, by_year: [], by_regency: [] });
+      assert.equal((await getAnalysisSummary(2026, [], [])).metrics[1].value, "—");
+    }
+    for (const houses of [-1, 1.5, "12"]) {
+      globalThis.fetch = async () => Response.json({ summary: { total_events: 1 }, impacts: { affected_displaced: 0, houses_flooded: houses }, by_year: [], by_regency: [] });
+      await assert.rejects(getFloodStatistics(), /tidak valid/);
+    }
+  } finally { globalThis.fetch = original; }
+});
+
 test("overview scopes history by regency and date and preserves explicit zero", async () => {
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async (input) => {
@@ -15,12 +35,14 @@ test("overview scopes history by regency and date and preserves explicit zero", 
     assert.equal(query.get("regency_id"), "14");
     assert.equal(query.get("start_date"), "2026-01-01T00:00:00");
     assert.equal(query.get("end_date"), "2026-01-31T23:59:59.999999");
-    return Response.json({ summary: { total_events: 0 }, impacts: { affected_displaced: 0 }, by_year: [], by_regency: [] });
+    return Response.json({ summary: { total_events: 0 }, impacts: { affected_displaced: 0, houses_flooded: 0 }, by_year: [], by_regency: [] });
   };
   try {
     const result = await getWorkspaceOverview(["14"], "2026-01-01", "2026-01-31");
     assert.deepEqual(result.facilities.find((row) => row.id === "bridges"), { id: "bridges", label: "Jembatan", count: null });
     assert.equal(result.metrics[0].value, "0");
+    assert.equal(result.metrics[1].label, "Rumah Terpendam");
+    assert.equal(result.metrics[1].value, "0 unit");
     assert.equal(result.metrics[3].value, "0 jiwa");
     assert.match(result.summary, /akumulasi/);
     assert.equal(result.elevation, "—");
@@ -56,7 +78,7 @@ test("analysis combines scoped counts and keeps impacts distinct from unique pop
     assert.equal(query.get("regency_id"), "14");
     const previous = query.get("start_date")?.startsWith("2025");
     return Response.json({
-      summary: { total_events: previous ? 20 : 24 }, impacts: { affected_displaced: 100 },
+      summary: { total_events: previous ? 20 : 24 }, impacts: { affected_displaced: 100, houses_flooded: 12 },
       by_regency: [{ regency_id: 14, regency_name: "Kota Bogor", total_events: 24 }],
       by_year: [{ year: 2025, total_events: 20 }, { year: 2026, total_events: 24 }],
     });
@@ -65,6 +87,8 @@ test("analysis combines scoped counts and keeps impacts distinct from unique pop
     const result = await getAnalysisSummary(2026, [14, 14]);
     assert.equal(calls, 3);
     assert.equal(result.metrics[0].value, "24");
+    assert.equal(result.metrics[1].label, "Total Rumah Terpendam");
+    assert.equal(result.metrics[1].value, "12 unit");
     assert.equal(result.metrics[3].value, "2");
     assert.equal(result.metrics[2].change, "Akumulasi terdampak/mengungsi");
     assert.equal(result.annualEvents.at(-1).events, 24);
@@ -83,6 +107,7 @@ test("failed spatial data and comparison preserve successful flood statistics", 
   try {
     const snapshot = await getAnalysisSummary(2026, [14]);
     assert.equal(snapshot.metrics[0].value, "24");
+    assert.equal(snapshot.metrics[1].value, "—");
     assert.equal(snapshot.metrics[0].change, "—");
     assert.equal(snapshot.annualEvents.at(-1).events, 24);
     assert.equal(snapshot.distribution[0].value, null);
@@ -96,7 +121,7 @@ test("failed spatial data and comparison preserve successful flood statistics", 
 test("malformed comparison responses do not break successful annual metrics", async () => {
   const original = globalThis.fetch;
   globalThis.fetch = async (input) => input.includes("2025-01-01") ? Response.json([]) : Response.json({
-    summary: { total_events: 2 }, impacts: { affected_displaced: 0 }, by_year: [{ year: 2026, total_events: 2 }], by_regency: [],
+    summary: { total_events: 2 }, impacts: { affected_displaced: 0, houses_flooded: 0 }, by_year: [{ year: 2026, total_events: 2 }], by_regency: [],
   });
   try {
     const snapshot = await getAnalysisSummary(2026, [], [{ district_id: 1, n_piksel: 10, kelas_dominan_v2: 4 }]);

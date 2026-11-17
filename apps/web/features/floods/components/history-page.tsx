@@ -56,7 +56,7 @@ export function HistoryPage({ data }: { data: FloodHistoryData }) {
         <CasualtyChart snapshot={snapshot} />
         <div className="history-summary-right grid gap-4 min-w-0"><div className="history-metrics grid grid-cols-[1fr_1fr] gap-4 max-[900.01px]:gap-2 max-[700.01px]:gap-2">
           <Card className="history-metric h-27 p-4 [&_h2]:text-[14px] [&_h2]:leading-[20px] [&_h2]:font-normal [&_strong]:block [&_strong]:text-[24px] [&_strong]:leading-[32px] [&_strong]:font-medium [&_>_span]:block [&_>_span]:text-[#2bb600] [&_>_span]:text-[12px] [&_>_span]:leading-[16px] [&_>_span]:mt-1 max-[900.01px]:p-3"><h2>Total Kejadian Banjir</h2><strong>{snapshot.events}</strong><span>{snapshot.eventChange}</span></Card>
-          <Card className="history-metric h-27 p-4 [&_h2]:text-[14px] [&_h2]:leading-[20px] [&_h2]:font-normal [&_strong]:block [&_strong]:text-[24px] [&_strong]:leading-[32px] [&_strong]:font-medium [&_>_span]:block [&_>_span]:text-[#2bb600] [&_>_span]:text-[12px] [&_>_span]:leading-[16px] [&_>_span]:mt-1 max-[900.01px]:p-3"><h2>Total Area Terdampak</h2><strong>{snapshot.area}</strong><span>{snapshot.areaChange}</span></Card>
+          <Card className="history-metric h-27 p-4 [&_h2]:text-[14px] [&_h2]:leading-[20px] [&_h2]:font-normal [&_strong]:block [&_strong]:text-[24px] [&_strong]:leading-[32px] [&_strong]:font-medium [&_>_span]:block [&_>_span]:text-[#2bb600] [&_>_span]:text-[12px] [&_>_span]:leading-[16px] [&_>_span]:mt-1 max-[900.01px]:p-3"><h2>Total Rumah Terpendam</h2><strong>{snapshot.housesFlooded}</strong><span>{snapshot.housesFloodedNote}</span></Card>
         </div><TimelineChart snapshot={snapshot} /></div>
       </section>
       <div className="history-divider h-4 my-4 flex items-center [&::after]:content-[''] [&::after]:h-0.5 [&::after]:bg-neutral-300 [&::after]:w-full" aria-hidden="true" />
@@ -64,7 +64,7 @@ export function HistoryPage({ data }: { data: FloodHistoryData }) {
         <HistoryFiltersBar districtRows={data.rows} year={tableYear} years={data.years} onYearChange={(value) => { setTableYear(value); setFilters((current) => ({ ...current, from: "", to: "" })); }} filters={filters} regions={data.regions} onChange={setFilters} />
         <HistoryTable rows={rows} />
       </Card>
-      <p className="history-data-note mt-4 text-[12px] leading-[16px] text-[#737373]" role="status">{(hasDistrictSelection(summaryRegionIds) ? "Histori Flood belum memiliki lokasi kecamatan/kelurahan. Ringkasan dan tabel untuk pilihan ini belum tersedia." : "") || error || (loading ? "Memuat histori banjir…" : "Sumber API Flood. Jenis banjir berasal dari jenis kejadian API. Luas terdampak belum tersedia. — menandakan data tidak tersedia.")}</p>
+      <p className="history-data-note mt-4 text-[12px] leading-[16px] text-[#737373]" role="status">{(hasDistrictSelection(summaryRegionIds) ? "Histori Flood belum memiliki lokasi kecamatan/kelurahan. Ringkasan dan tabel untuk pilihan ini belum tersedia." : "") || error || (loading ? "Memuat histori banjir…" : "Sumber API Flood. Jenis banjir berasal dari jenis kejadian API. Jumlah rumah merupakan akumulasi rumah terendam banjir dan dapat mencakup rumah yang sama pada kejadian berbeda. — menandakan data tidak tersedia.")}</p>
     </main>
   </div>;
 }

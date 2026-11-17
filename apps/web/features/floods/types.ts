@@ -8,7 +8,7 @@ export interface FloodHistoryRow {
   village: string;
   severity: FloodSeverity | null;
   floodType: string | null;
-  areaKm2: number | null;
+  housesFlooded: number | null;
   deaths: number | null;
   missing: number | null;
 }
@@ -31,8 +31,8 @@ export interface FloodHistoryData {
   snapshots: Record<number, {
     events: string;
     eventChange: string;
-    area: string;
-    areaChange: string;
+    housesFlooded: string;
+    housesFloodedNote: string;
     deaths: number | null;
     missing: number | null;
     timeline: { month: string; events: number }[];

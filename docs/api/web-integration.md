@@ -38,7 +38,7 @@ Chat requests include verified dataset totals retrieved from the selected data e
 
 ## Data gaps
 
-The contract has no monthly rainfall series, building dataset, flood extent geometries, operational shelter verification, or spatial facility exposure endpoint. Flood events have no district/village references, severity or affected area. Historical affected-area cards remain unavailable. Spatial dataset period and public-facility taxonomy remain missing.
+The contract has no monthly rainfall series, building dataset, flood extent geometries, operational shelter verification, or spatial facility exposure endpoint. Flood events have no district/village references, severity or affected area. Historical affected-area cards have been replaced with flooded-house counts. Spatial dataset period and public-facility taxonomy remain missing.
 
 ## Display geometry and caching
 
@@ -81,3 +81,5 @@ The existing river checkbox loads a bounded canvas overlay for the current
 viewport. Overview and Analysis use full regional segment counts, independently
 of map rendering limits. These counts do not measure river length, flood impact,
 or unique named watercourses.
+
+- The former affected-area cards in Map Interaktif, Histori Banjir and Analisis now show flooded houses from `houses_flooded`, in units. Labels use the requested “Rumah Terpendam”; this means flooded houses, not buried houses. Map and Analisis use the existing filtered statistics response, while history sums the existing event-detail rows and replaces its Area table column. No additional API requests are introduced. Missing values remain unavailable and zero remains valid; repeated flood events can count the same house again. Administrative `areaKm2` in the spatial analysis table remains the total region area, not flood extent or susceptible-class area.

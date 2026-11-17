@@ -7,7 +7,7 @@ export function emptyOverview(message = "Memuat data backend…"): WorkspaceData
   return {
     metrics: [
       { id: "floods", label: "Total Kejadian Banjir", value: "—", change: "—", trend: "increase" },
-      { id: "area", label: "Area Terdampak", value: "—", change: "—", trend: "increase" },
+      { id: "housesFlooded", label: "Rumah Terpendam", value: "—", change: "—", trend: "increase" },
       { id: "rainfall", label: "Curah Hujan Tahunan", value: "—", change: "—", trend: "increase" },
       { id: "population", label: "Penduduk Terdampak", value: "—", change: "—", trend: "decrease" },
     ],
@@ -49,6 +49,11 @@ export async function getWorkspaceOverview(regionIds: string[], from: string, to
     const total = statistics.reduce((sum, row) => sum + row.summary.total_events, 0);
     overview.metrics[0].value = total.toLocaleString("id-ID");
     overview.metrics[0].change = scope;
+    const houses = statistics.map((row) => row.impacts.houses_flooded);
+    if (houses.every((value) => value != null)) {
+      overview.metrics[1].value = houses.reduce<number>((sum, value) => sum + (value ?? 0), 0).toLocaleString("id-ID") + " unit";
+      overview.metrics[1].change = "Akumulasi rumah terendam banjir";
+    }
     const affected = statistics.map((row) => row.impacts.affected_displaced);
     if (affected.every((value) => value !== null)) {
       overview.metrics[3].value = affected.reduce<number>((sum, value) => sum + (value ?? 0), 0).toLocaleString("id-ID") + " jiwa";
