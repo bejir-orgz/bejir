@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { fetchRegionChildren, searchRegions } from "@/features/regions/api";
@@ -35,7 +35,7 @@ function RegionTree({ nodes, depth = 0, expandedIds, selectedIds, branches, sear
               {branch && depth === 0 ? <Button variant="ghost" type="button" className="gis-tree-toggle w-6 h-6 flex shrink-0 items-center justify-center p-0 cursor-pointer text-[#111]" aria-label={`${expanded ? "Tutup" : "Buka"} ${node.name}`} aria-expanded={expanded} onClick={() => onExpand(node.id)}>{expanded ? <IconChevronDown className="size-6" aria-hidden="true" /> : <IconChevronRight className="size-6" aria-hidden="true" />}</Button> : null}
               <RegionCheckbox label={`Pilih ${node.name}`} checked={isRegionSelected(selectedIds, node.id)} onChange={() => onSelect(node.id)} />
               {branch ? <Button variant="ghost" type="button" className="gis-folder-toggle w-6 h-6 flex shrink-0 items-center justify-center p-0 cursor-pointer text-[#737373]" aria-label={`${expanded ? "Tutup" : "Buka"} folder ${node.name}`} aria-expanded={expanded} onClick={() => onExpand(node.id)}>{expanded ? <IconFolderOpen className="size-6" aria-hidden="true" /> : <IconFolder className="size-6" aria-hidden="true" />}</Button> : null}
-              <span>{node.name}</span>
+              <span className="min-w-0 whitespace-normal break-words">{node.name}</span>
             </div>
             {branch && expanded && node.children ? <RegionTree nodes={node.children} depth={depth + 1} expandedIds={expandedIds} selectedIds={selectedIds} branches={branches} searching={searching} onExpand={onExpand} onSelect={onSelect} /> : null}
             {expanded && branches[node.id] === "error" ? <p role="status">Daerah gagal dimuat.</p> : null}
@@ -47,9 +47,11 @@ function RegionTree({ nodes, depth = 0, expandedIds, selectedIds, branches, sear
   );
 }
 
-export function RegionSidebar({ filters, onChange, hidden }: {
+export function RegionSidebar({ filters, onChange, hidden, onWidthChange }: {
   hidden?: boolean; filters: WorkspaceFilters; onChange: (patch: Partial<WorkspaceFilters>) => void;
+  onWidthChange: (width: number) => void;
 }) {
+  const panel = useRef<HTMLElement>(null);
   const [query, setQuery] = useState("");
   const [expandedIds, setExpandedIds] = useState<string[]>([]);
   const [roots, setRoots] = useState<RegionNode[] | null>();
@@ -59,6 +61,18 @@ export function RegionSidebar({ filters, onChange, hidden }: {
   const hasRoots = Array.isArray(roots);
   const result = search?.term === term ? search : undefined;
   const regions = result?.nodes ?? filterRegionTree(attachChildren(roots ?? [], branches), query);
+
+  useEffect(() => {
+    const element = panel.current;
+    if (!element) return;
+    // Measure offscreen too so the other panels match before Daerah is opened.
+    const observer = new ResizeObserver(() => {
+      const width = Math.ceil(element.getBoundingClientRect().width);
+      if (width > 0) onWidthChange(width);
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [onWidthChange]);
 
   useEffect(() => {
     if (hidden || !term) return;
@@ -73,14 +87,14 @@ export function RegionSidebar({ filters, onChange, hidden }: {
   }, [hidden, term]);
 
   useEffect(() => {
-    if (hidden || hasRoots) return;
+    if (hasRoots) return;
     const controller = new AbortController();
     fetchRegionChildren(undefined, controller.signal).then(
       (nodes) => setRoots(nodes),
       () => { if (!controller.signal.aborted) setRoots(null); },
     );
     return () => controller.abort();
-  }, [hidden, hasRoots]);
+  }, [hasRoots]);
 
   async function expandRegion(id: string) {
     const isOpen = expandedIds.includes(id);
@@ -96,9 +110,12 @@ export function RegionSidebar({ filters, onChange, hidden }: {
   }
 
   return (
-    <aside hidden={hidden} id="gis-regions-panel" className="gis-left absolute z-2 [inset:0_auto_0_0] w-66 min-h-26 p-4 pl-3 pr-5 border-0 rounded-[0_16px_16px_0] bg-[white] overflow-y-auto [direction:rtl] [clip-path:inset(0_round_0_16px_16px_0)] [transform:translateX(0)] [transition:transform_var(--gis-slide-duration)_var(--gis-slide-easing),display_var(--gis-slide-duration)_allow-discrete] [&[hidden]]:hidden [&[hidden]]:[transform:translateX(-100%)] starting:[&:not([hidden])]:[transform:translateX(-100%)] [&_h1]:text-[24px] [&_h1]:leading-[32px] [&_h1]:font-medium [&_h2]:text-[24px] [&_h2]:leading-[32px] [&_h2]:font-medium max-[999.01px]:min-h-22 max-[999.01px]:bottom-6 [--sb-thumb-color:#8EC5FF] [--sb-size:4px] motion-reduce:[transition:none]" aria-label="Daerah">
+    <aside ref={panel} data-hidden={!!hidden} aria-hidden={hidden} inert={hidden} id="gis-regions-panel" className="gis-left absolute z-2 [inset:0_auto_0_0] w-max min-w-[min(264px,calc(100vw_-_48px))] max-w-[min(480px,calc(100vw_-_48px))] min-h-26 p-4 pl-3 pr-5 border-0 rounded-[0_16px_16px_0] bg-[white] overflow-y-auto [direction:rtl] [clip-path:inset(0_round_0_16px_16px_0)] [transform:translateX(0)] [transition:transform_var(--gis-slide-duration)_var(--gis-slide-easing),visibility_var(--gis-slide-duration)] [&[data-hidden=true]]:invisible [&[data-hidden=true]]:[transform:translateX(-100%)] starting:[&[data-hidden=false]]:[transform:translateX(-100%)] [&_h1]:text-[24px] [&_h1]:leading-[32px] [&_h1]:font-medium [&_h2]:text-[24px] [&_h2]:leading-[32px] [&_h2]:font-medium max-[999.01px]:min-h-22 max-[999.01px]:bottom-6 [--sb-thumb-color:#8EC5FF] [--sb-size:4px] motion-reduce:[transition:none]" aria-label="Daerah">
       <div dir="ltr">
-      <h1>Daerah</h1>
+      <div className="flex items-center justify-between gap-4">
+        <h1>Daerah</h1>
+        {!!(filters.regionIds.length || query.trim()) && <Button type="button" variant="link" size="sm" className="text-red-500 no-underline hover:text-red-600 hover:no-underline" aria-label="Reset pilihan daerah" onClick={() => { setQuery(""); setExpandedIds([]); onChange({ regionIds: [] }); }}>Reset</Button>}
+      </div>
       <label className="gis-search flex items-center gap-2 rounded-2xl border border-neutral-300 focus-within:border-blue-500 p-[8px_16px] mt-2 h-[38px] text-neutral-400 transition-colors [&_input]:min-w-0 [&_input]:w-full [&_input]:h-5 [&_input]:p-0 [&_input]:border-0 [&_input]:outline-none [&_input]:shadow-none [&_input]:bg-transparent [&_input]:text-[14px] [&_input]:leading-[20px] [&_input]:text-neutral-400 [&_input::placeholder]:text-neutral-400 [&_input::placeholder]:opacity-100 [&_input]:focus:outline-none [&_input]:focus-visible:ring-0 [&_input]:focus-visible:border-0"><IconSearch className="size-4 shrink-0 text-neutral-400" aria-hidden="true" /><Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Cari daerah" aria-label="Cari daerah" /></label>
       <div className="gis-region-scroll mt-4">
         <RegionTree nodes={regions} expandedIds={expandedIds} selectedIds={filters.regionIds} branches={branches} searching={Boolean(query.trim())} onExpand={expandRegion} onSelect={(id) => onChange({ regionIds: toggleRegionSelection(filters.regionIds, id) })} />

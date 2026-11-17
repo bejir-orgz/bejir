@@ -78,7 +78,7 @@ export function AnalysisPage({ data }: { data: AnalysisData }) {
         </div>
       </section>
       <div className="analysis-divider h-4 my-4 flex items-center [&::after]:content-[''] [&::after]:h-0.5 [&::after]:bg-neutral-300 [&::after]:w-full" aria-hidden="true" />
-      <Card className="analysis-table-card p-4 flex flex-col gap-4 min-w-0"><div className="analysis-table-title flex items-center justify-between min-h-8 [&_h2]:text-[20px] [&_h2]:leading-[28px] [&_h2]:font-medium"><h2>Tabel Kerawanan/Wilayah</h2>{active && <Button variant="destructive" size="sm" onClick={() => setFilters(emptyAnalysisFilters)}>Reset filter</Button>}</div>
+      <Card className="analysis-table-card p-4 flex flex-col gap-4 min-w-0"><div className="analysis-table-title flex items-center justify-between min-h-8 [&_h2]:text-[20px] [&_h2]:leading-[28px] [&_h2]:font-medium"><h2>Tabel Kerawanan/Wilayah</h2>{active && <Button variant="link" size="sm" className="text-red-500 no-underline hover:text-red-600 hover:no-underline" onClick={() => setFilters(emptyAnalysisFilters)}>Reset filter</Button>}</div>
         <AnalysisFiltersBar filters={filters} regions={data.regions} classes={data.classes} onChange={setFilters} />
         <AnalysisTable rows={rows} />
       </Card>

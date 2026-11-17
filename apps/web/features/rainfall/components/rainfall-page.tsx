@@ -44,7 +44,7 @@ export function RainfallPage({ data }: { data: RainfallPageData }) {
         </div>
       </section>
       <div className="rainfall-divider h-4 my-4 flex items-center [&::after]:content-[''] [&::after]:h-0.5 [&::after]:bg-neutral-300 [&::after]:w-full" aria-hidden="true" />
-      <Card className="rainfall-table-card p-4 flex flex-col gap-4 min-w-0"><div className="rainfall-table-title flex items-center justify-between min-h-8 [&_h2]:text-[20px] [&_h2]:leading-[28px] [&_h2]:font-medium"><h2>Tabel Curah Hujan</h2>{active && <Button variant="destructive" size="sm" onClick={() => { setFilters(emptyRainfallFilters); setTableYear(data.years[0] ?? 0); }}>Reset filter</Button>}</div>
+      <Card className="rainfall-table-card p-4 flex flex-col gap-4 min-w-0"><div className="rainfall-table-title flex items-center justify-between min-h-8 [&_h2]:text-[20px] [&_h2]:leading-[28px] [&_h2]:font-medium"><h2>Tabel Curah Hujan</h2>{active && <Button variant="link" size="sm" className="text-red-500 no-underline hover:text-red-600 hover:no-underline" onClick={() => { setFilters(emptyRainfallFilters); setTableYear(data.years[0] ?? 0); }}>Reset filter</Button>}</div>
         <RainfallFiltersBar filters={filters} regions={data.regions} legend={data.legend} year={tableYear} years={data.years} onYearChange={changeTableYear} onChange={setFilters} />
         <RainfallTable rows={rows} error={data.error} />
       </Card>

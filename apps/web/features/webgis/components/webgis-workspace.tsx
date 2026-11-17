@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState, useReducer, useRef, useSyncExternalStore } from "react";
+import { useEffect, useState, useReducer, useRef, useSyncExternalStore, type CSSProperties } from "react";
 import { useRegionSelection } from "@/features/regions/region-selection";
 import { WebgisHeader } from "@/components/layout/webgis-header";
-import { IconMap, IconLayoutNavbarCollapse, IconLayoutNavbarCollapseFilled, IconStackFront, IconStack3Filled, IconCalendarWeek, IconCalendarWeekFilled, IconListDetails } from "@tabler/icons-react";
+import { IconMap, IconLayoutNavbarCollapse, IconLayoutNavbarCollapseFilled, IconStackFront, IconStack3Filled, IconCalendarWeek, IconCalendarWeekFilled, IconListDetails, IconListDetailsFilled } from "@tabler/icons-react";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { OverviewButton } from "@/components/ui/overview-button";
@@ -27,7 +27,7 @@ import { initialPanelState, panelReducer, type LeftPanel } from "../panel-state"
 const leftTools = [
   { id: "regions", label: "daerah", icon: IconMap, filledIcon: IconMap },
   { id: "layers", label: "layer", icon: IconStackFront, filledIcon: IconStack3Filled },
-  { id: "legends", label: "legenda", icon: IconListDetails, filledIcon: IconListDetails },
+  { id: "legends", label: "legenda", icon: IconListDetails, filledIcon: IconListDetailsFilled },
   { id: "timeline", label: "timeline", icon: IconCalendarWeek, filledIcon: IconCalendarWeekFilled },
 ] as const;
 
@@ -43,6 +43,7 @@ const getServerSnapshot = () => false;
 export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
   const { mapRegionIds, dataRegionIds, setMapRegionIds } = useRegionSelection();
   const [localFilters, setFilters] = useState(data.initialFilters);
+  const [sidebarWidth, setSidebarWidth] = useState(264);
   const filters = { ...localFilters, regionIds: mapRegionIds };
   useEffect(() => {
     if (data.initialFilters.regionIds.length) setMapRegionIds(data.initialFilters.regionIds);
@@ -86,7 +87,7 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
         updateFilters({ regionIds: [region.id] });
         dispatch({ type: "show-overview" });
       }} />
-      <main id="gis-main" className="gis-layout [--regions-width:264px] [--overview-width:456px] relative flex-1 min-h-0 isolate [&[data-left-open=false]]:[--regions-width:0px] [&[data-left-open=true]_.gis-left-toolbar_.gis-panel-toggle[aria-expanded=false]]:[opacity:0] [&[data-left-open=true]_.gis-left-toolbar_.gis-panel-toggle[aria-expanded=false]]:pointer-events-none [&[data-overview-open=true]_.gis-overview-trigger]:[transform:translateX(-100%)] [&[data-overview-open=true]_.gis-map-controls]:right-[calc(var(--overview-width)_+_16px)] min-[1000px]:[&[data-overview-open=true]_.gis-map_.leaflet-bottom.leaflet-right]:right-[var(--overview-width)]! min-[1000px]:max-[1199.01px]:[--overview-width:380px] max-[999.01px]:[--regions-width:0px] max-[999.01px]:[--overview-width:min(456px,calc(100%_-_56px))] max-[999.01px]:[&[data-left-open=true]_.gis-overview-toggle]:hidden max-[999.01px]:[&[data-overview-open=true]_.gis-left-toolbar]:hidden" data-left-open={leftOpen} data-overview-open={overviewOpen} onKeyDown={(event) => {
+      <main id="gis-main" style={{ "--sidebar-width": `min(${sidebarWidth}px, 480px, calc(100vw - 48px))` } as CSSProperties} className="gis-layout [--regions-width:var(--sidebar-width)] [--overview-width:456px] relative flex-1 min-h-0 isolate [&[data-left-open=false]]:[--regions-width:0px] [&[data-left-open=true]_.gis-left-toolbar_.gis-panel-toggle[aria-expanded=false]]:[opacity:0] [&[data-left-open=true]_.gis-left-toolbar_.gis-panel-toggle[aria-expanded=false]]:pointer-events-none [&[data-overview-open=true]_.gis-overview-trigger]:[transform:translateX(-100%)] [&[data-overview-open=true]_.gis-map-controls]:right-[calc(var(--overview-width)_+_16px)] min-[1000px]:[&[data-overview-open=true]_.gis-map_.leaflet-bottom.leaflet-right]:right-[var(--overview-width)]! min-[1000px]:max-[1199.01px]:[--overview-width:380px] max-[999.01px]:[--regions-width:0px] max-[999.01px]:[--overview-width:min(456px,calc(100%_-_56px))] max-[999.01px]:[&[data-left-open=true]_.gis-overview-toggle]:hidden max-[999.01px]:[&[data-overview-open=true]_.gis-left-toolbar]:hidden" data-left-open={leftOpen} data-overview-open={overviewOpen} onKeyDown={(event) => {
         if (event.key === "Escape" && !event.defaultPrevented && (leftOpen || overviewOpen)) {
           event.preventDefault();
           dispatch({ type: "close-all" });
@@ -95,11 +96,11 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
       }}>
         <h1 className="sr-only">Map Interaktif Jawa Barat</h1>
         <InteractiveMap dataStatus={regionStatus ?? routeStatus ?? riverStatus ?? thematicStatus ?? evacuation.dataStatus}>{(map) => <><RiverLayer map={map} enabled={filters.layerIds.includes("rivers")} regionIds={filters.regionIds} onStatus={setRiverStatus} /><ThematicLayers map={map} layerIds={filters.layerIds} regionIds={filters.regionIds} onStatus={setThematicStatus} /><EvacuationLayer map={map} sites={evacuation.sites} enabled={evacuationEnabled} /><BoundaryLayer map={map} regionIds={filters.regionIds} onStatus={setRegionStatus} /><EvacuationRouting map={map} enabled={evacuationEnabled} onStatus={setRouteStatus} /></>}</InteractiveMap>
-        <RegionSidebar hidden={panels.left !== "regions"} filters={filters} onChange={updateFilters} />
+        <RegionSidebar onWidthChange={setSidebarWidth} hidden={panels.left !== "regions"} filters={filters} onChange={updateFilters} />
         <OptionsSidebar mode="layers" hidden={panels.left !== "layers"} data={data} filters={filters} onChange={updateFilters} />
         <TimelineSidebar year={data.year} hidden={panels.left !== "timeline"} filters={filters} onChange={updateFilters} />
         <LegendSidebar layers={data.layers} hidden={panels.left !== "legends"} />
-        <div className="gis-left-toolbar absolute top-4 left-0 flex flex-col gap-4 pointer-events-none [&_.gis-panel-toggle]:relative [&_.gis-panel-toggle]:z-1 [&_.gis-panel-toggle]:rounded-[0_16px_16px_0] [&_.gis-panel-toggle]:pointer-events-auto [&_.gis-panel-toggle]:[opacity:1] [&_.gis-panel-toggle]:[transform:translateX(0)] [&_.gis-panel-toggle]:[transition:transform_var(--gis-slide-duration)_var(--gis-slide-easing),opacity_120ms_ease] [&_.gis-panel-toggle[aria-expanded=true]]:z-3 [&_.gis-panel-toggle[aria-expanded=true]]:[transform:translateX(264px)] [&_.gis-panel-toggle[aria-expanded=true]]:bg-[white] max-[999.01px]:gap-2 motion-reduce:[&_.gis-panel-toggle]:[transition:none]" role="group" aria-label="Alat peta">{leftTools.map(({ id, label, icon, filledIcon }) => {
+        <div className="gis-left-toolbar absolute top-4 left-0 flex flex-col gap-4 pointer-events-none [&_.gis-panel-toggle]:relative [&_.gis-panel-toggle]:z-1 [&_.gis-panel-toggle]:rounded-[0_16px_16px_0] [&_.gis-panel-toggle]:pointer-events-auto [&_.gis-panel-toggle]:[opacity:1] [&_.gis-panel-toggle]:[transform:translateX(0)] [&_.gis-panel-toggle]:[transition:transform_var(--gis-slide-duration)_var(--gis-slide-easing),opacity_120ms_ease] [&_.gis-panel-toggle[aria-expanded=true]]:z-3 [&_.gis-panel-toggle[aria-expanded=true]]:[transform:translateX(var(--sidebar-width))] [&_.gis-panel-toggle[aria-expanded=true]]:bg-[white] max-[999.01px]:gap-2 motion-reduce:[&_.gis-panel-toggle]:[transition:none]" role="group" aria-label="Alat peta">{leftTools.map(({ id, label, icon, filledIcon }) => {
           const expanded = panels.left === id;
           const Icon = expanded ? filledIcon : icon;
           return (

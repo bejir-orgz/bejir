@@ -60,9 +60,12 @@ export function TimelineSidebar({ year, filters, hidden, onChange }: {
   }
 
   return (
-    <aside id="gis-timeline-panel" hidden={hidden} className="gis-left absolute z-2 [inset:0_auto_0_0] w-66 border-0 rounded-[0_16px_16px_0] bg-[white] overflow-y-auto [clip-path:inset(0_round_0_16px_16px_0)] [transform:translateX(0)] [transition:transform_var(--gis-slide-duration)_var(--gis-slide-easing),display_var(--gis-slide-duration)_allow-discrete] [&[hidden]]:hidden [&[hidden]]:[transform:translateX(-100%)] starting:[&:not([hidden])]:[transform:translateX(-100%)] [&_h1]:text-[24px] [&_h1]:leading-[32px] [&_h1]:font-medium [&_h2]:text-[24px] [&_h2]:leading-[32px] [&_h2]:font-medium [--sb-thumb-color:#8EC5FF] [--sb-size:4px] motion-reduce:[transition:none] gis-timeline-sidebar bottom-0 min-h-0 max-h-[none] p-4 pl-3 pr-5 [direction:rtl]" aria-label="Timeline">
+    <aside id="gis-timeline-panel" hidden={hidden} className="gis-left absolute z-2 [inset:0_auto_0_0] w-[var(--sidebar-width)] border-0 rounded-[0_16px_16px_0] bg-[white] overflow-y-auto [clip-path:inset(0_round_0_16px_16px_0)] [transform:translateX(0)] [transition:transform_var(--gis-slide-duration)_var(--gis-slide-easing),display_var(--gis-slide-duration)_allow-discrete] [&[hidden]]:hidden [&[hidden]]:[transform:translateX(-100%)] starting:[&:not([hidden])]:[transform:translateX(-100%)] [&_h1]:text-[24px] [&_h1]:leading-[32px] [&_h1]:font-medium [&_h2]:text-[24px] [&_h2]:leading-[32px] [&_h2]:font-medium [--sb-thumb-color:#8EC5FF] [--sb-size:4px] motion-reduce:[transition:none] gis-timeline-sidebar bottom-0 min-h-0 max-h-[none] p-4 pl-3 pr-5 [direction:rtl]" aria-label="Timeline">
       <div dir="ltr">
-        <h2>Timeline</h2>
+        <div className="flex items-center justify-between gap-4">
+          <h2>Timeline</h2>
+          {!!(filters.date || filters.dateTo || (pickerOpen && draftRange?.from)) && <Button type="button" variant="link" size="sm" className="text-red-500 no-underline hover:text-red-600 hover:no-underline" aria-label="Reset pilihan timeline" onClick={() => { setDraftRange(undefined); setPickerOpen(false); onChange({ period: "today", date: "", dateTo: "" }); }}>Reset</Button>}
+        </div>
         <Popover open={pickerOpen} onOpenChange={(open) => {
           if (open) setDraftRange(selectedDate ? { from: selectedDate, to: selectedEnd } : undefined);
           setPickerOpen(open);
@@ -94,7 +97,7 @@ export function TimelineSidebar({ year, filters, hidden, onChange }: {
             ))}</div>
           </section>
         ))}</div>
-        <p className="sr-only">Pilihan waktu hanya disimpan secara lokal dan tidak memfilter data nyata.</p>
+        <p className="sr-only">Tanpa pilihan tanggal, ringkasan histori memakai tahun berjalan. Parameter spasial tidak memiliki filter waktu.</p>
       </div>
     </aside>
   );

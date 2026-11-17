@@ -60,7 +60,7 @@ export function HistoryPage({ data }: { data: FloodHistoryData }) {
         </div><TimelineChart snapshot={snapshot} /></div>
       </section>
       <div className="history-divider h-4 my-4 flex items-center [&::after]:content-[''] [&::after]:h-0.5 [&::after]:bg-neutral-300 [&::after]:w-full" aria-hidden="true" />
-      <Card className="history-table-card p-4 flex flex-col gap-4 min-w-0"><div className="history-table-title flex items-center justify-between min-h-8 [&_h2]:text-[20px] [&_h2]:leading-[28px] [&_h2]:font-medium"><h2>Tabel Histori Banjir</h2>{active && <Button variant="destructive" size="sm" onClick={() => { setFilters(emptyHistoryFilters); setTableYear(data.years[0]); }}>Reset filter</Button>}</div>
+      <Card className="history-table-card p-4 flex flex-col gap-4 min-w-0"><div className="history-table-title flex items-center justify-between min-h-8 [&_h2]:text-[20px] [&_h2]:leading-[28px] [&_h2]:font-medium"><h2>Tabel Histori Banjir</h2>{active && <Button variant="link" size="sm" className="text-red-500 no-underline hover:text-red-600 hover:no-underline" onClick={() => { setFilters(emptyHistoryFilters); setTableYear(data.years[0]); }}>Reset filter</Button>}</div>
         <HistoryFiltersBar districtRows={data.rows} year={tableYear} years={data.years} onYearChange={(value) => { setTableYear(value); setFilters((current) => ({ ...current, from: "", to: "" })); }} filters={filters} regions={data.regions} onChange={setFilters} />
         <HistoryTable rows={rows} />
       </Card>
