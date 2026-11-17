@@ -70,9 +70,30 @@ export function LandingPage() {
 
         <div className={styles.riverContinuation}>
         <MotionReveal className={styles.regionSummary}>
-          <div className={styles.regionSummaryHeading}><div><p>5 daerah dengan banjir terbanyak · 2024</p><h2>Kenali riwayat wilayahnya.</h2></div><a href={floodRankingSource} target="_blank" rel="noreferrer">BNPB · Tabel L5, hlm. 128–129 <IconArrowUpRight size={13} aria-hidden="true" /></a></div>
-          <ol className={styles.regionList}>{topFloodRegions.map((region, i) => <MotionReveal as="li" key={region.code} delay={i * 0.08}><span className={styles.regionName}><small>0{i + 1}</small>{region.name}</span><strong><AnimatedNumber value={region.count} delay={i * 0.08} /><span>kejadian</span></strong></MotionReveal>)}</ol>
-          <p className={styles.regionNote}>Jumlah kejadian Januari–Desember 2024. Data historis, bukan kondisi saat ini.</p>
+          <div className={styles.regionSummaryHeading}>
+            <h2>5 daerah dengan banjir terbanyak</h2>
+            <p>Jawa Barat · Januari–Desember 2024</p>
+            <a href={floodRankingSource} target="_blank" rel="noreferrer">
+              BNPB · Tabel L5, hlm. 128–129 <IconArrowUpRight size={14} aria-hidden="true" />
+            </a>
+          </div>
+          <ol className={styles.regionList} role="list" aria-label="Peringkat kejadian banjir">
+            {topFloodRegions.map((region, i) => (
+              <MotionReveal as="li" key={region.code} delay={i * 0.08}>
+                <span className={styles.regionRank} aria-hidden="true">{i + 1}</span>
+                <span className={styles.regionName}>{region.name}</span>
+                <strong className={styles.regionCount}>
+                  <AnimatedNumber value={region.count} delay={i * 0.08} />
+                  <small>kejadian</small>
+                </strong>
+                <div className={styles.regionBar} aria-hidden="true">
+                  <div style={{ width: `${region.count / topFloodRegions[0].count * 100}%` }}>
+                    <MotionDataBar />
+                  </div>
+                </div>
+              </MotionReveal>
+            ))}
+          </ol>
         </MotionReveal>
         <section className={styles.coverage} aria-label="Cakupan informasi">
           <p>Kenali banjir dari berbagai sisi</p>

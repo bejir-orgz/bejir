@@ -72,17 +72,50 @@
 
 .heroShore { position: absolute; z-index: 3; bottom: -1px; left: 0; width: 100%; height: 110px; pointer-events: none; }
 .riverContinuation { position: relative; padding: 0 24px; background: linear-gradient(180deg, #eaf4ff, #f5f9ff 65%, #fff); }
-.regionSummary { position: relative; z-index: 4; max-width: 1112px; margin: -3px auto 0; padding: 26px 28px 20px; border: 1px solid #d7e6f7; border-radius: 22px; background: #ffffffeb; box-shadow: 0 16px 45px -30px #1e40af45; }
-.regionSummaryHeading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
-.regionSummaryHeading p { color: #526b85; font-size: 12px; }
-.regionSummary h2 { margin-top: 5px; color: #172554; font-size: 22px; font-weight: 500; letter-spacing: -.03em; }
-.regionSummaryHeading a { display: inline-flex; align-items: center; gap: 5px; color: #2563eb; font-size: 10px; }
-.regionList { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; margin-top: 24px; list-style: none; }
-.regionList li { padding: 0 18px; border-left: 1px solid #e1eaf6; }.regionList li:first-child { padding-left: 0; border-left: 0; }
-.regionName { display: flex; align-items: center; gap: 7px; color: #526b85; font-size: 11px; }.regionName small { color: #2563eb; font-size: 9px; }
-.regionList strong { display: flex; align-items: baseline; gap: 7px; margin-top: 10px; color: #172554; font-size: 34px; line-height: 1.1; font-weight: 500; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
-.regionList strong > span:last-child { color: #737373; font-size: 10px; letter-spacing: 0; font-weight: 400; }
-.regionNote { margin-top: 22px; padding-top: 14px; border-top: 1px solid #e1eaf6; color: #737373; font-size: 9px; line-height: 1.8; }
+.regionSummary {
+  position: relative;
+  z-index: 4;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.7fr);
+  gap: clamp(28px, 5vw, 64px);
+  max-width: 1112px;
+  margin: -3px auto 0;
+  padding: clamp(24px, 4vw, 48px);
+  border: 1px solid #d7e6f7;
+  border-radius: 22px;
+  background: #ffffffeb;
+  box-shadow: 0 16px 45px -30px #1e40af45;
+}
+.regionSummary h2 {
+  color: #172554;
+  font-size: clamp(24px, 3vw, 34px);
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: -.03em;
+  text-wrap: balance;
+}
+.regionSummaryHeading p { margin-top: 12px; color: #526b85; font-size: 14px; }
+.regionSummaryHeading a { display: inline-flex; align-items: center; gap: 5px; margin-top: 10px; color: #2056c6; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; }
+
+.regionList { list-style: none; }
+.regionList li {
+  display: grid;
+  grid-template-columns: 1.5rem minmax(0, 1fr) max-content;
+  align-items: baseline;
+  column-gap: 10px;
+  row-gap: 8px;
+  padding-block: 12px;
+  border-bottom: 1px solid #e1eaf6;
+}
+.regionList li:first-child { padding-top: 0; }
+.regionList li:last-child { padding-bottom: 0; border-bottom: 0; }
+.regionRank { color: #526b85; font-size: 13px; font-variant-numeric: tabular-nums; }
+.regionName { color: #172554; font-size: 14px; font-weight: 500; overflow-wrap: anywhere; }
+.regionCount { display: flex; align-items: baseline; gap: 5px; color: #172554; font-size: 20px; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; }
+.regionCount small { color: #526b85; font-size: 11px; font-weight: 400; }
+.regionBar { grid-column: 2 / -1; height: 4px; overflow: hidden; border-radius: 999px; background: #e7f0fd; }
+.regionBar > div { height: 100%; border-radius: inherit; }
+.regionBar span { display: block; height: 100%; border-radius: inherit; background: #2563eb; }
 .heroDescription { max-width: 500px; margin-inline: auto; font-size: 15px; line-height: 1.8; color: #3c5879; }
 .actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 24px; margin-top: 26px; }
 .actions > a:first-child { border-radius: 100px; padding-inline: 24px; box-shadow: 0 5px 15px #2563eb22; }
@@ -211,7 +244,13 @@
 }
 @media (max-width: 380px) { .hero h1 { font-size: 40px; }.mapInfo { grid-template-columns: 1fr; }.mapInfo > a { justify-self: start; }.badge { font-size: 8px; } }
 @media (prefers-reduced-motion: reduce) { .landing *, .landing *::before, .landing *::after { animation: none !important; transition: none !important; } }
-@media (max-width: 760px) { .heroShore { height: 90px; }.riverContinuation { padding-inline: 20px; }.regionSummary { padding: 22px 20px 16px; border-radius: 18px; }.regionSummary h2 { font-size: 21px; }.regionList { grid-template-columns: 1fr; gap: 0; margin-top: 22px; }.regionList li, .regionList li:first-child { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 15px 0; border: 0; border-bottom: 1px solid #e1eaf6; }.regionList li:last-child { border-bottom: 0; }.regionName { font-size: 12px; gap: 10px; }.regionName small { display: grid; place-items: center; flex-shrink: 0; width: 26px; height: 26px; border-radius: 7px; background: #eff6ff; font-size: 10px; }.regionList strong { flex-shrink: 0; margin-top: 0; font-size: 28px; gap: 6px; }.riverContinuation .coverage { padding-inline: 0; }.riverContinuation .statsSection { padding-inline: 0; } }
+@media (max-width: 760px) {
+  .heroShore { height: 90px; }
+  .riverContinuation { padding-inline: 20px; }
+  .regionSummary { grid-template-columns: minmax(0, 1fr); gap: 22px; padding: 22px 18px; border-radius: 18px; }
+  .riverContinuation .coverage { padding-inline: 0; }
+  .riverContinuation .statsSection { padding-inline: 0; }
+}
 
 .sectionLabel { display: flex; align-items: center; gap: 12px; margin-bottom: 26px; color: #404040; font-size: 13px; font-weight: 500; line-height: 1.6; letter-spacing: normal; text-transform: none; }
 .sectionLabel::after { content: ""; flex: 1; min-width: 20px; height: 1px; margin-left: 8px; background: #e5e7eb; }
