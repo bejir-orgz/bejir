@@ -19,6 +19,7 @@ test("overview scopes history by regency and date and preserves explicit zero", 
   };
   try {
     const result = await getWorkspaceOverview(["14"], "2026-01-01", "2026-01-31");
+    assert.deepEqual(result.facilities.find((row) => row.id === "bridges"), { id: "bridges", label: "Jembatan", count: null });
     assert.equal(result.metrics[0].value, "0");
     assert.equal(result.metrics[3].value, "0 jiwa");
     assert.match(result.summary, /akumulasi/);

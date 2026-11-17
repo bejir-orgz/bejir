@@ -20,6 +20,7 @@ export function emptyOverview(message = "Memuat data backend…"): WorkspaceData
       { id: "health", label: "Fasilitas Kesehatan", count: null },
       { id: "education", label: "Fasilitas Pendidikan", count: null },
       { id: "worship", label: "Tempat Ibadah", count: null },
+      { id: "bridges", label: "Jembatan", count: null },
     ],
     landCover: ["—"], elevation: "—", rivers: "—",
   };

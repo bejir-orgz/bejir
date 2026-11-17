@@ -1,7 +1,7 @@
 import { unstable_cache } from "next/cache";
 import { getFacilityTotals } from "@/features/floods/api";
 
-const cachedTotals = unstable_cache(getFacilityTotals, ["facility-totals-impacts-v3", process.env.BEJIR_API_URL || "documented"], { revalidate: 300 });
+const cachedTotals = unstable_cache(getFacilityTotals, ["facility-totals-impacts-v4", process.env.BEJIR_API_URL || "documented"], { revalidate: 300 });
 
 export async function GET(request: Request) {
   const query = new URL(request.url).searchParams;

@@ -2,12 +2,12 @@ import { fetchBackend } from "../../lib/api/backend";
 import { readPrepared } from "../geography/prepared-data";
 import type { FacilityTotalsResponse, FloodImpactsResponse } from "../../lib/api/schemas";
 
-export interface FacilityTotals extends FacilityTotalsResponse { prepared_at?: string }
+export interface FacilityTotals extends FacilityTotalsResponse { bridges: number | null; prepared_at?: string }
 interface FacilityGroup extends Pick<FacilityTotals, "health" | "education" | "worship"> { regency_id: number | null; date: string | null }
 
 export function sumFacilityGroups(groups: FacilityGroup[], regencyIds: number[], from: string, to: string): FacilityTotals {
   const selected = groups.filter((row) => (!regencyIds.length || regencyIds.includes(row.regency_id!)) && (!from || (row.date !== null && row.date >= from && row.date <= (to || from))));
-  const totals: FacilityTotals = { health: 0, education: 0, worship: 0, public: null, data_kind: "historical_damage" };
+  const totals: FacilityTotals = { health: 0, education: 0, worship: 0, bridges: null, public: null, data_kind: "historical_damage" };
   for (const key of ["health", "education", "worship"] as const) {
     for (const row of selected) {
       const value = row[key];
@@ -38,10 +38,11 @@ export async function getFacilityTotals(regencyIds: number[], from = "", to = ""
     health: impacts.overall.health_facilities_damaged!,
     education: impacts.overall.schools_damaged!,
     worship: impacts.overall.religious_facilities_damaged!,
+    bridges: impacts.overall.bridges_damaged!,
     public: null,
     data_kind: "historical_damage",
   };
-  for (const key of ["health", "education", "worship", "public"] as const) {
+  for (const key of ["health", "education", "worship", "bridges", "public"] as const) {
     if (data[key] !== null && (!Number.isSafeInteger(data[key]) || data[key]! < 0)) throw new Error("Respons fasilitas tidak valid.");
   }
   return data;

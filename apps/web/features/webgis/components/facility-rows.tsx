@@ -1,10 +1,11 @@
-import { IconBuildingHospital, IconMosque, IconSchool } from "@tabler/icons-react";
+import { IconBuildingBridge, IconBuildingHospital, IconMosque, IconSchool } from "@tabler/icons-react";
 import type { FacilityMetric } from "../types";
 
 const facilityStyles = {
   health: { icon: IconBuildingHospital, background: "#FFD2D2", color: "#FF0000" },
   education: { icon: IconSchool, background: "var(--facility-education-background, #DBEAFE)", color: "var(--primary)" },
   worship: { icon: IconMosque, background: "#D7FFD9", color: "#2BB600" },
+  bridges: { icon: IconBuildingBridge, background: "#FEF3C7", color: "#B45309" },
 };
 
 /** Shared presentation for the map overview and analysis dashboard. */

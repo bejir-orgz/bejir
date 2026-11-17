@@ -41,6 +41,7 @@ for (const year of years) {
       { id: "health", label: "Fasilitas Kesehatan", count: [42, 39, 36][offset] },
       { id: "education", label: "Fasilitas Pendidikan", count: [186, 178, 165][offset] },
       { id: "worship", label: "Tempat Ibadah", count: [129, 121, 110][offset] },
+      { id: "bridges", label: "Jembatan", count: null },
     ],
   };
 }

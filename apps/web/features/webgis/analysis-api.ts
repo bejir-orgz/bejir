@@ -25,6 +25,7 @@ export function emptyAnalysisData(error?: string): AnalysisData {
           { id: "health", label: "Fasilitas Kesehatan", count: null },
           { id: "education", label: "Fasilitas Pendidikan", count: null },
           { id: "worship", label: "Tempat Ibadah", count: null },
+          { id: "bridges", label: "Jembatan", count: null },
         ],
       },
     },
