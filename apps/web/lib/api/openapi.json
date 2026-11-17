@@ -1656,6 +1656,88 @@
           }
         }
       }
+    },
+    "/api/v1/flood/impacts": {
+      "get": {
+        "tags": [
+          "Flood"
+        ],
+        "summary": "Get Impacts",
+        "operationId": "get_impacts_api_v1_flood_impacts_get",
+        "parameters": [
+          {
+            "name": "regency_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "exclusiveMinimum": 0
+              },
+              "maxItems": 100,
+              "default": [],
+              "title": "Regency Id"
+            }
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start Date"
+            }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FloodImpactsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -2209,6 +2291,186 @@
           "worship"
         ],
         "title": "FacilityTotals"
+      },
+      "FloodImpactTotals": {
+        "properties": {
+          "fatalities": {
+            "type": "integer",
+            "title": "Fatalities",
+            "default": 0
+          },
+          "missing": {
+            "type": "integer",
+            "title": "Missing",
+            "default": 0
+          },
+          "injured": {
+            "type": "integer",
+            "title": "Injured",
+            "default": 0
+          },
+          "affected_displaced": {
+            "type": "integer",
+            "title": "Affected Displaced",
+            "default": 0
+          },
+          "houses_heavily_damaged": {
+            "type": "integer",
+            "title": "Houses Heavily Damaged",
+            "default": 0
+          },
+          "houses_moderately_damaged": {
+            "type": "integer",
+            "title": "Houses Moderately Damaged",
+            "default": 0
+          },
+          "houses_slightly_damaged": {
+            "type": "integer",
+            "title": "Houses Slightly Damaged",
+            "default": 0
+          },
+          "houses_flooded": {
+            "type": "integer",
+            "title": "Houses Flooded",
+            "default": 0
+          },
+          "schools_damaged": {
+            "type": "integer",
+            "title": "Schools Damaged",
+            "default": 0
+          },
+          "religious_facilities_damaged": {
+            "type": "integer",
+            "title": "Religious Facilities Damaged",
+            "default": 0
+          },
+          "health_facilities_damaged": {
+            "type": "integer",
+            "title": "Health Facilities Damaged",
+            "default": 0
+          },
+          "offices_damaged": {
+            "type": "integer",
+            "title": "Offices Damaged",
+            "default": 0
+          },
+          "bridges_damaged": {
+            "type": "integer",
+            "title": "Bridges Damaged",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "title": "FloodImpactTotals"
+      },
+      "FloodRegencyImpacts": {
+        "properties": {
+          "fatalities": {
+            "type": "integer",
+            "title": "Fatalities",
+            "default": 0
+          },
+          "missing": {
+            "type": "integer",
+            "title": "Missing",
+            "default": 0
+          },
+          "injured": {
+            "type": "integer",
+            "title": "Injured",
+            "default": 0
+          },
+          "affected_displaced": {
+            "type": "integer",
+            "title": "Affected Displaced",
+            "default": 0
+          },
+          "houses_heavily_damaged": {
+            "type": "integer",
+            "title": "Houses Heavily Damaged",
+            "default": 0
+          },
+          "houses_moderately_damaged": {
+            "type": "integer",
+            "title": "Houses Moderately Damaged",
+            "default": 0
+          },
+          "houses_slightly_damaged": {
+            "type": "integer",
+            "title": "Houses Slightly Damaged",
+            "default": 0
+          },
+          "houses_flooded": {
+            "type": "integer",
+            "title": "Houses Flooded",
+            "default": 0
+          },
+          "schools_damaged": {
+            "type": "integer",
+            "title": "Schools Damaged",
+            "default": 0
+          },
+          "religious_facilities_damaged": {
+            "type": "integer",
+            "title": "Religious Facilities Damaged",
+            "default": 0
+          },
+          "health_facilities_damaged": {
+            "type": "integer",
+            "title": "Health Facilities Damaged",
+            "default": 0
+          },
+          "offices_damaged": {
+            "type": "integer",
+            "title": "Offices Damaged",
+            "default": 0
+          },
+          "bridges_damaged": {
+            "type": "integer",
+            "title": "Bridges Damaged",
+            "default": 0
+          },
+          "regency_id": {
+            "type": "integer",
+            "title": "Regency Id"
+          },
+          "regency_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Regency Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "regency_id"
+        ],
+        "title": "FloodRegencyImpacts"
+      },
+      "FloodImpactsResponse": {
+        "properties": {
+          "overall": {
+            "$ref": "#/components/schemas/FloodImpactTotals"
+          },
+          "by_regency": {
+            "items": {
+              "$ref": "#/components/schemas/FloodRegencyImpacts"
+            },
+            "type": "array",
+            "title": "By Regency"
+          }
+        },
+        "type": "object",
+        "required": [
+          "overall",
+          "by_regency"
+        ],
+        "title": "FloodImpactsResponse"
       }
     }
   }

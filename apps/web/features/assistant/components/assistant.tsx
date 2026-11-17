@@ -64,9 +64,9 @@ export function BejirAssistant({ defaultLayerIds }: { defaultLayerIds: readonly 
         </div>
       </div>
       <div className="gis-ai-footer after:content-[''] after:absolute after:inset-x-0 after:-bottom-4 after:h-4 after:bg-white sticky bottom-0 z-10 mt-auto flex shrink-0 flex-col gap-2 bg-white pt-2">
-        <form ref={composer} className="gis-ai-composer shrink-0 p-2 [border:1px_solid_var(--gis-border)] rounded-2xl bg-[white] [&:focus-within]:border-[var(--gis-blue)] [&_textarea]:[field-sizing:content] [&_textarea]:min-h-6 [&_textarea]:h-auto [&_textarea]:max-h-24 [&_textarea]:p-0 [&_textarea]:border-0 [&_textarea]:rounded-none [&_textarea]:resize-none [&_textarea]:text-[16px] [&_textarea]:leading-[24px] [&_textarea]:bg-[white] [&_textarea:focus-visible]:[outline:none] [&_textarea::placeholder]:text-[#a1a1a1]" onSubmit={(event) => { event.preventDefault(); submitQuestion(); }}>
+        <form ref={composer} className="gis-ai-composer shrink-0 p-2 [border:1px_solid_var(--gis-border)] rounded-2xl bg-[white] [&:focus-within]:border-[var(--gis-blue)] [&_textarea]:[field-sizing:content] [&_textarea]:min-h-6 [&_textarea]:h-auto [&_textarea]:max-h-24 [&_textarea]:p-0 [&_textarea]:border-0 [&_textarea]:rounded-none [&_textarea]:resize-none [&_textarea]:text-[12px] [&_textarea]:leading-[16px] [&_textarea]:bg-[white] [&_textarea:focus-visible]:[outline:none] [&_textarea::placeholder]:text-[#a1a1a1]" onSubmit={(event) => { event.preventDefault(); submitQuestion(); }}>
           <Label className="sr-only" htmlFor="gis-question">Tanya Aji</Label>
-          <Textarea id="gis-question" className="focus-visible:ring-0" value={question} onChange={(event) => setQuestion(event.target.value)} placeholder="Tanya Aji" rows={1} maxLength={2000} aria-describedby="gis-ai-demo-note" onKeyDown={(event) => {
+          <Textarea id="gis-question" className="focus-visible:ring-0" value={question} onChange={(event) => setQuestion(event.target.value)} placeholder="Tanya Aji" rows={1} maxLength={2000} onKeyDown={(event) => {
             if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); submitQuestion(); }
           }} />
           <div className="gis-ai-composer-actions flex items-center justify-between gap-2 mt-2 [&_button]:h-10 [&_button]:p-2 [&_button]:rounded-[10px] [&_button]:bg-[#e5e5e5] [&_button]:text-[#737373] [&_button:hover]:bg-[#d4d4d4] [&_.gis-ai-layer-trigger:is([data-has-sources=true],[data-state=open])]:bg-[#dbeafe] [&_.gis-ai-layer-trigger:is([data-has-sources=true],[data-state=open])]:text-[var(--gis-blue)] [&_.gis-ai-send]:w-10 [&_.gis-ai-send:not(:disabled)]:bg-[var(--gis-blue)] [&_.gis-ai-send:not(:disabled)]:text-[white]">
@@ -89,7 +89,6 @@ export function BejirAssistant({ defaultLayerIds }: { defaultLayerIds: readonly 
             <Button type="submit" size="icon" className="gis-ai-send" disabled={!question.trim() || pending || !assistantSources(sourceLayerIds).length} aria-label="Kirim pertanyaan"><IconBrandTelegram className="size-6" aria-hidden="true" /></Button>
           </div>
         </form>
-        <p className="gis-ai-demo-note shrink-0 m-0 text-[#737373] text-[10px] leading-[14px] text-center" id="gis-ai-demo-note">Pilihan awal mengikuti layer peta; sumber AI dapat diatur terpisah. Kerawanan mencakup paparan penduduk.</p>
       </div>
     </div>
   );

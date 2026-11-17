@@ -1,6 +1,6 @@
 import { fetchBackend } from "../../lib/api/backend";
 import { readPrepared } from "../geography/prepared-data";
-import type { FacilityTotalsResponse } from "../../lib/api/schemas";
+import type { FacilityTotalsResponse, FloodImpactsResponse } from "../../lib/api/schemas";
 
 export interface FacilityTotals extends FacilityTotalsResponse { prepared_at?: string }
 interface FacilityGroup extends Pick<FacilityTotals, "health" | "education" | "worship"> { regency_id: number | null; date: string | null }
@@ -24,7 +24,7 @@ export async function getFacilityTotals(regencyIds: number[], from = "", to = ""
   const ids = [...new Set(regencyIds)].sort((a, b) => a - b);
   for (const id of ids) query.append("regency_id", String(id));
   if (from) { query.set("start_date", `${from}T00:00:00`); query.set("end_date", `${to || from}T23:59:59.999999`); }
-  const response = await fetchBackend(`/api/v1/flood/facilities?${query}`, { next: { revalidate: 300 }, signal: AbortSignal.timeout(15_000) });
+  const response = await fetchBackend(`/api/v1/flood/impacts?${query}`, { next: { revalidate: 300 }, signal: AbortSignal.timeout(15_000) });
   if (response.status === 404 || response.status === 501) {
     // Compatibility for the old deployment. Offline preparation replaces request-time event fan-out.
     const prepared = await readPrepared<{ groups: FacilityGroup[]; data_kind: string }>("facilities");
@@ -32,10 +32,17 @@ export async function getFacilityTotals(regencyIds: number[], from = "", to = ""
     return { ...sumFacilityGroups(prepared.groups, ids, from, to), prepared_at: prepared.prepared_at };
   }
   if (!response.ok) throw new Error("Agregasi fasilitas gagal dimuat.");
-  const data: FacilityTotals = await response.json();
+  const impacts: FloodImpactsResponse | null = await response.json();
+  if (!impacts?.overall) throw new Error("Respons fasilitas tidak valid.");
+  const data: FacilityTotals = {
+    health: impacts.overall.health_facilities_damaged!,
+    education: impacts.overall.schools_damaged!,
+    worship: impacts.overall.religious_facilities_damaged!,
+    public: null,
+    data_kind: "historical_damage",
+  };
   for (const key of ["health", "education", "worship", "public"] as const) {
     if (data[key] !== null && (!Number.isSafeInteger(data[key]) || data[key]! < 0)) throw new Error("Respons fasilitas tidak valid.");
   }
-  if (data.data_kind !== "historical_damage") throw new Error("Jenis data fasilitas tidak sesuai.");
   return data;
 }

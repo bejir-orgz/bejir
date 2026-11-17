@@ -86,3 +86,42 @@ export interface FacilityTotalsResponse {
   public: null;
   data_kind: "historical_damage";
 }
+
+export interface FloodImpactTotals {
+  fatalities?: number;
+  missing?: number;
+  injured?: number;
+  affected_displaced?: number;
+  houses_heavily_damaged?: number;
+  houses_moderately_damaged?: number;
+  houses_slightly_damaged?: number;
+  houses_flooded?: number;
+  schools_damaged?: number;
+  religious_facilities_damaged?: number;
+  health_facilities_damaged?: number;
+  offices_damaged?: number;
+  bridges_damaged?: number;
+}
+
+export interface FloodRegencyImpacts {
+  fatalities?: number;
+  missing?: number;
+  injured?: number;
+  affected_displaced?: number;
+  houses_heavily_damaged?: number;
+  houses_moderately_damaged?: number;
+  houses_slightly_damaged?: number;
+  houses_flooded?: number;
+  schools_damaged?: number;
+  religious_facilities_damaged?: number;
+  health_facilities_damaged?: number;
+  offices_damaged?: number;
+  bridges_damaged?: number;
+  regency_id: number;
+  regency_name?: string | null;
+}
+
+export interface FloodImpactsResponse {
+  overall: FloodImpactTotals;
+  by_regency: FloodRegencyImpacts[];
+}

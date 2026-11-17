@@ -81,12 +81,14 @@ export function RegionSidebar({ filters, onChange, hidden }: {
   }
 
   return (
-    <aside hidden={hidden} id="gis-regions-panel" className="gis-left absolute z-2 [inset:0_auto_0_0] w-66 min-h-26 p-[8px_16px] border-0 rounded-[0_16px_16px_0] bg-[white] overflow-y-auto [clip-path:inset(0_round_0_16px_16px_0)] [transform:translateX(0)] [transition:transform_var(--gis-slide-duration)_var(--gis-slide-easing),display_var(--gis-slide-duration)_allow-discrete] [&[hidden]]:hidden [&[hidden]]:[transform:translateX(-100%)] starting:[&:not([hidden])]:[transform:translateX(-100%)] [&_h1]:text-[24px] [&_h1]:leading-[32px] [&_h1]:font-medium [&_h2]:text-[24px] [&_h2]:leading-[32px] [&_h2]:font-medium max-[999.01px]:min-h-22 max-[999.01px]:bottom-6 [--sb-thumb-color:#8EC5FF] [--sb-size:4px] motion-reduce:[transition:none]" aria-label="Daerah">
+    <aside hidden={hidden} id="gis-regions-panel" className="gis-left absolute z-2 [inset:0_auto_0_0] w-66 min-h-26 p-4 pl-3 pr-5 border-0 rounded-[0_16px_16px_0] bg-[white] overflow-y-auto [direction:rtl] [clip-path:inset(0_round_0_16px_16px_0)] [transform:translateX(0)] [transition:transform_var(--gis-slide-duration)_var(--gis-slide-easing),display_var(--gis-slide-duration)_allow-discrete] [&[hidden]]:hidden [&[hidden]]:[transform:translateX(-100%)] starting:[&:not([hidden])]:[transform:translateX(-100%)] [&_h1]:text-[24px] [&_h1]:leading-[32px] [&_h1]:font-medium [&_h2]:text-[24px] [&_h2]:leading-[32px] [&_h2]:font-medium max-[999.01px]:min-h-22 max-[999.01px]:bottom-6 [--sb-thumb-color:#8EC5FF] [--sb-size:4px] motion-reduce:[transition:none]" aria-label="Daerah">
+      <div dir="ltr">
       <h1>Daerah</h1>
       <label className="gis-search flex items-center gap-2 rounded-2xl border border-neutral-300 focus-within:border-blue-500 p-[8px_16px] mt-2 h-[38px] text-neutral-400 transition-colors [&_input]:min-w-0 [&_input]:w-full [&_input]:h-5 [&_input]:p-0 [&_input]:border-0 [&_input]:outline-none [&_input]:shadow-none [&_input]:bg-transparent [&_input]:text-[14px] [&_input]:leading-[20px] [&_input]:text-neutral-400 [&_input::placeholder]:text-neutral-400 [&_input::placeholder]:opacity-100 [&_input]:focus:outline-none [&_input]:focus-visible:ring-0 [&_input]:focus-visible:border-0"><IconSearch className="size-4 shrink-0 text-neutral-400" aria-hidden="true" /><Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Cari daerah" aria-label="Cari daerah" /></label>
-      <div className="gis-region-scroll mt-2">
+      <div className="gis-region-scroll mt-4">
         <RegionTree nodes={regions} expandedIds={expandedIds} selectedIds={filters.regionIds} branches={branches} searching={Boolean(query.trim())} onExpand={expandRegion} onSelect={(id) => onChange({ regionIds: toggleRegionSelection(filters.regionIds, id) })} />
         {regions.length === 0 ? <p className="gis-empty p-[16px_0] text-[var(--gis-muted)] text-[12px]" role="status">{roots === null ? "Daerah gagal dimuat." : roots ? "Daerah tidak ditemukan." : "Memuat daerah…"}</p> : null}
+      </div>
       </div>
     </aside>
   );
