@@ -1,5 +1,10 @@
 import { fetchBackend } from "@/lib/api/backend";
 import { getCatalog } from "@/features/geography/catalog";
+import { unstable_cache } from "next/cache";
+import { getRegionSearchTree } from "@/features/geography/search";
+import { filterRegionTree } from "@/features/webgis/region-tree";
+
+const searchTree = unstable_cache(getRegionSearchTree, ["region-search-v1", process.env.BEJIR_API_URL || "documented"], { revalidate: 3600 });
 
 interface GeographyRow {
   id: number;
@@ -7,13 +12,17 @@ interface GeographyRow {
 }
 
 export async function GET(request: Request) {
-  const parent = new URL(request.url).searchParams.get("parent");
+  const query = new URL(request.url).searchParams;
+  const parent = query.get("parent");
+  const search = query.get("search")?.trim();
+  if (search && (search.length > 100 || parent !== null)) return Response.json({ error: "Pencarian tidak valid." }, { status: 400 });
   if (parent !== null && !/^[1-9]\d*(?:\/[1-9]\d*)?$/.test(parent)) {
     return Response.json({ error: "Wilayah induk tidak valid." }, { status: 400 });
   }
 
   const [regencyId, districtId] = parent?.split("/") ?? [];
   try {
+    if (search) return Response.json(filterRegionTree(await searchTree(), search));
     let rows: GeographyRow[];
     if (!districtId) {
       const catalog = await getCatalog();
