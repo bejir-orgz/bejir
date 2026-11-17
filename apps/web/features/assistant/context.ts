@@ -3,6 +3,7 @@ import { fetchBackend } from "../../lib/api/backend";
 
 export async function groundAssistantRequest(payload: AssistantChatRequest): Promise<AssistantChatRequest> {
   const facts = ["Metadata terverifikasi dari API Bejir. Gunakan metadata total berikut untuk pertanyaan jumlah seluruh dataset. Sampel retrieval dapat memuat sebagian baris."];
+  facts.push("Tulis jawaban dalam Markdown. Gunakan paragraf, daftar, teks tebal, dan tabel jika membantu. Jangan bungkus seluruh jawaban dalam blok kode.");
   if (payload.sources.includes("evacuation_sites")) {
     const response = await fetchBackend("/api/v1/evacuation/sites?limit=1", { cache: "no-store" });
     if (!response.ok) throw new Error("Metadata titik evakuasi gagal dimuat.");

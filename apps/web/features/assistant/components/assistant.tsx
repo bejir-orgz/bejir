@@ -9,6 +9,7 @@ import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMe
 import { assistantLayers } from "../data/sources";
 import { askAssistant, assistantSources } from "../api";
 import type { AssistantMessage } from "../../../lib/api/schemas";
+import { AssistantMarkdown } from "./assistant-markdown";
 
 export function BejirAssistant({ defaultLayerIds }: { defaultLayerIds: readonly string[] }) {
   const [question, setQuestion] = useState("");
@@ -58,7 +59,7 @@ export function BejirAssistant({ defaultLayerIds }: { defaultLayerIds: readonly 
           {exchanges.map((exchange, index) => (
             <div className="gis-ai-exchange mt-4 scroll-mb-36 scroll-mt-20" key={exchange.id} ref={index === exchanges.length - 1 ? latestExchange : undefined}>
               <p className="gis-ai-question w-[min(352px,100%)] m-[0_0_16px_auto] p-4 rounded-2xl bg-[#dbeafe] whitespace-pre-wrap">{exchange.question}</p>
-              <p className="gis-ai-demo-reply pb-4 whitespace-pre-wrap">{exchange.answer}</p>
+              {exchange.error ? <p className="gis-ai-demo-reply pb-4 whitespace-pre-wrap">{exchange.answer}</p> : <AssistantMarkdown text={exchange.answer} />}
             </div>
           ))}
         </div>

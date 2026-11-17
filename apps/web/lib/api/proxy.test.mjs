@@ -85,6 +85,7 @@ test("chat context preserves alternating roles, latest question and verified dat
       assert.equal(body.messages.at(-1).content, question);
       assert.ok(body.messages.length <= 12);
       assert.match(body.messages[0].content, /14338/);
+      assert.match(body.messages[0].content, /jawaban dalam Markdown/);
       body.messages.forEach((message, index) => assert.equal(message.role, index % 2 ? "model" : "user"));
       return Response.json({ answer: "14338", sources: ["evacuation_sites"], model: "test" });
     };
