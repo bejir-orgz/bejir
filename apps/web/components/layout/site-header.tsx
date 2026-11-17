@@ -34,7 +34,7 @@ export function SiteHeader() {
         <nav aria-label="Navigasi utama" className="hidden items-center gap-4 md:flex">
           {navigation.map((item) => <a key={item.href} href={item.href} aria-current={activeHash === item.href ? "location" : undefined} className="rounded-md p-2 text-sm text-neutral-600 transition-colors hover:text-blue-600 focus-visible:outline-2 focus-visible:outline-blue-600 aria-[current=location]:text-blue-700">{item.label}</a>)}
         </nav>
-        <Button asChild className="hidden sm:inline-flex"><Link href="/map">Buka WebGIS <IconArrowUpRight aria-hidden="true" /></Link></Button>
+        <Button asChild className="hidden rounded-full sm:inline-flex"><Link href="/map">Buka WebGIS <IconArrowUpRight aria-hidden="true" /></Link></Button>
         <Sheet>
           <SheetTrigger asChild>
             <Button variant="outline" size="icon" className="md:hidden" aria-label="Buka menu navigasi" onClick={(event) => {
@@ -62,7 +62,7 @@ export function SiteHeader() {
                   <a href={item.href} aria-current={activeHash === item.href ? "location" : undefined} className="rounded-lg px-3 py-3 text-sm hover:bg-neutral-50 aria-[current=location]:bg-blue-50 aria-[current=location]:font-semibold aria-[current=location]:text-blue-700">{item.label}</a>
                 </SheetClose>
               ))}
-              <Button asChild><Link href="/map">Buka WebGIS <IconArrowUpRight aria-hidden="true" /></Link></Button>
+              <Button asChild className="rounded-full"><Link href="/map">Buka WebGIS <IconArrowUpRight aria-hidden="true" /></Link></Button>
             </nav>
           </SheetContent>
         </Sheet>

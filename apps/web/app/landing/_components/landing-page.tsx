@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Image from "next/image";
+import { HeroLandscape } from "./hero-landscape";
 import { IconArrowDown, IconArrowUpRight, IconChartBar, IconCloudRain, IconLayersIntersect, IconMap2, IconMapPin, IconRoute, IconShieldCheck } from "@tabler/icons-react";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SibajwaBrand } from "@/components/shared/sibajwa-brand";
@@ -53,16 +53,7 @@ export function LandingPage() {
       <LandingNavbar className={styles.navbar}><SiteHeader /></LandingNavbar>
       <main id="main-content">
         <section className={styles.hero} id="jelajahi">
-          {/* Already compressed to 107 KB; retain panorama resolution for narrow cover crops. */}
-          <MotionArtwork className={styles.heroArt}>
-            <Image src="/images/jabar-river-hero.webp" alt="" fill sizes="100vw" unoptimized preload className={styles.heroImage} />
-            <div className={styles.skyMotion}><i /><i /></div>
-            <svg className={styles.waterMotion} viewBox="0 0 1600 200" preserveAspectRatio="none" aria-hidden="true">
-              <g><path d="M50 40h85m135 4h150m175 5h105m245-4h155m210 6h125" /><path d="M175 85h120m175-4h95m210 6h140m160-5h190" /></g>
-              <g><path d="M100 125h190m165 8h135m160-8h105m190 3h190m180-7h100" /><path d="M290 175h125m210-8h160m220 9h140m180-8h150" /></g>
-              <g><path d="M420 61h120m275 4h80m160-4h100" /><path d="M70 153h110m400-8h100m270 8h100m240-5h110" /></g>
-            </svg>
-          </MotionArtwork>
+          <MotionArtwork className={styles.heroArt}><HeroLandscape /></MotionArtwork>
 
           <div className={styles.heroContent}>
             <h1>Kenali banjir.<br />Pahami <span>wilayahmu.</span></h1>

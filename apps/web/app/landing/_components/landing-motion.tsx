@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useSyncExternalStore, type ReactNode } from "react";
-import { animate, domAnimation, LazyMotion, MotionConfig, useInView, useReducedMotion, useScroll, useSpring, useTransform } from "framer-motion";
+import { animate, domAnimation, LazyMotion, MotionConfig, useInView, useReducedMotion, useScroll } from "framer-motion";
 import * as m from "framer-motion/m";
 
 const formatter = new Intl.NumberFormat("id-ID");
@@ -42,10 +42,7 @@ export function MotionArtwork({ children, className }: { children: ReactNode; cl
   const inView = useInView(ref, { amount: 0.05 });
   const pageVisible = useSyncExternalStore(subscribeVisibility, getPageVisible, getServerVisible);
   const reduced = useReducedMotion();
-  const { scrollY } = useScroll();
-  const offset = useTransform(scrollY, [0, 900], [0, 72]);
-  const y = useSpring(offset, { stiffness: 120, damping: 28 });
-  return <m.div ref={ref} className={className} style={{ y: reduced ? 0 : y }} data-ambient={inView && pageVisible && !reduced ? "running" : "paused"} data-hero-art aria-hidden="true">{children}</m.div>;
+  return <m.div ref={ref} className={className} data-ambient={inView && pageVisible && !reduced ? "running" : "paused"} data-hero-art aria-hidden="true">{children}</m.div>;
 }
 
 export function MotionDataBar() {
