@@ -1,4 +1,4 @@
-// Generated from OpenAPI; assistant sources include the local rivers extension.
+// Types for documented API responses and web presentation projections.
 
 export type AssistantChatRequest = {
   "messages": Array<AssistantMessage>;
@@ -124,4 +124,12 @@ export interface FloodRegencyImpacts {
 export interface FloodImpactsResponse {
   overall: FloodImpactTotals;
   by_regency: FloodRegencyImpacts[];
+}
+
+export interface DistrictRainfallMonthlyResponse {
+  district_id: number;
+  year?: number | null;
+  month: number;
+  n_piksel?: number | null;
+  hujan_mm?: number | null;
 }

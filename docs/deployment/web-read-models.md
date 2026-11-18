@@ -1,108 +1,54 @@
-# Fast WebGIS data loading
+# WebGIS live data and display artifacts
 
-The web request path must not download full administrative geometry, simplify it,
-or enumerate flood event details to calculate facilities. These tasks run during
-data preparation, separately from users opening pages.
+Administrative metadata is loaded from `/api/v1/geography/catalog` and facility
+counts from `/api/v1/flood/impacts`. Both are deployed on the configured public API.
+The web does not fall back to saved catalog or facility snapshots. Failed API
+requests produce unavailable/error states instead of dummy or historical backup data.
 
-## Prepare data
+## Required display artifacts
 
-Use Node.js 24 and the configured public API origin. From `apps/web` run
+Two generated files remain active inputs for map performance, not backups:
+
+| File | Purpose | Refresh |
+| --- | --- | --- |
+| boundaries.json | Validated, simplified administrative outlines for map selection and thematic layers | After administrative geometry changes |
+| rivers.json | River display geometry, bounding boxes and exact district intersections | After river/geography imports |
+
+Do not delete these active inputs without replacing their map-serving path.
+The web never downloads all raw polygons or 100K+ river geometries into the browser.
+River requests filter the prepared data by viewport and region and bound feature counts.
+
+From `apps/web`, using Node.js 24 and the configured API origin:
 
 ```powershell
 npm run prepare:data
+npm run prepare:rivers
 ```
 
-This writes three derived artifacts to `data/processed/web`. The small
-`catalog.json` is tracked in Git so fresh clones can start. Geometry and facility
-artifacts remain ignored.
+`prepare:data` now prepares boundaries only. `prepare:rivers` gets its catalog
+from the live metadata endpoint; it no longer needs a saved catalog file.
+Both scripts validate source data and publish output atomically. Each artifact
+records API origin and `prepared_at`; preparation time is not the observation period.
+`rivers-preparation/` contains resumable build intermediates, not runtime data.
+It may be removed after `rivers.json` has been validated and published.
 
-| File | Contents | Refresh |
-| --- | --- | --- |
-| catalog.json | IDs, names and administrative parentage | When administrative data changes |
-| boundaries.json | Validated display boundaries | When administrative geometry changes |
-| facilities.json | Historical facility damage grouped by region and day | After flood-data imports, until the aggregate endpoint is deployed |
+For deployment, place the two files in `data/processed/web` or configure the
+server-only `BEJIR_PREPARED_DATA_DIR`. Next.js tracing includes only these active
+artifacts and excludes river build checkpoints. The directory remains ignored by Git.
+Never commit large raw datasets or `.env` files.
 
-The outputs contain the API origin and UTC `prepared_at`. This timestamp describes
-preparation, not the period of the spatial dataset. The web rejects artifacts
-from a different API origin. Preparation validates unique administrative IDs,
-parentage, geometry validity and complete flood event coverage before publishing.
-Files are replaced atomically. Raw polygons and event details are not published.
-Facility preparation has bounded retries and an unpublished checkpoint. Resume an interrupted run with `facilities --resume` only when source imports have not changed. A normal refresh starts fresh. When the live aggregate endpoint is available, facility preparation skips detail enumeration.
+Missing artifacts cause an explicit map-layer error. They are never replaced
+with empty or dummy geometry. The API host must be reachable from the web server.
 
-The old API sorts flood events by date without an ID tie-breaker. Preparation
-partitions date ranges until each result fits one page, checks all unique
-event IDs against API totals (2,245 at verification), and refuses incomplete or changing coverage. The
-updated backend sorts by date and ID. The web also rejects overlapping pages.
+## Monthly rainfall
 
-For individual refreshes use
-
-```powershell
-node --env-file-if-exists=.env.local scripts/prepare-web-data.mjs geography
-node --env-file-if-exists=.env.local scripts/prepare-web-data.mjs facilities
-```
-
-## Deploy
-
-1. Prepare the artifacts before packaging the web app. Next.js file tracing
-   includes the three artifacts from the monorepo. Only the small catalog is tracked in Git.
-2. Preserve `data/processed/web` in the deployed filesystem, or mount it and set
-   server-only `BEJIR_PREPARED_DATA_DIR` to its absolute location. Both preparation
-   and the web app must use the same configured API origin and directory.
-3. Deploy/restart the FastAPI backend to activate the additive endpoints below.
-   No database migration is required.
-4. Verify the new endpoints on the deployed origin and reload the web pages.
-
-| Contract | Purpose |
-| --- | --- |
-| GET /api/v1/geography/catalog | Two small metadata queries, without geometry |
-| GET /api/v1/geography/{regencies,districts,villages}?include_geometry=false | Skip geometry selection and serialization, retaining existing defaults for other clients |
-| GET /api/v1/flood/facilities | One filtered SQL aggregate. Repeated regency_id values form a union and are deduplicated |
-
-The web uses the prepared catalog when present, otherwise the lightweight catalog
-endpoint. The tracked `data/processed/web/catalog.json` contains 27 regencies/cities
-and 627 districts, prepared from the Geography API on 2026-11-13 (timestamp in the
-file). This 29 KB metadata-only catalog lets a fresh clone render while the legacy
-API lacks `/geography/catalog`. It contains no geometry, flood statistics, or
-credentials. Commit catalog updates after validated geography preparation when
-administrative IDs/names change. Different API origins must provide their own
-catalog or prepared artifacts. Invalid artifacts/responses are never replaced
-with an empty catalog. No separate backup snapshot is bundled.
-All pages share the same all-district hazard list and metadata join.
-There are no 27 per-regency hazard requests. Selected administrative outlines use
-the same prepared boundaries. Village outlines remain targeted detail requests.
-
-If the old backend returns 404/501 for facility totals, the web reads the dated
-facility projection and labels its preparation date. Other backend failures are
-reported as failures, not silently replaced by old counts. An absent projection
-does not trigger event fan-out. Successful aggregate responses use a five-minute
-cache. The fallback projection changes only when preparation is rerun.
-
-Historical damage is cumulative and can include the same facility repeatedly.
-Unknown counts remain null, zero remains zero, and public facilities remain
-unavailable until the source identifies public use/ownership. Coverage area,
-population estimates and district hazard classes retain their separate meanings.
-
-## Failure isolation
-
-Flood statistics, prior-year comparison, historical charts, spatial distribution,
-population and facility counts have independent failure states. A facility failure
-cannot blank successful charts. Overview requests start only while its panel is
-open. Analysis and rainfall render at request time so a failed build-time fetch
-cannot become the published page. Safe source-specific errors are logged on the
-server, without exposing backend exception details in the UI.
-
-## Checks
-
-```powershell
-$env:PYTHONPATH = 'apps/api'
-$env:DATABASE_URL = 'sqlite://'
-python -m pytest apps/api/tests -q
-```
-
-The backend tests require pytest and the project's Python dependencies. They use
-temporary SQLite tables to execute aggregate and metadata queries. They do not
-connect to the production database or validate PostGIS query plans.
-
-Run web tests, lint, TypeScript checks and `npm run build` from `apps/web`.
-Do not treat a fast cache hit as a cold-load measurement. Record metadata latency,
-unprimed analysis loads, boundary reads and facility endpoint request counts.
+The web loads `/api/v1/spatial-analysis/district-rainfall-monthly` once per cached
+page data refresh and aggregates available observations using each record's
+`n_piksel`. District selections preserve the matching observations. Unknown
+rainfall values remain unavailable; zero is a valid observation.
+Current live rows have `year: null`. They support month selection and a 12-month
+chart, while the year selector remains unavailable. No current year is invented.
+Without a month/year selection the table retains the spatial rainfall parameter;
+a selected month uses the monthly observations. A known selected year summarizes
+its monthly observations, not an annual total. Classification thresholds remain
+unavailable because the API does not provide an approved classification.

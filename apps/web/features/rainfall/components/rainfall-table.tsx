@@ -10,11 +10,12 @@ import { getPageItems } from "@/lib/pagination";
 import type { RainfallClass, RainfallRow } from "../types";
 
 const periodFormatter = new Intl.DateTimeFormat("id-ID", { month: "long", year: "numeric" });
+const monthFormatter = new Intl.DateTimeFormat("id-ID", { month: "long" });
 const integerFormatter = new Intl.NumberFormat("id-ID");
 const classOrder: RainfallClass[] = ["Sangat Rendah", "Rendah", "Sedang", "Tinggi", "Sangat Tinggi"];
 
 const columns: ColumnDef<RainfallRow>[] = [
-  { accessorKey: "period", header: ({ column }) => <SortHeader column={column} title="Tanggal" />, cell: ({ row }) => row.original.period ? periodFormatter.format(new Date(`${row.original.period}-01T12:00:00`)) : "—" },
+  { accessorKey: "period", header: ({ column }) => <SortHeader column={column} title="Tanggal" />, cell: ({ row: { original: row } }) => row.period ? periodFormatter.format(new Date(`${row.period}-01T12:00:00`)) : row.month ? `${monthFormatter.format(new Date(2000, row.month - 1, 1))}${row.year ? ` ${row.year}` : ""}` : row.year ? String(row.year) : "—" },
   { accessorKey: "region", header: ({ column }) => <SortHeader column={column} title="Kota/Kabupaten" /> },
   { accessorKey: "classification", header: ({ column }) => <SortHeader column={column} title="Klasifikasi" />, cell: ({ row }) => row.original.classification ?? "—", sortingFn: (a, b) => (a.original.classification === null ? -1 : classOrder.indexOf(a.original.classification)) - (b.original.classification === null ? -1 : classOrder.indexOf(b.original.classification)) },
   { accessorKey: "rainfallMm", header: ({ column }) => <SortHeader column={column} title="Curah Hujan" />, cell: ({ row }) => row.original.rainfallMm === null ? "—" : `${integerFormatter.format(row.original.rainfallMm)} mm` },

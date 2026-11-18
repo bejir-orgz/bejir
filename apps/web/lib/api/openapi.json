@@ -5,6 +5,27 @@
     "version": "0.1.0"
   },
   "paths": {
+    "/api/v1/geography/catalog": {
+      "get": {
+        "tags": [
+          "Geography"
+        ],
+        "summary": "Get Catalog",
+        "operationId": "get_catalog_api_v1_geography_catalog_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdministrativeCatalog"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/geography/provinces": {
       "get": {
         "tags": [
@@ -84,6 +105,16 @@
             }
           },
           {
+            "name": "include_geometry",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true,
+              "title": "Include Geometry"
+            }
+          },
+          {
             "name": "limit",
             "in": "query",
             "required": false,
@@ -104,16 +135,6 @@
               "minimum": 0,
               "default": 0,
               "title": "Offset"
-            }
-          },
-          {
-            "name": "include_geometry",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "default": true,
-              "title": "Include Geometry"
             }
           }
         ],
@@ -204,6 +225,16 @@
             }
           },
           {
+            "name": "include_geometry",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true,
+              "title": "Include Geometry"
+            }
+          },
+          {
             "name": "limit",
             "in": "query",
             "required": false,
@@ -224,16 +255,6 @@
               "minimum": 0,
               "default": 0,
               "title": "Offset"
-            }
-          },
-          {
-            "name": "include_geometry",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "default": true,
-              "title": "Include Geometry"
             }
           }
         ],
@@ -324,6 +345,16 @@
             }
           },
           {
+            "name": "include_geometry",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true,
+              "title": "Include Geometry"
+            }
+          },
+          {
             "name": "limit",
             "in": "query",
             "required": false,
@@ -344,16 +375,6 @@
               "minimum": 0,
               "default": 0,
               "title": "Offset"
-            }
-          },
-          {
-            "name": "include_geometry",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "default": true,
-              "title": "Include Geometry"
             }
           }
         ],
@@ -403,6 +424,275 @@
             "content": {
               "application/json": {
                 "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rivers": {
+      "get": {
+        "tags": [
+          "Rivers"
+        ],
+        "summary": "Get Rivers",
+        "operationId": "get_rivers_api_v1_rivers_get",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Name"
+            }
+          },
+          {
+            "name": "river_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "River Type"
+            }
+          },
+          {
+            "name": "layer_code",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Layer Code"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/flood/facilities": {
+      "get": {
+        "tags": [
+          "Flood"
+        ],
+        "summary": "Get Facilities",
+        "operationId": "get_facilities_api_v1_flood_facilities_get",
+        "parameters": [
+          {
+            "name": "regency_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "exclusiveMinimum": 0
+              },
+              "maxItems": 100,
+              "default": [],
+              "title": "Regency Id"
+            }
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start Date"
+            }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FacilityTotals"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/flood/impacts": {
+      "get": {
+        "tags": [
+          "Flood"
+        ],
+        "summary": "Get Impacts",
+        "operationId": "get_impacts_api_v1_flood_impacts_get",
+        "parameters": [
+          {
+            "name": "regency_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "exclusiveMinimum": 0
+              },
+              "maxItems": 100,
+              "default": [],
+              "title": "Regency Id"
+            }
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start Date"
+            }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FloodImpactsResponse"
+                }
               }
             }
           },
@@ -759,6 +1049,113 @@
             "content": {
               "application/json": {
                 "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/spatial-analysis/district-rainfall-monthly": {
+      "get": {
+        "tags": [
+          "Spatial Analysis"
+        ],
+        "summary": "Get District Rainfall Monthly",
+        "operationId": "get_district_rainfall_monthly_api_v1_spatial_analysis_district_rainfall_monthly_get",
+        "parameters": [
+          {
+            "name": "district_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "exclusiveMinimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "District Id"
+            }
+          },
+          {
+            "name": "regency_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "exclusiveMinimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Regency Id"
+            }
+          },
+          {
+            "name": "year",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 2100,
+                  "minimum": 1900
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Year"
+            }
+          },
+          {
+            "name": "month",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 12,
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Month"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DistrictRainfallMonthlyResponse"
+                  },
+                  "title": "Response Get District Rainfall Monthly Api V1 Spatial Analysis District Rainfall Monthly Get"
+                }
               }
             }
           },
@@ -1448,300 +1845,34 @@
           }
         }
       }
-    },
-    "/api/v1/geography/catalog": {
-      "get": {
-        "tags": [
-          "Geography"
-        ],
-        "summary": "Get Catalog",
-        "operationId": "get_catalog_api_v1_geography_catalog_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AdministrativeCatalog"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/flood/facilities": {
-      "get": {
-        "tags": [
-          "Flood"
-        ],
-        "summary": "Get Facilities",
-        "operationId": "get_facilities_api_v1_flood_facilities_get",
-        "parameters": [
-          {
-            "name": "regency_id",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "integer",
-                "exclusiveMinimum": 0
-              },
-              "maxItems": 100,
-              "default": [],
-              "title": "Regency Id"
-            }
-          },
-          {
-            "name": "start_date",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "format": "date-time"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Start Date"
-            }
-          },
-          {
-            "name": "end_date",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "format": "date-time"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "End Date"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/FacilityTotals"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/rivers": {
-      "get": {
-        "tags": [
-          "Rivers"
-        ],
-        "summary": "Get Rivers",
-        "operationId": "get_rivers_api_v1_rivers_get",
-        "parameters": [
-          {
-            "name": "name",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "minLength": 1
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Name"
-            }
-          },
-          {
-            "name": "river_type",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "minLength": 1
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "River Type"
-            }
-          },
-          {
-            "name": "layer_code",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "minLength": 1
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Layer Code"
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 1000,
-              "minimum": 1,
-              "default": 100,
-              "title": "Limit"
-            }
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "minimum": 0,
-              "default": 0,
-              "title": "Offset"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/flood/impacts": {
-      "get": {
-        "tags": [
-          "Flood"
-        ],
-        "summary": "Get Impacts",
-        "operationId": "get_impacts_api_v1_flood_impacts_get",
-        "parameters": [
-          {
-            "name": "regency_id",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "integer",
-                "exclusiveMinimum": 0
-              },
-              "maxItems": 100,
-              "default": [],
-              "title": "Regency Id"
-            }
-          },
-          {
-            "name": "start_date",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "format": "date-time"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Start Date"
-            }
-          },
-          {
-            "name": "end_date",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "format": "date-time"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "End Date"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/FloodImpactsResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
     }
   },
   "components": {
     "schemas": {
+      "AdministrativeCatalog": {
+        "properties": {
+          "regencies": {
+            "items": {
+              "$ref": "#/components/schemas/RegencyMetadata"
+            },
+            "type": "array",
+            "title": "Regencies"
+          },
+          "districts": {
+            "items": {
+              "$ref": "#/components/schemas/DistrictMetadata"
+            },
+            "type": "array",
+            "title": "Districts"
+          }
+        },
+        "type": "object",
+        "required": [
+          "regencies",
+          "districts"
+        ],
+        "title": "AdministrativeCatalog"
+      },
       "AssistantChatRequest": {
         "properties": {
           "messages": {
@@ -1882,6 +2013,82 @@
         ],
         "title": "DestinationRouteResponse"
       },
+      "DistrictMetadata": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "regency_id": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Regency Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "regency_id"
+        ],
+        "title": "DistrictMetadata"
+      },
+      "DistrictRainfallMonthlyResponse": {
+        "properties": {
+          "district_id": {
+            "type": "integer",
+            "title": "District Id"
+          },
+          "year": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Year"
+          },
+          "month": {
+            "type": "integer",
+            "title": "Month"
+          },
+          "n_piksel": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "N Piksel"
+          },
+          "hujan_mm": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hujan Mm"
+          }
+        },
+        "type": "object",
+        "required": [
+          "district_id",
+          "month"
+        ],
+        "title": "DistrictRainfallMonthlyResponse"
+      },
       "EvacuationSiteResponse": {
         "properties": {
           "id": {
@@ -1938,6 +2145,243 @@
         ],
         "title": "EvacuationSiteResponse"
       },
+      "FacilityTotals": {
+        "properties": {
+          "health": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Health"
+          },
+          "education": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Education"
+          },
+          "worship": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Worship"
+          },
+          "public": {
+            "type": "null",
+            "title": "Public"
+          },
+          "data_kind": {
+            "type": "string",
+            "const": "historical_damage",
+            "title": "Data Kind",
+            "default": "historical_damage"
+          }
+        },
+        "type": "object",
+        "required": [
+          "health",
+          "education",
+          "worship"
+        ],
+        "title": "FacilityTotals"
+      },
+      "FloodImpactTotals": {
+        "properties": {
+          "fatalities": {
+            "type": "integer",
+            "title": "Fatalities",
+            "default": 0
+          },
+          "missing": {
+            "type": "integer",
+            "title": "Missing",
+            "default": 0
+          },
+          "injured": {
+            "type": "integer",
+            "title": "Injured",
+            "default": 0
+          },
+          "affected_displaced": {
+            "type": "integer",
+            "title": "Affected Displaced",
+            "default": 0
+          },
+          "houses_heavily_damaged": {
+            "type": "integer",
+            "title": "Houses Heavily Damaged",
+            "default": 0
+          },
+          "houses_moderately_damaged": {
+            "type": "integer",
+            "title": "Houses Moderately Damaged",
+            "default": 0
+          },
+          "houses_slightly_damaged": {
+            "type": "integer",
+            "title": "Houses Slightly Damaged",
+            "default": 0
+          },
+          "houses_flooded": {
+            "type": "integer",
+            "title": "Houses Flooded",
+            "default": 0
+          },
+          "schools_damaged": {
+            "type": "integer",
+            "title": "Schools Damaged",
+            "default": 0
+          },
+          "religious_facilities_damaged": {
+            "type": "integer",
+            "title": "Religious Facilities Damaged",
+            "default": 0
+          },
+          "health_facilities_damaged": {
+            "type": "integer",
+            "title": "Health Facilities Damaged",
+            "default": 0
+          },
+          "offices_damaged": {
+            "type": "integer",
+            "title": "Offices Damaged",
+            "default": 0
+          },
+          "bridges_damaged": {
+            "type": "integer",
+            "title": "Bridges Damaged",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "title": "FloodImpactTotals"
+      },
+      "FloodImpactsResponse": {
+        "properties": {
+          "overall": {
+            "$ref": "#/components/schemas/FloodImpactTotals"
+          },
+          "by_regency": {
+            "items": {
+              "$ref": "#/components/schemas/FloodRegencyImpacts"
+            },
+            "type": "array",
+            "title": "By Regency"
+          }
+        },
+        "type": "object",
+        "required": [
+          "overall",
+          "by_regency"
+        ],
+        "title": "FloodImpactsResponse"
+      },
+      "FloodRegencyImpacts": {
+        "properties": {
+          "fatalities": {
+            "type": "integer",
+            "title": "Fatalities",
+            "default": 0
+          },
+          "missing": {
+            "type": "integer",
+            "title": "Missing",
+            "default": 0
+          },
+          "injured": {
+            "type": "integer",
+            "title": "Injured",
+            "default": 0
+          },
+          "affected_displaced": {
+            "type": "integer",
+            "title": "Affected Displaced",
+            "default": 0
+          },
+          "houses_heavily_damaged": {
+            "type": "integer",
+            "title": "Houses Heavily Damaged",
+            "default": 0
+          },
+          "houses_moderately_damaged": {
+            "type": "integer",
+            "title": "Houses Moderately Damaged",
+            "default": 0
+          },
+          "houses_slightly_damaged": {
+            "type": "integer",
+            "title": "Houses Slightly Damaged",
+            "default": 0
+          },
+          "houses_flooded": {
+            "type": "integer",
+            "title": "Houses Flooded",
+            "default": 0
+          },
+          "schools_damaged": {
+            "type": "integer",
+            "title": "Schools Damaged",
+            "default": 0
+          },
+          "religious_facilities_damaged": {
+            "type": "integer",
+            "title": "Religious Facilities Damaged",
+            "default": 0
+          },
+          "health_facilities_damaged": {
+            "type": "integer",
+            "title": "Health Facilities Damaged",
+            "default": 0
+          },
+          "offices_damaged": {
+            "type": "integer",
+            "title": "Offices Damaged",
+            "default": 0
+          },
+          "bridges_damaged": {
+            "type": "integer",
+            "title": "Bridges Damaged",
+            "default": 0
+          },
+          "regency_id": {
+            "type": "integer",
+            "title": "Regency Id"
+          },
+          "regency_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Regency Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "regency_id"
+        ],
+        "title": "FloodRegencyImpacts"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -1950,6 +2394,25 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "RegencyMetadata": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "RegencyMetadata"
       },
       "RouteRequest": {
         "properties": {
@@ -2166,311 +2629,6 @@
           "type"
         ],
         "title": "ValidationError"
-      },
-      "AdministrativeCatalog": {
-        "properties": {
-          "regencies": {
-            "items": {
-              "$ref": "#/components/schemas/RegencyMetadata"
-            },
-            "type": "array",
-            "title": "Regencies"
-          },
-          "districts": {
-            "items": {
-              "$ref": "#/components/schemas/DistrictMetadata"
-            },
-            "type": "array",
-            "title": "Districts"
-          }
-        },
-        "type": "object",
-        "required": [
-          "regencies",
-          "districts"
-        ],
-        "title": "AdministrativeCatalog"
-      },
-      "DistrictMetadata": {
-        "properties": {
-          "id": {
-            "type": "integer",
-            "exclusiveMinimum": 0.0,
-            "title": "Id"
-          },
-          "name": {
-            "type": "string",
-            "title": "Name"
-          },
-          "regency_id": {
-            "type": "integer",
-            "exclusiveMinimum": 0.0,
-            "title": "Regency Id"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "name",
-          "regency_id"
-        ],
-        "title": "DistrictMetadata"
-      },
-      "RegencyMetadata": {
-        "properties": {
-          "id": {
-            "type": "integer",
-            "exclusiveMinimum": 0.0,
-            "title": "Id"
-          },
-          "name": {
-            "type": "string",
-            "title": "Name"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "name"
-        ],
-        "title": "RegencyMetadata"
-      },
-      "FacilityTotals": {
-        "properties": {
-          "health": {
-            "anyOf": [
-              {
-                "type": "integer",
-                "minimum": 0.0
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Health"
-          },
-          "education": {
-            "anyOf": [
-              {
-                "type": "integer",
-                "minimum": 0.0
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Education"
-          },
-          "worship": {
-            "anyOf": [
-              {
-                "type": "integer",
-                "minimum": 0.0
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Worship"
-          },
-          "public": {
-            "type": "null",
-            "title": "Public"
-          },
-          "data_kind": {
-            "type": "string",
-            "const": "historical_damage",
-            "title": "Data Kind",
-            "default": "historical_damage"
-          }
-        },
-        "type": "object",
-        "required": [
-          "health",
-          "education",
-          "worship"
-        ],
-        "title": "FacilityTotals"
-      },
-      "FloodImpactTotals": {
-        "properties": {
-          "fatalities": {
-            "type": "integer",
-            "title": "Fatalities",
-            "default": 0
-          },
-          "missing": {
-            "type": "integer",
-            "title": "Missing",
-            "default": 0
-          },
-          "injured": {
-            "type": "integer",
-            "title": "Injured",
-            "default": 0
-          },
-          "affected_displaced": {
-            "type": "integer",
-            "title": "Affected Displaced",
-            "default": 0
-          },
-          "houses_heavily_damaged": {
-            "type": "integer",
-            "title": "Houses Heavily Damaged",
-            "default": 0
-          },
-          "houses_moderately_damaged": {
-            "type": "integer",
-            "title": "Houses Moderately Damaged",
-            "default": 0
-          },
-          "houses_slightly_damaged": {
-            "type": "integer",
-            "title": "Houses Slightly Damaged",
-            "default": 0
-          },
-          "houses_flooded": {
-            "type": "integer",
-            "title": "Houses Flooded",
-            "default": 0
-          },
-          "schools_damaged": {
-            "type": "integer",
-            "title": "Schools Damaged",
-            "default": 0
-          },
-          "religious_facilities_damaged": {
-            "type": "integer",
-            "title": "Religious Facilities Damaged",
-            "default": 0
-          },
-          "health_facilities_damaged": {
-            "type": "integer",
-            "title": "Health Facilities Damaged",
-            "default": 0
-          },
-          "offices_damaged": {
-            "type": "integer",
-            "title": "Offices Damaged",
-            "default": 0
-          },
-          "bridges_damaged": {
-            "type": "integer",
-            "title": "Bridges Damaged",
-            "default": 0
-          }
-        },
-        "type": "object",
-        "title": "FloodImpactTotals"
-      },
-      "FloodRegencyImpacts": {
-        "properties": {
-          "fatalities": {
-            "type": "integer",
-            "title": "Fatalities",
-            "default": 0
-          },
-          "missing": {
-            "type": "integer",
-            "title": "Missing",
-            "default": 0
-          },
-          "injured": {
-            "type": "integer",
-            "title": "Injured",
-            "default": 0
-          },
-          "affected_displaced": {
-            "type": "integer",
-            "title": "Affected Displaced",
-            "default": 0
-          },
-          "houses_heavily_damaged": {
-            "type": "integer",
-            "title": "Houses Heavily Damaged",
-            "default": 0
-          },
-          "houses_moderately_damaged": {
-            "type": "integer",
-            "title": "Houses Moderately Damaged",
-            "default": 0
-          },
-          "houses_slightly_damaged": {
-            "type": "integer",
-            "title": "Houses Slightly Damaged",
-            "default": 0
-          },
-          "houses_flooded": {
-            "type": "integer",
-            "title": "Houses Flooded",
-            "default": 0
-          },
-          "schools_damaged": {
-            "type": "integer",
-            "title": "Schools Damaged",
-            "default": 0
-          },
-          "religious_facilities_damaged": {
-            "type": "integer",
-            "title": "Religious Facilities Damaged",
-            "default": 0
-          },
-          "health_facilities_damaged": {
-            "type": "integer",
-            "title": "Health Facilities Damaged",
-            "default": 0
-          },
-          "offices_damaged": {
-            "type": "integer",
-            "title": "Offices Damaged",
-            "default": 0
-          },
-          "bridges_damaged": {
-            "type": "integer",
-            "title": "Bridges Damaged",
-            "default": 0
-          },
-          "regency_id": {
-            "type": "integer",
-            "title": "Regency Id"
-          },
-          "regency_name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Regency Name"
-          }
-        },
-        "type": "object",
-        "required": [
-          "regency_id"
-        ],
-        "title": "FloodRegencyImpacts"
-      },
-      "FloodImpactsResponse": {
-        "properties": {
-          "overall": {
-            "$ref": "#/components/schemas/FloodImpactTotals"
-          },
-          "by_regency": {
-            "items": {
-              "$ref": "#/components/schemas/FloodRegencyImpacts"
-            },
-            "type": "array",
-            "title": "By Regency"
-          }
-        },
-        "type": "object",
-        "required": [
-          "overall",
-          "by_regency"
-        ],
-        "title": "FloodImpactsResponse"
       }
     }
   }

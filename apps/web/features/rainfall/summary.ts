@@ -14,14 +14,17 @@ export function aggregateRainfall(parameters: RainfallParameter[]) {
 }
 
 export function rainfallSnapshot(rows: RainfallRow[]): RainfallPageData["snapshots"][number] {
-  const totals = aggregateRainfall(rows.flatMap((row) => row.parameters));
+  const parameters = rows.flatMap((row) => row.parameters);
+  const totals = aggregateRainfall(parameters);
+  const monthly = rows.flatMap((row) => row.monthly ?? []);
+  const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
   const format = (value: number | null) => value === null ? "—" : value.toLocaleString("id-ID", { maximumFractionDigits: 1 }) + " mm";
   return {
     metrics: [
-      { label: "Rata-Rata Curah Hujan", value: format(totals.average), change: `${totals.known}/${totals.total} kecamatan · berbobot piksel`, trend: "increase" },
+      { label: "Rata-Rata Curah Hujan", value: format(totals.average), change: `${totals.known}/${totals.total} ${parameters.some((row) => "month" in row) ? "pengamatan kecamatan/bulan" : "kecamatan"} · berbobot piksel`, trend: "increase" },
       { label: "Curah Hujan Minimum", value: format(totals.minimum), change: "Rata-rata kecamatan terendah", trend: "decrease" },
       { label: "Curah Hujan Maksimum", value: format(totals.maximum), change: "Rata-rata kecamatan tertinggi", trend: "increase" },
     ],
-    distribution: [],
+    distribution: monthly.length ? months.map((month, index) => ({ month, rainfallMm: aggregateRainfall(monthly.filter((row) => row.month === index + 1)).average })) : [],
   };
 }

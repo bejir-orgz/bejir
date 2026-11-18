@@ -13,11 +13,11 @@ import type { RainfallFilters, RainfallPageData } from "../types";
 
 export { RainfallRegionFilter };
 
-export function RainfallFiltersBar({ filters, regions, legend, year, years, onYearChange, onChange }: { filters: RainfallFilters; regions: string[]; legend: RainfallPageData["legend"]; year: number; years: readonly number[]; onYearChange: (year: number) => void; onChange: (filters: RainfallFilters) => void }) {
+export function RainfallFiltersBar({ filters, regions, legend, year, years, monthlyAvailable, onYearChange, onChange }: { filters: RainfallFilters; regions: string[]; legend: RainfallPageData["legend"]; year: number; years: readonly number[]; monthlyAvailable: boolean; onYearChange: (year: number) => void; onChange: (filters: RainfallFilters) => void }) {
   const [monthOpen, setMonthOpen] = useState(false);
   return <div className="rainfall-filters flex gap-4 max-[900.01px]:flex-wrap max-[900.01px]:gap-2">
     <Popover open={monthOpen} onOpenChange={setMonthOpen}>
-      <PopoverTrigger asChild><Button disabled={!years.length} variant={filters.month ? "outline" : "filter"} className="rainfall-filter rounded-2xl" data-active={!!filters.month}><IconCalendarWeek className="size-6" /><span>{filters.month ? `${calendarMonths[Number(filters.month) - 1]} ${year}` : "Tanggal"}</span></Button></PopoverTrigger>
+      <PopoverTrigger asChild><Button disabled={!monthlyAvailable} variant={filters.month ? "outline" : "filter"} className="rainfall-filter rounded-2xl" data-active={!!filters.month}><IconCalendarWeek className="size-6" /><span>{filters.month ? `${calendarMonths[Number(filters.month) - 1]}${year ? ` ${year}` : ""}` : "Tanggal"}</span></Button></PopoverTrigger>
       <PopoverContent align="start" collisionPadding={16} aria-label="Pilih bulan curah hujan" className="w-auto max-h-[min(calc(100dvh-32px),var(--radix-popover-content-available-height))] overflow-y-auto rounded-2xl border-0 bg-transparent p-0">
         <CalendarMonth year={year} years={years} month={filters.month} onYearChange={onYearChange} onMonthChange={(month) => { onChange({ ...filters, month }); setMonthOpen(false); }} />
       </PopoverContent>

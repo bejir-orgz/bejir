@@ -83,7 +83,7 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
   return (
     <div className="webgis-screen flex flex-col [&_>_.gis-header]:shrink-0 [--gis-blue:var(--primary)] [--gis-border:var(--border)] [--gis-muted:#737373] [--gis-slide-duration:280ms] [--gis-slide-easing:cubic-bezier(.22,1,.36,1)] text-[#000] bg-[#fff] text-[14px] leading-[20px] h-dvh min-h-120 overflow-hidden [&_button:focus-visible]:[outline:2px_solid_var(--gis-blue)] [&_button:focus-visible]:[outline-offset:-2px]">
       <a className="skip-link fixed z-50 top-2 left-4 [transform:translateY(-150%)] rounded-lg bg-[#2563eb] text-[white] p-[8px_16px] [&:focus]:[transform:translateY(0)]" href="#gis-main">Lewati ke peta</a>
-      <WebgisHeader dummy={data.source === "dummy"} mapCanvas onRegionSelect={(region) => {
+      <WebgisHeader mapCanvas onRegionSelect={(region) => {
         updateFilters({ regionIds: [region.id] });
         dispatch({ type: "show-overview" });
       }} />

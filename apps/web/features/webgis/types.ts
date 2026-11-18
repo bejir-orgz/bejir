@@ -22,7 +22,7 @@ export interface RegionNode {
 export interface LayerOption {
   id: string;
   label: string;
-  /** Number of mock sublayers represented by this group. */
+  /** Number of sublayers represented by this group. */
   count: number;
 }
 
@@ -42,7 +42,7 @@ export interface FacilityMetric {
 
 /** Frontend presentation model; not an assumed backend API contract. */
 export interface WorkspaceData {
-  source: "dummy" | "backend";
+  source: "backend";
   year: number;
   layers: LayerOption[];
   legends: { id: string; label: string }[];

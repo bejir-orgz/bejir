@@ -23,7 +23,7 @@ export interface AnalysisFilters {
 
 /** Dashboard presentation only; no API contract or spatial analysis method is implied. */
 export interface AnalysisData {
-  source?: "backend" | "dummy";
+  source?: "backend";
   error?: string;
   years: number[];
   regions: string[];

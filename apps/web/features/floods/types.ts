@@ -22,7 +22,7 @@ export interface HistoryFilters {
 }
 
 export interface FloodHistoryData {
-  source?: "backend" | "dummy";
+  source?: "backend";
   error?: string;
   previousCounts?: { region: string; events: number }[];
   years: number[];

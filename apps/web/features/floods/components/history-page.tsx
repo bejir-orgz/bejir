@@ -24,9 +24,7 @@ export function HistoryPage({ data }: { data: FloodHistoryData }) {
   const summaryData = cache[summaryYear];
   const tableData = cache[tableYear];
   const rows = useMemo(() => filterHistoryRows(tableData?.rows ?? [], tableYear, filters), [tableData, tableYear, filters]);
-  const snapshot = data.source === "backend"
-    ? summaryData && !summaryData.error ? summarizeHistory(summaryData, summaryRegionIds) : unavailableSnapshot
-    : data.snapshots[summaryYear];
+  const snapshot = summaryData && !summaryData.error ? summarizeHistory(summaryData, summaryRegionIds) : unavailableSnapshot;
   const loading = !summaryData || !tableData;
   useEffect(() => {
     if (data.source !== "backend") return;
@@ -46,7 +44,7 @@ export function HistoryPage({ data }: { data: FloodHistoryData }) {
     return () => controller.abort();
   }, [data.source, summaryYear, tableYear, cache]);
   const active = tableYear !== data.years[0] || !!(filters.query || filters.regionIds.length || filters.floodTypes.length || filters.from || filters.to);
-  return <div className="history-page min-h-[100dvh] bg-[#fff] text-[#171717] [&_[data-slot=card]]:border-0 [&_[data-slot=card]]:[outline:1px_solid_#d4d4d4] [&_[data-slot=card]]:[outline-offset:-1px]"><WebgisHeader mapCanvas dummy={data.source !== "backend"} />
+  return <div className="history-page min-h-[100dvh] bg-[#fff] text-[#171717] [&_[data-slot=card]]:border-0 [&_[data-slot=card]]:[outline:1px_solid_#d4d4d4] [&_[data-slot=card]]:[outline-offset:-1px]"><WebgisHeader mapCanvas />
     <main className="history-content w-[min(1200px,calc(100%_-_32px))] mx-auto py-4">
       <div className="history-heading min-h-10 flex items-center justify-between gap-4 [&_h1]:text-[36px] [&_h1]:leading-[40px] [&_h1]:font-medium max-[700.01px]:items-start max-[700.01px]:flex-wrap max-[700.01px]:[&_h1]:text-[28px] max-[700.01px]:[&_h1]:leading-[36px]"><div className="history-heading-scope flex items-center gap-4 max-[700.01px]:gap-2 max-[700.01px]:flex-wrap"><h1>Histori Banjir</h1><span className="history-heading-divider mx-2 h-10 w-0.5 shrink-0 bg-neutral-300 max-[700.01px]:h-7" aria-hidden="true" /><RegionFilter iconOnly regions={data.regions} districtRows={data.rows} value={summaryRegionIds} onChange={setSummaryRegionIds} /></div>
         <YearFilterButton years={data.years} value={summaryYear} onValueChange={setSummaryYear} />

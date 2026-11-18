@@ -29,5 +29,5 @@ export function useOverview(initial: WorkspaceData["overview"], filters: Workspa
   const overview = result?.key === key ? result.overview : initial;
   if (!facilities) return overview;
   if (facilities.error) return { ...overview, summary: overview.summary + " " + facilities.error };
-  return facilities.counts ? { ...overview, summary: overview.summary + (facilities.counts.prepared_at ? ` Snapshot fasilitas disiapkan ${new Date(facilities.counts.prepared_at).toLocaleDateString("id-ID")}.` : ""), facilities: overview.facilities.map((facility) => ({ ...facility, count: facilities.counts![facility.id] })) } : overview;
+  return facilities.counts ? { ...overview, facilities: overview.facilities.map((facility) => ({ ...facility, count: facilities.counts![facility.id] })) } : overview;
 }
