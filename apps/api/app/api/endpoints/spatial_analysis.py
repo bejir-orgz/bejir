@@ -2,11 +2,15 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
-from app.schemas.spatial_analysis import DistrictRainfallMonthlyResponse
+from app.schemas.spatial_analysis import (
+    DistrictRainfallMonthlyResponse,
+    RegencyRainfallClassificationResponse,
+)
 from app.services.spatial_analysis import (
     DistrictHazardStatisticService,
     DistrictRainfallMonthlyService,
     PopulationExposureService,
+    RegencyRainfallClassificationService,
 )
 
 router = APIRouter()
@@ -29,6 +33,20 @@ def get_district_rainfall_monthly(
         regency_id=regency_id,
         year=year,
         month=month,
+    )
+
+
+@router.get(
+    "/regency-rainfall-classification",
+    response_model=list[RegencyRainfallClassificationResponse],
+)
+def get_regency_rainfall_classification(
+    regency_id: int | None = Query(default=None, gt=0),
+    db: Session = Depends(get_db),
+):
+    return RegencyRainfallClassificationService.list_classification(
+        db,
+        regency_id=regency_id,
     )
 
 

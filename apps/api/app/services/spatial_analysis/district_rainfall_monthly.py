@@ -26,6 +26,22 @@ class DistrictRainfallMonthlyService:
         )
 
         return [
-            DistrictRainfallMonthlyResponse.model_validate(record)
-            for record in records
+            DistrictRainfallMonthlyResponse(
+                district_id=monthly.district_id,
+                year=monthly.year,
+                month=monthly.month,
+                n_piksel=monthly.n_piksel,
+                hujan_mm=monthly.hujan_mm,
+                kelas_hujan=(
+                    classification.kelas_hujan
+                    if classification is not None
+                    else None
+                ),
+                label_hujan=(
+                    classification.label_hujan
+                    if classification is not None
+                    else None
+                ),
+            )
+            for monthly, classification in records
         ]

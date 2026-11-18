@@ -7,9 +7,13 @@ from app.services.spatial_analysis.population_exposure import (
 from app.services.spatial_analysis.district_rainfall_monthly import (
     DistrictRainfallMonthlyService,
 )
+from app.services.spatial_analysis.regency_rainfall_classification import (
+    RegencyRainfallClassificationService,
+)
 
 __all__ = [
     "DistrictHazardStatisticService",
     "PopulationExposureService",
     "DistrictRainfallMonthlyService",
+    "RegencyRainfallClassificationService",
 ]

@@ -1,0 +1,628 @@
+code_kec,nama_kec,code_pum,nama_kab,n_piksel,mean_hujan_mm,kelas_hujan,label_hujan
+32.01.01,Cibinong,32.01,Bogor,52234,3908.7511,5,Sangat Tinggi
+32.01.02,Gunungputri,32.01,Bogor,67751,3031.9535,3,Sedang
+32.01.03,Citeureup,32.01,Bogor,81428,4076.7034,5,Sangat Tinggi
+32.01.04,Sukaraja,32.01,Bogor,48447,4288.6612,5,Sangat Tinggi
+32.01.05,Babakan Madang,32.01,Bogor,97253,4121.6317,5,Sangat Tinggi
+32.01.06,Jonggol,32.01,Bogor,145861,3164.0492,3,Sedang
+32.01.07,Cileungsi,32.01,Bogor,77895,2936.7940,2,Rendah
+32.01.08,Cariu,32.01,Bogor,94328,2874.9862,2,Rendah
+32.01.09,Sukamakmur,32.01,Bogor,206549,3469.2719,4,Tinggi
+32.01.10,Parung,32.01,Bogor,30848,3925.0688,5,Sangat Tinggi
+32.01.11,Gunungsindur,32.01,Bogor,54365,3460.8636,4,Tinggi
+32.01.12,Kemang,32.01,Bogor,37304,4494.1264,5,Sangat Tinggi
+32.01.13,Bojonggede,32.01,Bogor,32396,4047.1648,5,Sangat Tinggi
+32.01.14,Leuwiliang,32.01,Bogor,102505,4872.7741,5,Sangat Tinggi
+32.01.15,Ciampea,32.01,Bogor,37910,4647.4194,5,Sangat Tinggi
+32.01.16,Cibungbulang,32.01,Bogor,41484,4618.5806,5,Sangat Tinggi
+32.01.17,Pamijahan,32.01,Bogor,139304,4674.4495,5,Sangat Tinggi
+32.01.18,Rumpin,32.01,Bogor,154264,3981.8234,5,Sangat Tinggi
+32.01.19,Jasinga,32.01,Bogor,155156,4028.6528,5,Sangat Tinggi
+32.01.20,Parungpanjang,32.01,Bogor,78774,3244.8828,3,Sedang
+32.01.21,Nanggung,32.01,Bogor,174775,4944.5328,5,Sangat Tinggi
+32.01.22,Cigudeg,32.01,Bogor,199671,4248.3307,5,Sangat Tinggi
+32.01.23,Tenjo,32.01,Bogor,90224,3092.8149,3,Sedang
+32.01.24,Ciawi,32.01,Bogor,40104,3685.1108,4,Tinggi
+32.01.25,Cisarua,32.01,Bogor,86142,3446.4751,4,Tinggi
+32.01.26,Megamendung,32.01,Bogor,75493,3669.6144,4,Tinggi
+32.01.27,Caringin,32.01,Bogor,86559,3524.5399,4,Tinggi
+32.01.28,Cijeruk,32.01,Bogor,52570,4141.4772,5,Sangat Tinggi
+32.01.29,Ciomas,32.01,Bogor,18909,4603.6651,5,Sangat Tinggi
+32.01.30,Dramaga,32.01,Bogor,28400,4701.8258,5,Sangat Tinggi
+32.01.31,Tamansari,32.01,Bogor,43028,4512.0571,5,Sangat Tinggi
+32.01.32,Klapanunggal,32.01,Bogor,106781,3481.3609,4,Tinggi
+32.01.33,Ciseeng,32.01,Bogor,43936,4100.2204,5,Sangat Tinggi
+32.01.34,Rancabungur,32.01,Bogor,25146,4569.6080,5,Sangat Tinggi
+32.01.35,Sukajaya,32.01,Bogor,183478,4962.5962,5,Sangat Tinggi
+32.01.36,Tanjungsari,32.01,Bogor,163720,2886.5795,2,Rendah
+32.01.37,Tajurhalang,32.01,Bogor,33733,4125.3608,5,Sangat Tinggi
+32.01.38,Cigombong,32.01,Bogor,52489,3541.8935,4,Tinggi
+32.01.39,Leuwisadeng,32.01,Bogor,41547,4788.9573,5,Sangat Tinggi
+32.01.40,Tenjolaya,32.01,Bogor,41938,4568.8025,5,Sangat Tinggi
+32.02.01,Palabuhanratu,32.02,Sukabumi,101242,3080.9545,3,Sedang
+32.02.02,Simpenan,32.02,Sukabumi,192463,4108.7291,5,Sangat Tinggi
+32.02.03,Cikakak,32.02,Sukabumi,126264,3966.4647,5,Sangat Tinggi
+32.02.04,Bantargadung,32.02,Sukabumi,80944,3003.0526,3,Sedang
+32.02.05,Cisolok,32.02,Sukabumi,192970,4404.7108,5,Sangat Tinggi
+32.02.06,Cikidang,32.02,Sukabumi,177012,3261.8949,3,Sedang
+32.02.07,Lengkong,32.02,Sukabumi,147619,4163.0081,5,Sangat Tinggi
+32.02.08,Jampangtengah,32.02,Sukabumi,228467,3522.7733,4,Tinggi
+32.02.09,Warungkiara,32.02,Sukabumi,99615,3207.2739,3,Sedang
+32.02.10,Cikembar,32.02,Sukabumi,90819,2987.3873,2,Rendah
+32.02.11,Cibadak,32.02,Sukabumi,71498,2636.2198,2,Rendah
+32.02.12,Nagrak,32.02,Sukabumi,76623,2658.5228,2,Rendah
+32.02.13,Parungkuda,32.02,Sukabumi,28747,2701.1949,2,Rendah
+32.02.14,Bojonggenteng,32.02,Sukabumi,19241,3030.9736,3,Sedang
+32.02.15,Parakansalak,32.02,Sukabumi,42318,3600.1691,4,Tinggi
+32.02.16,Cicurug,32.02,Sukabumi,51413,3388.2952,3,Sedang
+32.02.17,Cidahu,32.02,Sukabumi,38731,3591.4538,4,Tinggi
+32.02.18,Kalapanunggal,32.02,Sukabumi,54298,3728.4995,4,Tinggi
+32.02.19,Kabandungan,32.02,Sukabumi,151974,4515.7927,5,Sangat Tinggi
+32.02.20,Waluran,32.02,Sukabumi,116778,4404.6794,5,Sangat Tinggi
+32.02.21,Jampangkulon,32.02,Sukabumi,76881,4241.7639,5,Sangat Tinggi
+32.02.22,Ciemas,32.02,Sukabumi,351390,4349.7001,5,Sangat Tinggi
+32.02.23,Kalibunder,32.02,Sukabumi,101239,4176.6069,5,Sangat Tinggi
+32.02.24,Surade,32.02,Sukabumi,133238,4115.1287,5,Sangat Tinggi
+32.02.25,Cibitung,32.02,Sukabumi,99299,4093.5230,5,Sangat Tinggi
+32.02.26,Ciracap,32.02,Sukabumi,151383,4074.6781,5,Sangat Tinggi
+32.02.27,Gunungguruh,32.02,Sukabumi,26968,2915.6156,2,Rendah
+32.02.28,Cicantayan,32.02,Sukabumi,41541,2827.2025,2,Rendah
+32.02.29,Cisaat,32.02,Sukabumi,25496,2862.2020,2,Rendah
+32.02.30,Kadudampit,32.02,Sukabumi,77312,3168.0905,3,Sedang
+32.02.31,Caringin,32.02,Sukabumi,40929,2893.3308,2,Rendah
+32.02.32,Sukabumi,32.02,Sukabumi,33897,3101.5546,3,Sedang
+32.02.33,Sukaraja,32.02,Sukabumi,46976,3053.8489,3,Sedang
+32.02.34,Kebonpedes,32.02,Sukabumi,12719,2928.5045,2,Rendah
+32.02.35,Cireunghas,32.02,Sukabumi,32846,3075.6030,3,Sedang
+32.02.36,Sukalarang,32.02,Sukabumi,34117,3058.4855,3,Sedang
+32.02.37,Pabuaran,32.02,Sukabumi,127749,3964.8143,5,Sangat Tinggi
+32.02.38,Purabaya,32.02,Sukabumi,110796,3503.8235,4,Tinggi
+32.02.39,Nyalindung,32.02,Sukabumi,119726,3198.6096,3,Sedang
+32.02.40,Gegerbitung,32.02,Sukabumi,76639,3274.3497,3,Sedang
+32.02.41,Sagaranten,32.02,Sukabumi,132642,3820.4198,4,Tinggi
+32.02.42,Curugkembar,32.02,Sukabumi,71839,3797.8073,4,Tinggi
+32.02.43,Cidolog,32.02,Sukabumi,107781,3933.2130,5,Sangat Tinggi
+32.02.44,Cidadap,32.02,Sukabumi,93788,3931.3275,5,Sangat Tinggi
+32.02.45,Tegalbuleud,32.02,Sukabumi,284882,4066.4391,5,Sangat Tinggi
+32.02.46,Cimanggu,32.02,Sukabumi,57114,4271.3502,5,Sangat Tinggi
+32.02.47,Ciambar,32.02,Sukabumi,68148,2856.8206,2,Rendah
+32.03.01,Cianjur,32.03,Cianjur,29647,2773.0177,2,Rendah
+32.03.02,Warungkondang,32.03,Cianjur,50809,2949.1815,2,Rendah
+32.03.03,Cibeber,32.03,Cianjur,139545,2990.9166,2,Rendah
+32.03.04,Cilaku,32.03,Cianjur,59107,2771.0897,2,Rendah
+32.03.05,Ciranjang,32.03,Cianjur,38068,2518.3241,2,Rendah
+32.03.06,Bonjogpicung,32.03,Cianjur,98905,2697.0532,2,Rendah
+32.03.07,Karangtengah,32.03,Cianjur,53850,2576.8125,2,Rendah
+32.03.08,Mande,32.03,Cianjur,102955,2547.8161,2,Rendah
+32.03.09,Sukaluyu,32.03,Cianjur,52304,2587.1246,2,Rendah
+32.03.10,Pacet,32.03,Cianjur,46195,3136.8341,3,Sedang
+32.03.11,Cugenang,32.03,Cianjur,84755,2979.4972,2,Rendah
+32.03.12,Cikalongkulon,32.03,Cianjur,161240,2567.2901,2,Rendah
+32.03.13,Sukaresmi,32.03,Cianjur,107281,2905.6033,2,Rendah
+32.03.14,Sukanagara,32.03,Cianjur,189766,3667.4120,4,Tinggi
+32.03.15,Campaka,32.03,Cianjur,153742,3304.8690,3,Sedang
+32.03.16,Takokak,32.03,Cianjur,163041,3587.6628,4,Tinggi
+32.03.17,Kadupandak,32.03,Cianjur,113921,3905.5255,5,Sangat Tinggi
+32.03.18,Pagelarang,32.03,Cianjur,227516,3867.8713,4,Tinggi
+32.03.19,Tanggeung,32.03,Cianjur,73778,3964.5573,5,Sangat Tinggi
+32.03.20,Cubinong,32.03,Cianjur,258139,4226.2392,5,Sangat Tinggi
+32.03.21,Sindangbarang,32.03,Cianjur,177419,4561.6897,5,Sangat Tinggi
+32.03.22,Agrabinta,32.03,Cianjur,218639,3930.5291,5,Sangat Tinggi
+32.03.23,Cidaun,32.03,Cianjur,328156,3709.0594,4,Tinggi
+32.03.24,Naringgul,32.03,Cianjur,321020,3974.2635,5,Sangat Tinggi
+32.03.25,Campakamulya,32.03,Cianjur,83594,3709.8200,4,Tinggi
+32.03.26,Cikadu,32.03,Cianjur,223034,4159.3790,5,Sangat Tinggi
+32.03.27,Gekbrong,32.03,Cianjur,54488,3003.4683,3,Sedang
+32.03.28,Cipanas,32.03,Cianjur,75657,3309.7279,3,Sedang
+32.03.29,Cijati,32.03,Cianjur,54014,4025.3008,5,Sangat Tinggi
+32.03.30,Leles,32.03,Cianjur,130474,4100.2648,5,Sangat Tinggi
+32.03.31,Haurwangi,32.03,Cianjur,51078,2603.0347,2,Rendah
+32.03.32,Pasirkuda,32.03,Cianjur,115772,4018.9718,5,Sangat Tinggi
+32.04.05,Cileunyi,32.04,Bandung,34145,2192.9291,1,Sangat Rendah
+32.04.06,Cimenyan,32.04,Bandung,53060,2399.2488,1,Sangat Rendah
+32.04.07,Cilengkrang,32.04,Bandung,39072,2492.0819,1,Sangat Rendah
+32.04.08,Bojongsoang,32.04,Bandung,31494,2185.7342,1,Sangat Rendah
+32.04.09,Margahayu,32.04,Bandung,11849,2223.8127,1,Sangat Rendah
+32.04.10,Margaasih,32.04,Bandung,20190,2248.1249,1,Sangat Rendah
+32.04.11,Katapang,32.04,Bandung,18070,2421.4532,1,Sangat Rendah
+32.04.12,Dayeuhkolot,32.04,Bandung,12541,2191.8503,1,Sangat Rendah
+32.04.13,Banjaran,32.04,Bandung,39630,2932.9173,2,Rendah
+32.04.14,Pameungpeuk,32.04,Bandung,15994,2500.4818,2,Rendah
+32.04.15,Pangalengan,32.04,Bandung,241055,3452.2547,4,Tinggi
+32.04.16,Arjasari,32.04,Bandung,70506,2754.1720,2,Rendah
+32.04.17,Cimaung,32.04,Bandung,66464,3260.3006,3,Sedang
+32.04.25,Cicalengka,32.04,Bandung,46971,2606.2394,2,Rendah
+32.04.26,Nagreg,32.04,Bandung,47226,2670.3935,2,Rendah
+32.04.27,Cikancung,32.04,Bandung,43598,2560.8386,2,Rendah
+32.04.28,Rancaekek,32.04,Bandung,50197,2218.7585,1,Sangat Rendah
+32.04.29,Ciparay,32.04,Bandung,61233,2499.9187,1,Sangat Rendah
+32.04.30,Pacet,32.04,Bandung,106466,2955.9756,2,Rendah
+32.04.31,Kertasari,32.04,Bandung,151585,3228.8946,3,Sedang
+32.04.32,Baleendah,32.04,Bandung,45274,2392.7138,1,Sangat Rendah
+32.04.33,Majalaya,32.04,Bandung,26869,2513.0530,2,Rendah
+32.04.34,Solokanjeruk,32.04,Bandung,27141,2367.9443,1,Sangat Rendah
+32.04.35,Paseh,32.04,Bandung,53326,2701.4594,2,Rendah
+32.04.36,Ibun,32.04,Bandung,61671,2875.7127,2,Rendah
+32.04.37,Soreang,32.04,Bandung,27885,2843.0017,2,Rendah
+32.04.38,Pasirjambu,32.04,Bandung,223902,4059.3806,5,Sangat Tinggi
+32.04.39,Ciwidey,32.04,Bandung,58052,3925.7540,5,Sangat Tinggi
+32.04.40,Rancabali,32.04,Bandung,171810,4571.7992,5,Sangat Tinggi
+32.04.44,Cangkuang,32.04,Bandung,26304,2831.1412,2,Rendah
+32.04.46,Kutawaringin,32.04,Bandung,53124,2626.4370,2,Rendah
+32.05.01,Garut Kota,32.05,Garut,33024,2434.0648,1,Sangat Rendah
+32.05.02,Karangpawitan,32.05,Garut,59463,2294.6252,1,Sangat Rendah
+32.05.03,Wanaraja,32.05,Garut,25541,2524.2968,2,Rendah
+32.05.04,Tarogong Kaler,32.05,Garut,57326,2611.3696,2,Rendah
+32.05.05,Tarogong Kidul,32.05,Garut,22081,2478.5260,1,Sangat Rendah
+32.05.06,Banyuresmi,32.05,Garut,52683,2302.0250,1,Sangat Rendah
+32.05.07,Samarang,32.05,Garut,63002,2953.8454,2,Rendah
+32.05.08,Pasirwangi,32.05,Garut,62650,3133.3517,3,Sedang
+32.05.09,Leles,32.05,Garut,77442,2662.0673,2,Rendah
+32.05.10,Kadungora,32.05,Garut,43264,2547.2093,2,Rendah
+32.05.11,Leuwigoong,32.05,Garut,27697,2443.6183,1,Sangat Rendah
+32.05.12,Cibatu,32.05,Garut,42978,2894.6461,2,Rendah
+32.05.13,Kersamanah,32.05,Garut,26940,3128.3105,3,Sedang
+32.05.14,Malangbong,32.05,Garut,116006,3345.7220,3,Sedang
+32.05.15,Sukawening,32.05,Garut,41209,2802.3568,2,Rendah
+32.05.16,Karangtengah,32.05,Garut,33585,3050.2655,3,Sedang
+32.05.17,Bayongbong,32.05,Garut,51861,3006.6869,3,Sedang
+32.05.18,Cigedug,32.05,Garut,36295,3445.0095,4,Tinggi
+32.05.19,Cilawu,32.05,Garut,88949,2863.6582,2,Rendah
+32.05.20,Cisurupan,32.05,Garut,101138,3532.2233,4,Tinggi
+32.05.21,Sukaresmi,32.05,Garut,35129,3188.2808,3,Sedang
+32.05.22,Cikajang,32.05,Garut,120319,3670.8961,4,Tinggi
+32.05.23,Banjarwangi,32.05,Garut,134941,3331.0546,3,Sedang
+32.05.24,Singajaya,32.05,Garut,58577,3487.0817,4,Tinggi
+32.05.25,Cihurip,32.05,Garut,60844,3537.4630,4,Tinggi
+32.05.26,Peundeuy,32.05,Garut,64631,3515.6765,4,Tinggi
+32.05.27,Pameungpeuk,32.05,Garut,52194,3144.2169,3,Sedang
+32.05.28,Cisompet,32.05,Garut,182380,3468.9220,4,Tinggi
+32.05.29,Cibalong,32.05,Garut,247498,3523.6684,4,Tinggi
+32.05.30,Cikelet,32.05,Garut,195928,3219.3880,3,Sedang
+32.05.31,Bungbulang,32.05,Garut,188612,3242.7896,3,Sedang
+32.05.32,Mekarmukti,32.05,Garut,47643,3121.7675,3,Sedang
+32.05.33,Pakenjeng,32.05,Garut,213053,3399.3059,3,Sedang
+32.05.34,Pamulihan,32.05,Garut,142339,3459.6392,4,Tinggi
+32.05.35,Cisewu,32.05,Garut,179298,3330.3203,3,Sedang
+32.05.36,Caringin,32.05,Garut,126618,3261.3000,3,Sedang
+32.05.37,Talegong,32.05,Garut,121537,3417.3671,4,Tinggi
+32.05.38,Bl. Limbangan,32.05,Garut,96088,2969.3672,2,Rendah
+32.05.39,Selaawi,32.05,Garut,39394,3165.1383,3,Sedang
+32.05.40,Cibiuk,32.05,Garut,23340,2729.5806,2,Rendah
+32.05.41,Pangatikan,32.05,Garut,23426,2728.3206,2,Rendah
+32.05.42,Sucinaraja,32.05,Garut,34065,2537.6883,2,Rendah
+32.06.01,Cipatujah,32.06,Tasikmalaya,269287,3273.0642,3,Sedang
+32.06.02,Karangnunggal,32.06,Tasikmalaya,172095,3362.6358,3,Sedang
+32.06.03,Cikalong,32.06,Tasikmalaya,178723,3654.8126,4,Tinggi
+32.06.04,Pancatengah,32.06,Tasikmalaya,176832,4061.8860,5,Sangat Tinggi
+32.06.05,Cikatomas,32.06,Tasikmalaya,162184,3774.6066,4,Tinggi
+32.06.06,Cibalong,32.06,Tasikmalaya,66594,3371.8359,3,Sedang
+32.06.07,Parungponteng,32.06,Tasikmalaya,56949,3322.4198,3,Sedang
+32.06.08,Bantarkalong,32.06,Tasikmalaya,71191,3289.0257,3,Sedang
+32.06.09,Bojongasih,32.06,Tasikmalaya,56578,3319.9864,3,Sedang
+32.06.10,Culamega,32.06,Tasikmalaya,96653,3258.0240,3,Sedang
+32.06.11,Bojonggambir,32.06,Tasikmalaya,141109,3456.4948,4,Tinggi
+32.06.12,Sodonghilir,32.06,Tasikmalaya,113427,3361.3359,3,Sedang
+32.06.13,Taraju,32.06,Tasikmalaya,70294,3372.9975,3,Sedang
+32.06.14,Salawu,32.06,Tasikmalaya,78209,3246.6614,3,Sedang
+32.06.15,Puspahiang,32.06,Tasikmalaya,63258,3362.1601,3,Sedang
+32.06.16,Tanjungjaya,32.06,Tasikmalaya,43824,3417.9845,4,Tinggi
+32.06.17,Sukaraja,32.06,Tasikmalaya,52612,3406.6839,4,Tinggi
+32.06.18,Salopa,32.06,Tasikmalaya,115345,3873.1890,4,Tinggi
+32.06.19,Jatiwaras,32.06,Tasikmalaya,99182,3592.7507,4,Tinggi
+32.06.20,Cineam,32.06,Tasikmalaya,82585,3911.2101,5,Sangat Tinggi
+32.06.21,Karang Jaya,32.06,Tasikmalaya,51228,3754.2016,4,Tinggi
+32.06.22,Manonjaya,32.06,Tasikmalaya,48520,3928.0160,5,Sangat Tinggi
+32.06.23,Gunung Tanjung,32.06,Tasikmalaya,54684,4053.5672,5,Sangat Tinggi
+32.06.24,Singaparna,32.06,Tasikmalaya,22347,3819.4811,4,Tinggi
+32.06.25,Mangunreja,32.06,Tasikmalaya,29768,3520.9719,4,Tinggi
+32.06.26,Sukarame,32.06,Tasikmalaya,17748,3778.3771,4,Tinggi
+32.06.27,Cigalontang,32.06,Tasikmalaya,162006,3034.1776,3,Sedang
+32.06.28,Leuwisari,32.06,Tasikmalaya,35161,3584.1756,4,Tinggi
+32.06.29,Padakembang,32.06,Tasikmalaya,21881,3827.7118,4,Tinggi
+32.06.30,Sariwangi,32.06,Tasikmalaya,43017,3286.5590,3,Sedang
+32.06.31,Sukaratu,32.06,Tasikmalaya,47320,3719.5491,4,Tinggi
+32.06.32,Cisayong,32.06,Tasikmalaya,56143,3576.4804,4,Tinggi
+32.06.33,Sukahening,32.06,Tasikmalaya,32168,3410.0250,4,Tinggi
+32.06.34,Rajapolah,32.06,Tasikmalaya,18297,3527.6517,4,Tinggi
+32.06.35,Jamanis,32.06,Tasikmalaya,17838,3418.7146,4,Tinggi
+32.06.36,Ciawi,32.06,Tasikmalaya,49537,3329.4025,3,Sedang
+32.06.37,Kadipaten,32.06,Tasikmalaya,47900,3308.8978,3,Sedang
+32.06.38,Pagerageung,32.06,Tasikmalaya,71603,3300.6489,3,Sedang
+32.06.39,Sukaresik,32.06,Tasikmalaya,19390,3372.9124,3,Sedang
+32.07.01,Ciamis,32.07,Ciamis,38094,4057.3357,5,Sangat Tinggi
+32.07.02,Cikoneng,32.07,Ciamis,64133,4108.5837,5,Sangat Tinggi
+32.07.03,Cijeungjing,32.07,Ciamis,67675,3854.6410,4,Tinggi
+32.07.04,Sadananya,32.07,Ciamis,49205,4329.1019,5,Sangat Tinggi
+32.07.05,Cidolog,32.07,Ciamis,60622,3456.1313,4,Tinggi
+32.07.06,Cihaurbeuti,32.07,Ciamis,60301,3871.6016,4,Tinggi
+32.07.07,Panumbangan,32.07,Ciamis,74152,3443.9517,4,Tinggi
+32.07.08,Panjalu,32.07,Ciamis,78752,3679.1068,4,Tinggi
+32.07.09,Kawali,32.07,Ciamis,39862,3906.8464,5,Sangat Tinggi
+32.07.10,Panawangan,32.07,Ciamis,89391,3165.2704,3,Sedang
+32.07.11,Cipaku,32.07,Ciamis,79506,4353.9396,5,Sangat Tinggi
+32.07.12,Jatinagara,32.07,Ciamis,38101,3867.9799,4,Tinggi
+32.07.13,Rajadesa,32.07,Ciamis,68275,3600.7581,4,Tinggi
+32.07.14,Sukadana,32.07,Ciamis,66935,3885.7329,4,Tinggi
+32.07.15,Rancah,32.07,Ciamis,95671,3449.5815,4,Tinggi
+32.07.16,Tambaksari,32.07,Ciamis,66955,3188.5517,3,Sedang
+32.07.17,Lakbok,32.07,Ciamis,60482,2724.8616,2,Rendah
+32.07.18,Banjarsari,32.07,Ciamis,63027,3156.7791,3,Sedang
+32.07.19,Pamarican,32.07,Ciamis,140417,3238.8217,3,Sedang
+32.07.29,Cimaragas,32.07,Ciamis,29895,3407.7757,4,Tinggi
+32.07.30,Cisaga,32.07,Ciamis,89475,3361.0883,3,Sedang
+32.07.31,Sindangkasih,32.07,Ciamis,33345,4107.8662,5,Sangat Tinggi
+32.07.32,Baregbeg,32.07,Ciamis,47872,4367.4112,5,Sangat Tinggi
+32.07.33,Sukamantri,32.07,Ciamis,56804,3139.7146,3,Sedang
+32.07.34,Lumbung,32.07,Ciamis,34860,3715.5106,4,Tinggi
+32.07.35,Purwadadi,32.07,Ciamis,60577,2879.5473,2,Rendah
+32.07.37,Banjaranyar,32.07,Ciamis,123776,3411.2287,4,Tinggi
+32.08.01,Kadugede,32.08,Kuningan,19669,2923.7090,2,Rendah
+32.08.02,Ciniru,32.08,Kuningan,55742,2955.0610,2,Rendah
+32.08.03,Subang,32.08,Kuningan,52863,3148.3883,3,Sedang
+32.08.04,Ciwaru,32.08,Kuningan,58259,3130.5247,3,Sedang
+32.08.05,Cibingbin,32.08,Kuningan,79788,3640.9761,4,Tinggi
+32.08.06,Luragung,32.08,Kuningan,46374,2853.6060,2,Rendah
+32.08.07,Lebakwangi,32.08,Kuningan,21627,2712.0085,2,Rendah
+32.08.08,Garawangi,32.08,Kuningan,32980,2761.9262,2,Rendah
+32.08.09,Kuningan,32.08,Kuningan,32963,2890.8660,2,Rendah
+32.08.10,Ciawigebang,32.08,Kuningan,67454,2554.2259,2,Rendah
+32.08.11,Cidahu,32.08,Kuningan,41809,2755.0437,2,Rendah
+32.08.12,Jalaksana,32.08,Kuningan,37908,3505.1015,4,Tinggi
+32.08.13,Cilimus,32.08,Kuningan,40629,3624.3884,4,Tinggi
+32.08.14,Mandirancan,32.08,Kuningan,37687,3552.9126,4,Tinggi
+32.08.15,Selajambe,32.08,Kuningan,40302,3125.5618,3,Sedang
+32.08.16,Kramatmulya,32.08,Kuningan,18759,3052.0258,3,Sedang
+32.08.17,Darma,32.08,Kuningan,60156,2905.9124,2,Rendah
+32.08.18,Cigugur,32.08,Kuningan,46963,3406.5549,4,Tinggi
+32.08.19,Pasawahan,32.08,Kuningan,54539,3416.8118,4,Tinggi
+32.08.20,Nusaherang,32.08,Kuningan,20085,2870.2879,2,Rendah
+32.08.21,Cipicung,32.08,Kuningan,21424,2550.3251,2,Rendah
+32.08.22,Pancalang,32.08,Kuningan,21016,3132.3935,3,Sedang
+32.08.23,Japara,32.08,Kuningan,30038,2682.7814,2,Rendah
+32.08.24,Cimahi,32.08,Kuningan,62495,3089.1820,3,Sedang
+32.08.25,Cilebak,32.08,Kuningan,47269,3225.3337,3,Sedang
+32.08.26,Hantara,32.08,Kuningan,37937,2948.9970,2,Rendah
+32.08.27,Kalimanggis,32.08,Kuningan,22652,2634.8752,2,Rendah
+32.08.28,Cibeureum,32.08,Kuningan,43439,3634.7261,4,Tinggi
+32.08.29,Karangkancana,32.08,Kuningan,74712,3408.2238,4,Tinggi
+32.08.30,Maleber,32.08,Kuningan,63969,2888.0330,2,Rendah
+32.08.31,Sindangagung,32.08,Kuningan,14385,2633.9739,2,Rendah
+32.08.32,Cigandamekar,32.08,Kuningan,24130,2941.7703,2,Rendah
+32.09.01,Waled,32.09,Cirebon,33454,2597.2209,2,Rendah
+32.09.02,Ciledug,32.09,Cirebon,15965,2514.1472,2,Rendah
+32.09.03,Losari,32.09,Cirebon,52995,2285.2295,1,Sangat Rendah
+32.09.04,Pabedilan,32.09,Cirebon,27978,2423.4424,1,Sangat Rendah
+32.09.05,Babakan,32.09,Cirebon,25693,2455.8372,1,Sangat Rendah
+32.09.06,Karangsembung,32.09,Cirebon,19549,2557.0938,2,Rendah
+32.09.07,Lemahabang,32.09,Cirebon,24892,2624.5012,2,Rendah
+32.09.08,Susukan Lebak,32.09,Cirebon,22928,2595.5981,2,Rendah
+32.09.09,Sedong,32.09,Cirebon,38233,2673.7965,2,Rendah
+32.09.10,Astanajapura,32.09,Cirebon,30094,2617.8655,2,Rendah
+32.09.11,Pangenan,32.09,Cirebon,41263,2518.3192,2,Rendah
+32.09.12,Mundu,32.09,Cirebon,32672,2698.1975,2,Rendah
+32.09.13,Beber,32.09,Cirebon,28592,2984.5759,2,Rendah
+32.09.14,Talun,32.09,Cirebon,23390,2846.4077,2,Rendah
+32.09.15,Sumber,32.09,Cirebon,29974,2849.0001,2,Rendah
+32.09.16,Dukupuntang,32.09,Cirebon,44022,2816.0722,2,Rendah
+32.09.17,Palimanan,32.09,Cirebon,20625,2527.1880,2,Rendah
+32.09.18,Plumbon,32.09,Cirebon,21378,2548.6062,2,Rendah
+32.09.19,Weru,32.09,Cirebon,11241,2604.4191,2,Rendah
+32.09.20,Kedawung,32.09,Cirebon,10727,2647.3886,2,Rendah
+32.09.21,Gunung Jati,32.09,Cirebon,26358,2351.5619,1,Sangat Rendah
+32.09.22,Kepetakan,32.09,Cirebon,75549,1913.7023,1,Sangat Rendah
+32.09.23,Klangenan,32.09,Cirebon,23048,2321.2514,1,Sangat Rendah
+32.09.24,Arjawinangun,32.09,Cirebon,27288,2189.2985,1,Sangat Rendah
+32.09.25,Panguragan,32.09,Cirebon,25136,2111.9257,1,Sangat Rendah
+32.09.26,Ciwaringin,32.09,Cirebon,20697,2330.9548,1,Sangat Rendah
+32.09.27,Susukan,32.09,Cirebon,57340,2166.1385,1,Sangat Rendah
+32.09.28,Gegesik,32.09,Cirebon,70218,2002.1501,1,Sangat Rendah
+32.09.29,Kaliwedi,32.09,Cirebon,32193,2016.6955,1,Sangat Rendah
+32.09.30,Gebang,32.09,Cirebon,38479,2387.5775,1,Sangat Rendah
+32.09.31,Depok,32.09,Cirebon,17956,2687.7512,2,Rendah
+32.09.32,Pasaleman,32.09,Cirebon,44533,2823.0025,2,Rendah
+32.09.33,Pabuaran,32.09,Cirebon,10721,2491.2297,1,Sangat Rendah
+32.09.34,Karangwareng,32.09,Cirebon,29689,2579.7428,2,Rendah
+32.09.35,Tengah Tani,32.09,Cirebon,11175,2543.9371,2,Rendah
+32.09.36,Plered,32.09,Cirebon,13273,2430.1785,1,Sangat Rendah
+32.09.37,Gempol,32.09,Cirebon,35003,2491.3538,1,Sangat Rendah
+32.09.38,Greged,32.09,Cirebon,35545,2798.0635,2,Rendah
+32.09.39,Suranenggala,32.09,Cirebon,28555,2111.8766,1,Sangat Rendah
+32.09.40,Jamblang,32.09,Cirebon,18371,2328.1606,1,Sangat Rendah
+32.10.01,Lemahsugih,32.10,Majalengka,91510,3239.0682,3,Sedang
+32.10.02,Bantarujeg,32.10,Majalengka,75122,3091.2843,3,Sedang
+32.10.03,Cikijing,32.10,Majalengka,41616,2708.9893,2,Rendah
+32.10.04,Talaga,32.10,Majalengka,51117,2907.8237,2,Rendah
+32.10.05,Argapura,32.10,Majalengka,83036,3657.1727,4,Tinggi
+32.10.06,Maja,32.10,Majalengka,69966,3197.2581,3,Sedang
+32.10.07,Majalengka,32.10,Majalengka,71209,3039.9313,3,Sedang
+32.10.08,Sukahaji,32.10,Majalengka,35323,3004.8465,3,Sedang
+32.10.09,Rajagaluh,32.10,Majalengka,50298,3378.9016,3,Sedang
+32.10.10,Leuwimunding,32.10,Majalengka,31141,2748.2088,2,Rendah
+32.10.11,Jatiwangi,32.10,Majalengka,46940,2784.9527,2,Rendah
+32.10.12,Dawuan,32.10,Majalengka,34640,2730.3688,2,Rendah
+32.10.13,Kadipaten,32.10,Majalengka,25412,2834.8840,2,Rendah
+32.10.14,Kertajati,32.10,Majalengka,221983,2544.8718,2,Rendah
+32.10.15,Jatitujuh,32.10,Majalengka,93915,2368.4287,1,Sangat Rendah
+32.10.16,Ligung,32.10,Majalengka,83118,2462.9135,1,Sangat Rendah
+32.10.17,Sumberjaya,32.10,Majalengka,38925,2507.1494,2,Rendah
+32.10.18,Panyingkiran,32.10,Majalengka,24522,2927.2209,2,Rendah
+32.10.19,Palasah,32.10,Majalengka,41062,2763.2903,2,Rendah
+32.10.20,Cigasong,32.10,Majalengka,31954,2961.9836,2,Rendah
+32.10.21,Sindangwangi,32.10,Majalengka,40984,3153.9854,3,Sedang
+32.10.22,Banjaran,32.10,Majalengka,39581,3177.7233,3,Sedang
+32.10.23,Cingambul,32.10,Majalengka,42647,2755.9440,2,Rendah
+32.10.24,Kasokandel,32.10,Majalengka,38952,2838.8554,2,Rendah
+32.10.25,Sindang,32.10,Majalengka,28360,3235.1436,3,Sedang
+32.10.26,Malausma,32.10,Majalengka,49775,3121.6636,3,Sedang
+32.11.01,Wado,32.11,Sumedang,79133,3345.2881,3,Sedang
+32.11.02,Jatinunggal,32.11,Sumedang,72184,3160.7873,3,Sedang
+32.11.03,Darmaraja,32.11,Sumedang,57164,3114.5233,3,Sedang
+32.11.04,Cibugel,32.11,Sumedang,56972,3209.3443,3,Sedang
+32.11.05,Cisitu,32.11,Sumedang,70897,3041.4060,3,Sedang
+32.11.06,Situraja,32.11,Sumedang,63066,2941.1597,2,Rendah
+32.11.07,Conggeang,32.11,Sumedang,130722,2754.0177,2,Rendah
+32.11.08,Paseh,32.11,Sumedang,38414,2836.1422,2,Rendah
+32.11.09,Surian,32.11,Sumedang,83645,3149.7909,3,Sedang
+32.11.10,Buahdua,32.11,Sumedang,122370,2860.7556,2,Rendah
+32.11.11,Tanjungsari,32.11,Sumedang,48777,2401.5554,1,Sangat Rendah
+32.11.12,Sukasari,32.11,Sumedang,44067,2402.7320,1,Sangat Rendah
+32.11.13,Pamulihan,32.11,Sumedang,60004,2458.1807,1,Sangat Rendah
+32.11.14,Cimanggung,32.11,Sumedang,48749,2522.8988,2,Rendah
+32.11.15,Jatinangor,32.11,Sumedang,28251,2173.8284,1,Sangat Rendah
+32.11.16,Rancakalong,32.11,Sumedang,63192,2567.0813,2,Rendah
+32.11.17,Sumedang Selatan,32.11,Sumedang,107516,2812.2883,2,Rendah
+32.11.18,Sumedang Utara,32.11,Sumedang,35590,2670.0663,2,Rendah
+32.11.19,Ganeas,32.11,Sumedang,28381,2839.3902,2,Rendah
+32.11.20,Tanjungkerta,32.11,Sumedang,48957,2748.2872,2,Rendah
+32.11.21,Tanjungmedar,32.11,Sumedang,76998,2864.6270,2,Rendah
+32.11.22,Cimalaka,32.11,Sumedang,52815,2792.3515,2,Rendah
+32.11.23,Cisarua,32.11,Sumedang,15503,2736.3883,2,Rendah
+32.11.24,Tomo,32.11,Sumedang,85364,2858.6785,2,Rendah
+32.11.25,Ujungjaya,32.11,Sumedang,96528,2733.5199,2,Rendah
+32.11.26,Jatigede,32.11,Sumedang,128286,3040.5098,3,Sedang
+32.12.01,Haurgeulis,32.12,Indramayu,72162,2178.5138,1,Sangat Rendah
+32.12.02,Kroya,32.12,Indramayu,149707,2215.9434,1,Sangat Rendah
+32.12.03,Gabuswetan,32.12,Indramayu,87248,1952.1358,1,Sangat Rendah
+32.12.04,Cikedung,32.12,Indramayu,125202,2105.3183,1,Sangat Rendah
+32.12.05,Lelea,32.12,Indramayu,68119,1905.1789,1,Sangat Rendah
+32.12.06,Bangodua,32.12,Indramayu,49340,1965.4579,1,Sangat Rendah
+32.12.07,Widasari,32.12,Indramayu,42966,1872.0143,1,Sangat Rendah
+32.12.08,Kertasemaya,32.12,Indramayu,43370,1907.7010,1,Sangat Rendah
+32.12.09,Krangkeng,32.12,Indramayu,69351,1834.8957,1,Sangat Rendah
+32.12.10,Karangampel,32.12,Indramayu,35545,1782.1547,1,Sangat Rendah
+32.12.11,Juntinyuat,32.12,Indramayu,59052,1771.2537,1,Sangat Rendah
+32.12.12,Sliyeg,32.12,Indramayu,60996,1815.1981,1,Sangat Rendah
+32.12.13,Jatibarang,32.12,Indramayu,47969,1824.3563,1,Sangat Rendah
+32.12.14,Balongan,32.12,Indramayu,38325,1768.9719,1,Sangat Rendah
+32.12.15,Indramayu,32.12,Indramayu,60663,1770.6062,1,Sangat Rendah
+32.12.16,Sindang,32.12,Indramayu,41890,1757.7463,1,Sangat Rendah
+32.12.17,Cantigi,32.12,Indramayu,96241,1768.6552,1,Sangat Rendah
+32.12.18,Lohbener,32.12,Indramayu,42299,1807.8768,1,Sangat Rendah
+32.12.19,Arahan,32.12,Indramayu,38196,1789.5526,1,Sangat Rendah
+32.12.20,Losarang,32.12,Indramayu,118472,1822.0463,1,Sangat Rendah
+32.12.21,Kandanghaur,32.12,Indramayu,96744,1805.8295,1,Sangat Rendah
+32.12.22,Bongas,32.12,Indramayu,55172,1883.7177,1,Sangat Rendah
+32.12.23,Anjatan,32.12,Indramayu,90696,1917.9877,1,Sangat Rendah
+32.12.24,Sukra,32.12,Indramayu,50576,1720.1346,1,Sangat Rendah
+32.12.25,Gantar,32.12,Indramayu,200055,2603.9767,2,Rendah
+32.12.26,Terisi,32.12,Indramayu,181276,2308.0586,1,Sangat Rendah
+32.12.27,Sukagumiwang,32.12,Indramayu,36846,2090.5880,1,Sangat Rendah
+32.12.28,Kedokan Bunder,32.12,Indramayu,34691,1843.5052,1,Sangat Rendah
+32.12.29,Pasekan,32.12,Indramayu,74249,1756.9977,1,Sangat Rendah
+32.12.30,Tukdana,32.12,Indramayu,84161,2111.2895,1,Sangat Rendah
+32.12.31,Patrol,32.12,Indramayu,46899,1783.8600,1,Sangat Rendah
+32.13.01,Sagalaherang,32.13,Subang,62563,3775.2280,4,Tinggi
+32.13.02,Cisalak,32.13,Subang,110134,2886.8683,2,Rendah
+32.13.03,Subang,32.13,Subang,67035,3416.5266,4,Tinggi
+32.13.04,Kalijati,32.13,Subang,100252,3372.8863,3,Sedang
+32.13.05,Pabuaran,32.13,Subang,83836,2520.9094,2,Rendah
+32.13.06,Purwadadi,32.13,Subang,86900,2546.3363,2,Rendah
+32.13.07,Pagaden,32.13,Subang,54920,2627.5919,2,Rendah
+32.13.08,Binong,32.13,Subang,58456,2075.3785,1,Sangat Rendah
+32.13.09,Ciasem,32.13,Subang,120837,1890.3163,1,Sangat Rendah
+32.13.10,Pusakanagara,32.13,Subang,70423,1713.4410,1,Sangat Rendah
+32.13.11,Pamanukan,32.13,Subang,33392,1733.9552,1,Sangat Rendah
+32.13.12,Jalancagak,32.13,Subang,58861,4093.9953,5,Sangat Tinggi
+32.13.13,Blanakan,32.13,Subang,117716,1700.0649,1,Sangat Rendah
+32.13.14,Tanjungsiang,32.13,Subang,70105,2881.2504,2,Rendah
+32.13.15,Compreng,32.13,Subang,81111,2006.2400,1,Sangat Rendah
+32.13.16,Patokbeusi,32.13,Subang,102189,2151.7423,1,Sangat Rendah
+32.13.17,Cibogo,32.13,Subang,71828,3097.3842,3,Sedang
+32.13.18,Cipunagara,32.13,Subang,118382,2481.9754,1,Sangat Rendah
+32.13.19,Cijambe,32.13,Subang,123439,3668.1210,4,Tinggi
+32.13.20,Cipeundeuy,32.13,Subang,108275,3079.0220,3,Sedang
+32.13.21,Legonkulon,32.13,Subang,69955,1663.2222,1,Sangat Rendah
+32.13.22,Cikaum,32.13,Subang,83826,2193.5087,1,Sangat Rendah
+32.13.23,Serangpanjang,32.13,Subang,78804,4458.8530,5,Sangat Tinggi
+32.13.24,Sukasari,32.13,Subang,66215,1687.0444,1,Sangat Rendah
+32.13.25,Tambakdahan,32.13,Subang,71729,1830.5323,1,Sangat Rendah
+32.13.26,Kasomalang,32.13,Subang,54608,3525.0639,4,Tinggi
+32.13.27,Dawuan,32.13,Subang,103145,3758.1436,4,Tinggi
+32.13.28,Pagaden Barat,32.13,Subang,57682,2754.5244,2,Rendah
+32.13.29,Ciater,32.13,Subang,70291,3052.3027,3,Sedang
+32.13.30,Pusakajaya,32.13,Subang,58494,1777.4516,1,Sangat Rendah
+32.14.01,Purwakarta,32.14,Purwakarta,27410,3134.4243,3,Sedang
+32.14.02,Campaka,32.14,Purwakarta,62156,2720.5423,2,Rendah
+32.14.03,Jatiluhur,32.14,Purwakarta,51763,3309.8806,3,Sedang
+32.14.04,Plered,32.14,Purwakarta,35015,3205.3322,3,Sedang
+32.14.05,Sukatani,32.14,Purwakarta,113429,3293.8317,3,Sedang
+32.14.06,Darangdan,32.14,Purwakarta,74111,3028.9559,3,Sedang
+32.14.07,Maniis,32.14,Purwakarta,71143,2516.3398,2,Rendah
+32.14.08,Tegalwaru,32.14,Purwakarta,76974,2946.1325,2,Rendah
+32.14.09,Wanayasa,32.14,Purwakarta,63156,3699.6235,4,Tinggi
+32.14.10,Pasawahan,32.14,Purwakarta,31689,3346.8003,3,Sedang
+32.14.11,Bojong,32.14,Purwakarta,79236,3164.2369,3,Sedang
+32.14.12,Babakancikao,32.14,Purwakarta,52964,2947.4578,2,Rendah
+32.14.13,Bungursari,32.14,Purwakarta,52084,2620.0894,2,Rendah
+32.14.14,Cibatu,32.14,Purwakarta,66176,3138.3948,3,Sedang
+32.14.15,Sukasari,32.14,Purwakarta,136751,2952.3760,2,Rendah
+32.14.16,Pondoksalam,32.14,Purwakarta,47035,3669.9899,4,Tinggi
+32.14.17,Kiarapedes,32.14,Purwakarta,63414,4355.4638,5,Sangat Tinggi
+32.15.01,Karawang Barat,32.15,Karawang,43048,2011.3152,1,Sangat Rendah
+32.15.02,Pangkalan,32.15,Karawang,108222,2754.1397,2,Rendah
+32.15.03,Telukjambe Timur,32.15,Karawang,51485,2287.0703,1,Sangat Rendah
+32.15.04,Ciampel,32.15,Karawang,130788,2713.3619,2,Rendah
+32.15.05,Klari,32.15,Karawang,81275,2476.7656,1,Sangat Rendah
+32.15.06,Rengasdengklok,32.15,Karawang,40657,1802.1661,1,Sangat Rendah
+32.15.07,Kutawaluya,32.15,Karawang,61775,1787.9071,1,Sangat Rendah
+32.15.08,Batujaya,32.15,Karawang,87409,1787.9535,1,Sangat Rendah
+32.15.09,Tirtajaya,32.15,Karawang,123332,1744.8351,1,Sangat Rendah
+32.15.10,Pedes,32.15,Karawang,77348,1730.8499,1,Sangat Rendah
+32.15.11,Cibuaya,32.15,Karawang,124378,1735.8308,1,Sangat Rendah
+32.15.12,Pakisjaya,32.15,Karawang,73219,1806.7662,1,Sangat Rendah
+32.15.13,Cikampek,32.15,Karawang,43054,2517.0595,2,Rendah
+32.15.14,Jatisari,32.15,Karawang,60943,2122.6075,1,Sangat Rendah
+32.15.15,Cilamaya Wetan,32.15,Karawang,88111,1743.5817,1,Sangat Rendah
+32.15.16,Tirtamulya,32.15,Karawang,51774,2077.2328,1,Sangat Rendah
+32.15.17,Telagasari,32.15,Karawang,59461,1903.6338,1,Sangat Rendah
+32.15.18,Rawamerta,32.15,Karawang,57301,1861.5160,1,Sangat Rendah
+32.15.19,Lemahabang,32.15,Karawang,60302,1893.4710,1,Sangat Rendah
+32.15.20,Tempuran,32.15,Karawang,104456,1705.4383,1,Sangat Rendah
+32.15.21,Majalaya,32.15,Karawang,36722,2048.8832,1,Sangat Rendah
+32.15.22,Jayakerta,32.15,Karawang,45910,1748.3593,1,Sangat Rendah
+32.15.23,Cilamaya Kulon,32.15,Karawang,74313,1733.0276,1,Sangat Rendah
+32.15.24,Banyusari,32.15,Karawang,62645,1947.3484,1,Sangat Rendah
+32.15.25,Kota Baru,32.15,Karawang,37257,2331.8353,1,Sangat Rendah
+32.15.26,Karawang Timur,32.15,Karawang,34675,2045.8148,1,Sangat Rendah
+32.15.27,Telukjambe Barat,32.15,Karawang,77568,2376.6777,1,Sangat Rendah
+32.15.28,Tegalwaru,32.15,Karawang,121619,2942.4139,2,Rendah
+32.15.29,Purwasari,32.15,Karawang,35134,2289.4232,1,Sangat Rendah
+32.15.30,Cilebar,32.15,Karawang,77831,1688.1621,1,Sangat Rendah
+32.16.01,Tarumajaya,32.16,Bekasi,63843,1934.7108,1,Sangat Rendah
+32.16.02,Babelan,32.16,Bekasi,71870,1871.5553,1,Sangat Rendah
+32.16.03,Sukawangi,32.16,Bekasi,77000,,,
+32.16.04,Tambelang,32.16,Bekasi,39968,,,
+32.16.05,Tambun Utara,32.16,Bekasi,39421,,,
+32.16.06,Tambun Selatan,32.16,Bekasi,46210,2278.2786,1,Sangat Rendah
+32.16.07,Cibitung,32.16,Bekasi,50354,2266.5061,1,Sangat Rendah
+32.16.08,Cikarang Barat,32.16,Bekasi,61120,2345.8665,1,Sangat Rendah
+32.16.09,Cikarang Utara,32.16,Bekasi,44780,2172.5882,1,Sangat Rendah
+32.16.10,Karang Bahagia,32.16,Bekasi,51688,,,
+32.16.11,Cikarang Timur,32.16,Bekasi,57859,2145.3147,1,Sangat Rendah
+32.16.12,Kedung Waringin,32.16,Bekasi,34382,2000.8470,1,Sangat Rendah
+32.16.13,Pebayuran,32.16,Bekasi,105278,1818.6451,1,Sangat Rendah
+32.16.14,Sukakarya,32.16,Bekasi,53195,,,
+32.16.15,Sukatani,32.16,Bekasi,42473,,,
+32.16.16,Cabangbungin,32.16,Bekasi,55429,,,
+32.16.17,Muaragembong,32.16,Bekasi,146281,1861.8917,1,Sangat Rendah
+32.16.18,Setu,32.16,Bekasi,65708,2678.5913,2,Rendah
+32.16.19,Cikarang Selatan,32.16,Bekasi,58867,2448.4589,1,Sangat Rendah
+32.16.20,Cikarang Pusat,32.16,Bekasi,59259,2420.7294,1,Sangat Rendah
+32.16.21,Serang Baru,32.16,Bekasi,63433,2625.7753,2,Rendah
+32.16.22,Cibarusah,32.16,Bekasi,46884,2720.4454,2,Rendah
+32.16.23,Bojongmangu,32.16,Bekasi,60807,2652.5861,2,Rendah
+32.17.01,Lembang,32.17,Bandung Barat,111142,2486.0082,1,Sangat Rendah
+32.17.02,Parongpong,32.17,Bandung Barat,43626,2373.8836,1,Sangat Rendah
+32.17.03,Cisarua,32.17,Bandung Barat,63159,2406.4325,1,Sangat Rendah
+32.17.04,Cikalongwetan,32.17,Bandung Barat,127151,2625.7774,2,Rendah
+32.17.05,Cipeundeuy,32.17,Bandung Barat,119549,2556.6551,2,Rendah
+32.17.06,Ngamprah,32.17,Bandung Barat,39121,2456.3260,1,Sangat Rendah
+32.17.07,Cipatat,32.17,Bandung Barat,133232,2641.1013,2,Rendah
+32.17.08,Padalarang,32.17,Bandung Barat,58269,2539.9086,2,Rendah
+32.17.09,Batujajar,32.17,Bandung Barat,34477,2409.5326,1,Sangat Rendah
+32.17.10,Cihampelas,32.17,Bandung Barat,49726,2434.1693,1,Sangat Rendah
+32.17.11,Cililin,32.17,Bandung Barat,88926,2718.4981,2,Rendah
+32.17.12,Cipongkor,32.17,Bandung Barat,91163,2689.4293,2,Rendah
+32.17.13,Rongga,32.17,Bandung Barat,126963,3028.4092,3,Sedang
+32.17.14,Sindangkerta,32.17,Bandung Barat,106301,3467.1229,4,Tinggi
+32.17.15,Gununghalu,32.17,Bandung Barat,178569,3664.9718,4,Tinggi
+32.17.16,Saguling,32.17,Bandung Barat,56043,2585.4610,2,Rendah
+32.18.01,Parigi,32.18,Pangandaran,124291,3840.6740,4,Tinggi
+32.18.02,Cijulang,32.18,Pangandaran,105634,4113.3998,5,Sangat Tinggi
+32.18.03,Cimerak,32.18,Pangandaran,211055,4182.6676,5,Sangat Tinggi
+32.18.04,Cigugur,32.18,Pangandaran,125324,4040.4644,5,Sangat Tinggi
+32.18.05,Langkaplancar,32.18,Pangandaran,231180,3869.3680,4,Tinggi
+32.18.06,Mangunjaya,32.18,Pangandaran,37257,2948.9654,2,Rendah
+32.18.07,Padaherang,32.18,Pangandaran,126851,3284.2782,3,Sedang
+32.18.08,Kalipucang,32.18,Pangandaran,115396,3493.1819,4,Tinggi
+32.18.09,Pangandaran,32.18,Pangandaran,83023,3603.6859,4,Tinggi
+32.18.10,Sidamulih,32.18,Pangandaran,96693,3669.0111,4,Tinggi
+32.71.01,Bogor Selatan,32.71,Kota Bogor,33877,4289.9784,5,Sangat Tinggi
+32.71.02,Bogor Timur,32.71,Kota Bogor,11624,4325.8397,5,Sangat Tinggi
+32.71.03,Bogor Tengah,32.71,Kota Bogor,9297,4464.3053,5,Sangat Tinggi
+32.71.04,Bogor Barat,32.71,Kota Bogor,25885,4583.8902,5,Sangat Tinggi
+32.71.05,Bogor Utara,32.71,Kota Bogor,20174,4377.5538,5,Sangat Tinggi
+32.71.06,Tanah Sareal,32.71,Kota Bogor,22899,4504.7654,5,Sangat Tinggi
+32.72.01,Gunung Puyuh,32.72,Kota Sukabumi,5713,2837.5592,2,Rendah
+32.72.02,Cikole,32.72,Kota Sukabumi,6897,2847.3228,2,Rendah
+32.72.03,Citamiang,32.72,Kota Sukabumi,4443,2798.3757,2,Rendah
+32.72.04,Warudoyong,32.72,Kota Sukabumi,8397,2811.8859,2,Rendah
+32.72.05,Baros,32.72,Kota Sukabumi,6208,2819.5208,2,Rendah
+32.72.06,Lembursitu,32.72,Kota Sukabumi,11892,2867.0727,2,Rendah
+32.72.07,Cibeureum,32.72,Kota Sukabumi,10145,2855.3222,2,Rendah
+32.73.01,Sukasari,32.73,Kota Bandung,6958,2347.5090,1,Sangat Rendah
+32.73.02,Coblong,32.73,Kota Bandung,7986,2298.0932,1,Sangat Rendah
+32.73.03,Babakan Ciparay,32.73,Kota Bandung,7869,2215.0194,1,Sangat Rendah
+32.73.04,Bojongloa Kaler,32.73,Kota Bandung,3412,2222.8525,1,Sangat Rendah
+32.73.05,Andir,32.73,Kota Bandung,4678,2270.4467,1,Sangat Rendah
+32.73.06,Cicendo,32.73,Kota Bandung,8418,2291.7883,1,Sangat Rendah
+32.73.07,Sukajadi,32.73,Kota Bandung,5794,2320.1139,1,Sangat Rendah
+32.73.08,Cidadap,32.73,Kota Bandung,8532,2317.4163,1,Sangat Rendah
+32.73.09,Bandung Wetan,32.73,Kota Bandung,3786,2263.4698,1,Sangat Rendah
+32.73.10,Astanaanyar,32.73,Kota Bandung,2943,2219.8716,1,Sangat Rendah
+32.73.11,Regol,32.73,Kota Bandung,5126,2211.1902,1,Sangat Rendah
+32.73.12,Batununggal,32.73,Kota Bandung,5322,2221.8249,1,Sangat Rendah
+32.73.13,Lengkong,32.73,Kota Bandung,6442,2214.0302,1,Sangat Rendah
+32.73.14,Cibeunying Kidul,32.73,Kota Bandung,4593,2269.6198,1,Sangat Rendah
+32.73.15,Bandung Kulon,32.73,Kota Bandung,7467,2238.3816,1,Sangat Rendah
+32.73.16,Kiaracondong,32.73,Kota Bandung,6327,2221.2935,1,Sangat Rendah
+32.73.17,Bojongloa Kidul,32.73,Kota Bandung,5437,2202.4108,1,Sangat Rendah
+32.73.18,Cibeunying Kaler,32.73,Kota Bandung,5083,2286.2349,1,Sangat Rendah
+32.73.19,Sumur Bandung,32.73,Kota Bandung,3829,2244.5289,1,Sangat Rendah
+32.73.20,Antapani,32.73,Kota Bandung,4657,2236.1103,1,Sangat Rendah
+32.73.21,Bandung Kidul,32.73,Kota Bandung,5889,2182.4016,1,Sangat Rendah
+32.73.22,Buahbatu,32.73,Kota Bandung,8081,2171.0233,1,Sangat Rendah
+32.73.23,Rancasari,32.73,Kota Bandung,7649,2147.2827,1,Sangat Rendah
+32.73.24,Arcamanik,32.73,Kota Bandung,8302,2228.8301,1,Sangat Rendah
+32.73.25,Cibiru,32.73,Kota Bandung,7360,2264.7971,1,Sangat Rendah
+32.73.26,Ujungberung,32.73,Kota Bandung,6860,2291.6136,1,Sangat Rendah
+32.73.27,Gedebage,32.73,Kota Bandung,10815,2150.6455,1,Sangat Rendah
+32.73.28,Panyileukan,32.73,Kota Bandung,5797,2202.8651,1,Sangat Rendah
+32.73.29,Cinambo,32.73,Kota Bandung,4679,2212.6024,1,Sangat Rendah
+32.73.30,Mandalajati,32.73,Kota Bandung,5240,2284.5814,1,Sangat Rendah
+32.74.01,Kejaksan,32.74,Kota Cirebon,4941,2604.9247,2,Rendah
+32.74.02,Lemahwungkuk,32.74,Kota Cirebon,8039,2700.3025,2,Rendah
+32.74.03,Harjamukti,32.74,Kota Cirebon,19502,2762.6465,2,Rendah
+32.74.04,Pekalipan,32.74,Kota Cirebon,1772,2703.3340,2,Rendah
+32.74.05,Kesambi,32.74,Kota Cirebon,9760,2717.8494,2,Rendah
+32.75.01,Bekasi Timur,32.75,Kota Bekasi,16257,2233.5725,1,Sangat Rendah
+32.75.02,Bekasi Barat,32.75,Kota Bekasi,16570,2147.3619,1,Sangat Rendah
+32.75.03,Bekasi Utara,32.75,Kota Bekasi,23121,2093.2377,1,Sangat Rendah
+32.75.04,Bekasi Selatan,32.75,Kota Bekasi,17571,2241.5517,1,Sangat Rendah
+32.75.05,Rawalumbu,32.75,Kota Bekasi,18741,2338.2758,1,Sangat Rendah
+32.75.06,Medansatria,32.75,Kota Bekasi,14675,2076.9746,1,Sangat Rendah
+32.75.07,Bantargebang,32.75,Kota Bekasi,21377,2616.4740,2,Rendah
+32.75.08,Pondokgede,32.75,Kota Bekasi,19369,2227.0171,1,Sangat Rendah
+32.75.09,Jatiasih,32.75,Kota Bekasi,26970,2438.1542,1,Sangat Rendah
+32.75.10,Jatisampurna,32.75,Kota Bekasi,22440,2765.6205,2,Rendah
+32.75.11,Mustikajaya,32.75,Kota Bekasi,27496,2455.7432,1,Sangat Rendah
+32.75.12,Pondokmelati,32.75,Kota Bekasi,12220,2423.5741,1,Sangat Rendah
+32.76.01,Pancoran Mas,32.76,Kota Depok,19826,3216.2817,3,Sedang
+32.76.02,Cimanggis,32.76,Kota Depok,24224,2871.8285,2,Rendah
+32.76.03,Sawangan,32.76,Kota Depok,28763,3399.2475,3,Sedang
+32.76.04,Limo,32.76,Kota Depok,13697,3040.9963,3,Sedang
+32.76.05,Sukmajaya,32.76,Kota Depok,19279,3125.8732,3,Sedang
+32.76.06,Beji,32.76,Kota Depok,16334,3001.3079,3,Sedang
+32.76.07,Cipayung,32.76,Kota Depok,12632,3475.0131,4,Tinggi
+32.76.08,Cilodong,32.76,Kota Depok,17090,3407.9086,4,Tinggi
+32.76.09,Cinere,32.76,Kota Depok,11420,2845.0951,2,Rendah
+32.76.10,Tapos,32.76,Kota Depok,37130,3237.4038,3,Sedang
+32.76.11,Bojongsari,32.76,Kota Depok,21786,3416.9751,4,Tinggi
+32.77.01,Cimahi Selatan,32.77,Kota Cimahi,19372,2302.1460,1,Sangat Rendah
+32.77.02,Cimahi Tengah,32.77,Kota Cimahi,12122,2356.7523,1,Sangat Rendah
+32.77.03,Cimahi Utara,32.77,Kota Cimahi,15711,2380.3531,1,Sangat Rendah
+32.78.01,Cihideung,32.78,Kota Tasikmalaya,6057,4483.0222,5,Sangat Tinggi
+32.78.02,Cipedes,32.78,Kota Tasikmalaya,10041,4434.5380,5,Sangat Tinggi
+32.78.03,Tawang,32.78,Kota Tasikmalaya,7682,4492.7327,5,Sangat Tinggi
+32.78.04,Indihiang,32.78,Kota Tasikmalaya,12067,4129.2066,5,Sangat Tinggi
+32.78.05,Kawalu,32.78,Kota Tasikmalaya,46283,3881.7601,4,Tinggi
+32.78.06,Cibeureum,32.78,Kota Tasikmalaya,20692,4034.7025,5,Sangat Tinggi
+32.78.07,Tamansari,32.78,Kota Tasikmalaya,40890,4032.2857,5,Sangat Tinggi
+32.78.08,Mangkubumi,32.78,Kota Tasikmalaya,26843,4189.8235,5,Sangat Tinggi
+32.78.09,Bungursari,32.78,Kota Tasikmalaya,19548,4161.0546,5,Sangat Tinggi
+32.78.10,Purbaratu,32.78,Kota Tasikmalaya,13652,4014.0073,5,Sangat Tinggi
+32.79.01,Banjar,32.79,Kota Banjar,29942,3224.1968,3,Sedang
+32.79.02,Pataruman,32.79,Kota Banjar,61177,3024.5428,3,Sedang
+32.79.03,Purwaharja,32.79,Kota Banjar,19170,3061.2171,3,Sedang
+32.79.04,Langensari,32.79,Kota Banjar,35716,2699.6952,2,Rendah

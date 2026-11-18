@@ -2,7 +2,10 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.geography.district import District
-from app.models.spatial_analysis import DistrictRainfallMonthly
+from app.models.spatial_analysis import (
+    DistrictRainfallClassification,
+    DistrictRainfallMonthly,
+)
 
 
 class DistrictRainfallMonthlyRepository:
@@ -15,8 +18,15 @@ class DistrictRainfallMonthlyRepository:
         regency_id: int | None = None,
         year: int | None = None,
         month: int | None = None,
-    ) -> list[DistrictRainfallMonthly]:
-        statement = select(DistrictRainfallMonthly)
+    ) -> list[tuple[DistrictRainfallMonthly, DistrictRainfallClassification | None]]:
+        statement = select(
+            DistrictRainfallMonthly,
+            DistrictRainfallClassification,
+        ).outerjoin(
+            DistrictRainfallClassification,
+            DistrictRainfallClassification.district_id
+            == DistrictRainfallMonthly.district_id,
+        )
 
         if regency_id is not None:
             statement = statement.join(
@@ -46,4 +56,4 @@ class DistrictRainfallMonthlyRepository:
             DistrictRainfallMonthly.month.asc(),
         )
 
-        return list(db.scalars(statement).all())
+        return list(db.execute(statement).all())

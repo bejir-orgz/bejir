@@ -7,9 +7,13 @@ from app.schemas.spatial_analysis.population_exposure import (
 from app.schemas.spatial_analysis.district_rainfall_monthly import (
     DistrictRainfallMonthlyResponse,
 )
+from app.schemas.spatial_analysis.regency_rainfall_classification import (
+    RegencyRainfallClassificationResponse,
+)
 
 __all__ = [
     "DistrictHazardResponse",
     "PopulationExposureResponse",
     "DistrictRainfallMonthlyResponse",
+    "RegencyRainfallClassificationResponse",
 ]
