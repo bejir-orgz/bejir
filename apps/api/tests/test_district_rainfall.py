@@ -9,7 +9,10 @@ from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.main import app
-from app.services.spatial_analysis import DistrictRainfallMonthlyService
+from app.services.spatial_analysis import (
+    DistrictRainfallMonthlyService,
+    RegencyRainfallMonthlyService,
+)
 
 
 @pytest.fixture
@@ -29,11 +32,15 @@ def db():
             "INSERT INTO core.regency VALUES (4, '32.01', 'Bogor', '32', 'geom'), (14, '32.16', 'Bekasi', '32', 'geom')"
         )
         connection.exec_driver_sql(
-            "INSERT INTO core.districts VALUES (545, '32.01.01', 'Cibinong', 4, 'geom'), (700, '32.16.03', 'Sukawangi', 14, 'geom')"
+            "INSERT INTO core.districts VALUES (545, '32.01.01', 'Cibinong', 4, 'geom'), (546, '32.01.02', 'Gunungputri', 4, 'geom'), (700, '32.16.03', 'Sukawangi', 14, 'geom')"
         )
         climatology = ",".join(
             f"({index}, 545, NULL, {month}, 52234, {300 + month * 10}.0)"
             for index, month in enumerate(range(1, 13), start=1)
+        )
+        gunungputri = ",".join(
+            f"({300 + month}, 546, NULL, {month}, 67751, {200 + month * 10}.0)"
+            for month in range(1, 13)
         )
         bekasi = ",".join(
             f"({100 + month}, 700, NULL, {month}, 0, NULL)"
@@ -42,14 +49,15 @@ def db():
         connection.exec_driver_sql(
             "INSERT INTO core.district_rainfall_monthly "
             "(id, district_id, year, month, n_piksel, hujan_mm) VALUES "
-            + climatology + "," + bekasi
+            + climatology + "," + gunungputri + "," + bekasi
             + ",(900, 545, 2015, 1, 51000, 111.1)"
         )
         connection.exec_driver_sql(
             "INSERT INTO core.district_rainfall_classification "
             "(id, district_id, n_piksel, mean_hujan_mm, kelas_hujan, label_hujan) VALUES "
             "(1, 545, 52234, 3908.7511, 5, 'Sangat Tinggi'), "
-            "(2, 700, 77000, NULL, NULL, NULL)"
+            "(2, 700, 77000, NULL, NULL, NULL), "
+            "(3, 546, 67751, 3031.9535, 3, 'Sedang')"
         )
         connection.exec_driver_sql(
             "INSERT INTO core.regency_rainfall_classification "
@@ -66,7 +74,7 @@ def db():
 
 def test_rainfall_monthly_rows_preserve_missing_values(db):
     rows = DistrictRainfallMonthlyService.list_rainfall_monthly(db)
-    assert len(rows) == 25
+    assert len(rows) == 37
     assert rows[0].model_dump().keys() == {
         "district_id", "year", "month", "n_piksel", "hujan_mm",
         "kelas_hujan", "label_hujan",
@@ -100,7 +108,7 @@ def test_rainfall_monthly_filters(db):
     assert (yearly[0].year, yearly[0].month, yearly[0].hujan_mm) == (2015, 1, 111.1)
 
     january = DistrictRainfallMonthlyService.list_rainfall_monthly(db, month=1)
-    assert len(january) == 3
+    assert len(january) == 4
     assert all(row.month == 1 for row in january)
 
 
@@ -125,6 +133,7 @@ def test_rainfall_monthly_endpoint_returns_null_and_validates(db):
             assert response.status_code == 200
             assert [(row["hujan_mm"], row["kelas_hujan"], row["label_hujan"]) for row in response.json()] == [
                 (320.0, 5, "Sangat Tinggi"),
+                (220.0, 3, "Sedang"),
             ]
 
             for query in [
@@ -177,5 +186,62 @@ def test_regency_rainfall_classification_endpoint(db):
             assert client.get(
                 "/api/v1/spatial-analysis/regency-rainfall-classification?regency_id=0"
             ).status_code == 422
+    finally:
+        app.dependency_overrides.clear()
+
+
+def test_regency_rainfall_monthly_weights_by_pixels(db):
+    rows = RegencyRainfallMonthlyService.list_rainfall_monthly(db)
+
+    # Regency 14 has no district with rainfall values, so it is omitted.
+    assert len(rows) == 13
+    assert all(row.regency_id == 4 for row in rows)
+
+    january = rows[0]
+    assert (january.year, january.month, january.period) == (None, 1, None)
+    assert (january.n_kec, january.n_kec_berdata) == (2, 2)
+    assert january.hujan_mm == pytest.approx(
+        (310 * 52234 + 210 * 67751) / (52234 + 67751)
+    )
+    assert (january.min_mm, january.maks_mm) == (210.0, 310.0)
+
+    yearly = [row for row in rows if row.year == 2015]
+    assert len(yearly) == 1
+    assert yearly[0].period == "2015-01"
+    assert yearly[0].hujan_mm == 111.1
+    assert (yearly[0].n_kec, yearly[0].n_kec_berdata) == (2, 1)
+
+
+def test_regency_rainfall_monthly_endpoint(db):
+    app.dependency_overrides[get_db] = lambda: db
+    try:
+        with TestClient(app) as client:
+            response = client.get(
+                "/api/v1/spatial-analysis/regency-rainfall-monthly?regency_id=4&month=2"
+            )
+            assert response.status_code == 200
+            payload = response.json()
+            assert len(payload) == 1
+            assert payload[0]["regency_code"] == "32.01"
+            assert payload[0]["period"] is None
+            assert payload[0]["n_kec"] == 2
+            assert payload[0]["hujan_mm"] == pytest.approx(
+                (320 * 52234 + 220 * 67751) / (52234 + 67751)
+            )
+
+            assert client.get(
+                "/api/v1/spatial-analysis/regency-rainfall-monthly?regency_id=14"
+            ).json() == []
+
+            response = client.get(
+                "/api/v1/spatial-analysis/regency-rainfall-monthly?year=2015"
+            )
+            assert response.status_code == 200
+            assert [row["period"] for row in response.json()] == ["2015-01"]
+
+            for query in ["regency_id=0", "month=13", "year=1800"]:
+                assert client.get(
+                    "/api/v1/spatial-analysis/regency-rainfall-monthly?" + query
+                ).status_code == 422
     finally:
         app.dependency_overrides.clear()

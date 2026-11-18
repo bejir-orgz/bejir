@@ -218,11 +218,13 @@ def main() -> int:
                 """,
                 prepared,
             )
+            written = cursor.rowcount if cursor.rowcount >= 0 else None
         connection.commit()
 
     skipped = len(rows) - len(prepared)
+    written = len(prepared) if written is None else written
     print(
-        f"sumber={source_count} baris; ditulis={len(prepared)} baris; "
+        f"sumber={source_count} baris; ditulis={written} baris; "
         f"hujan NULL={null_rainfall}; dilewati={skipped}"
     )
     if args.year is None and not any(row[1] is not None for row in rows):

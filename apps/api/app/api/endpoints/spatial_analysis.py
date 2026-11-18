@@ -5,12 +5,14 @@ from app.db.session import get_db
 from app.schemas.spatial_analysis import (
     DistrictRainfallMonthlyResponse,
     RegencyRainfallClassificationResponse,
+    RegencyRainfallMonthlyResponse,
 )
 from app.services.spatial_analysis import (
     DistrictHazardStatisticService,
     DistrictRainfallMonthlyService,
     PopulationExposureService,
     RegencyRainfallClassificationService,
+    RegencyRainfallMonthlyService,
 )
 
 router = APIRouter()
@@ -47,6 +49,24 @@ def get_regency_rainfall_classification(
     return RegencyRainfallClassificationService.list_classification(
         db,
         regency_id=regency_id,
+    )
+
+
+@router.get(
+    "/regency-rainfall-monthly",
+    response_model=list[RegencyRainfallMonthlyResponse],
+)
+def get_regency_rainfall_monthly(
+    regency_id: int | None = Query(default=None, gt=0),
+    year: int | None = Query(default=None, ge=1900, le=2100),
+    month: int | None = Query(default=None, ge=1, le=12),
+    db: Session = Depends(get_db),
+):
+    return RegencyRainfallMonthlyService.list_rainfall_monthly(
+        db,
+        regency_id=regency_id,
+        year=year,
+        month=month,
     )
 
 

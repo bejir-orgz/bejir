@@ -10,10 +10,14 @@ from app.repositories.spatial_analysis.district_rainfall_monthly import (
 from app.repositories.spatial_analysis.regency_rainfall_classification import (
     RegencyRainfallClassificationRepository,
 )
+from app.repositories.spatial_analysis.regency_rainfall_monthly import (
+    RegencyRainfallMonthlyRepository,
+)
 
 __all__ = [
     "DistrictHazardStatisticRepository",
     "PopulationExposureRepository",
     "DistrictRainfallMonthlyRepository",
     "RegencyRainfallClassificationRepository",
+    "RegencyRainfallMonthlyRepository",
 ]
