@@ -9,7 +9,6 @@ export const workspaceData: WorkspaceData = {
     { id: "rainfall", label: "Curah Hujan", count: 1 },
     { id: "evacuation", label: "Titik Evakuasi", count: 1 },
     { id: "rivers", label: "Jaringan Sungai", count: 1 },
-    { id: "flood-area", label: "Area Banjir", count: 0 },
     { id: "dem", label: "DEM", count: 1 },
     { id: "susceptibility", label: "Kerawanan Banjir", count: 1 },
     { id: "land-cover", label: "Tutupan Lahan", count: 1 },
@@ -18,9 +17,9 @@ export const workspaceData: WorkspaceData = {
     { id: "rainfall", label: "Curah Hujan" },
     { id: "evacuation", label: "Titik Evakuasi" },
     { id: "rivers", label: "Jaringan Sungai" },
-    { id: "flood-area", label: "Area Banjir" },
     { id: "dem", label: "DEM" },
     { id: "susceptibility", label: "Flood Risk" },
+    { id: "land-cover", label: "Tutupan Lahan" },
   ],
   initialFilters: {
     view: "map", period: "today", date: "", regionIds: [],

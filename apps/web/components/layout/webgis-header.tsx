@@ -8,7 +8,7 @@ import { RegionSearch } from "@/features/regions/region-search";
 import type { RegionNode } from "@/features/webgis/types";
 import "./webgis-header.css";
 
-export function WebgisHeader({ dummy = true, mapCanvas = false, onRegionSelect }: { dummy?: boolean; mapCanvas?: boolean; onRegionSelect?: (region: RegionNode) => void }) {
+export function WebgisHeader({ mapCanvas = false, onRegionSelect }: { mapCanvas?: boolean; onRegionSelect?: (region: RegionNode) => void }) {
   const pathname = usePathname();
   return (
     <header className="gis-header" data-canvas={mapCanvas}>
@@ -24,7 +24,6 @@ export function WebgisHeader({ dummy = true, mapCanvas = false, onRegionSelect }
           <Link href="/">Beranda</Link>
         </Button>
       </div>
-      {dummy ? <span className="gis-dummy-label">DATA DUMMY</span> : null}
     </header>
   );
 }

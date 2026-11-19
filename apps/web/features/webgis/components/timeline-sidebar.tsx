@@ -60,16 +60,20 @@ export function TimelineSidebar({ year, filters, hidden, onChange }: {
   }
 
   return (
-    <aside id="gis-timeline-panel" hidden={hidden} className="gis-left absolute z-2 [inset:0_auto_0_0] w-66 border-0 rounded-[0_16px_16px_0] bg-[white] overflow-y-auto [clip-path:inset(0_round_0_16px_16px_0)] [transform:translateX(0)] [transition:transform_var(--gis-slide-duration)_var(--gis-slide-easing),display_var(--gis-slide-duration)_allow-discrete] [&[hidden]]:hidden [&[hidden]]:[transform:translateX(-100%)] starting:[&:not([hidden])]:[transform:translateX(-100%)] [&_h1]:text-[24px] [&_h1]:leading-[32px] [&_h1]:font-medium [&_h2]:text-[24px] [&_h2]:leading-[32px] [&_h2]:font-medium [--sb-thumb-color:#8EC5FF] [--sb-size:4px] motion-reduce:[transition:none] gis-timeline-sidebar bottom-0 min-h-0 max-h-[none] p-4 pl-3 pr-5 [direction:rtl]" aria-label="Timeline">
+    <aside id="gis-timeline-panel" hidden={hidden} className="gis-left absolute z-2 [inset:0_auto_0_0] w-[var(--sidebar-width)] border-0 rounded-[0_16px_16px_0] bg-[white] overflow-hidden flex flex-col [clip-path:inset(0_round_0_16px_16px_0)] [transform:translateX(0)] [transition:transform_var(--gis-slide-duration)_var(--gis-slide-easing),display_var(--gis-slide-duration)_allow-discrete] [&[hidden]]:hidden [&[hidden]]:[transform:translateX(-100%)] starting:[&:not([hidden])]:[transform:translateX(-100%)] [&_h1]:text-[24px] [&_h1]:leading-[32px] [&_h1]:font-medium [&_h2]:text-[24px] [&_h2]:leading-[32px] [&_h2]:font-medium [--sb-thumb-color:#8EC5FF] [--sb-size:5px] motion-reduce:[transition:none] gis-timeline-sidebar bottom-0 min-h-0 max-h-[none] py-4 pr-4" aria-label="Timeline">
+      <div className="gis-sidebar-scroll min-h-0 overflow-y-auto pl-[calc(16px_-_var(--sb-size))] [scrollbar-gutter:stable] [direction:rtl]">
       <div dir="ltr">
-        <h2>Timeline</h2>
+        <div className="flex items-center justify-between gap-4">
+          <h2>Timeline</h2>
+          {!!(filters.date || filters.dateTo || (pickerOpen && draftRange?.from)) && <Button type="button" variant="link" size="sm" className="text-red-500 no-underline hover:text-red-600 hover:no-underline" aria-label="Reset pilihan timeline" onClick={() => { setDraftRange(undefined); setPickerOpen(false); onChange({ period: "today", date: "", dateTo: "" }); }}>Reset</Button>}
+        </div>
         <Popover open={pickerOpen} onOpenChange={(open) => {
           if (open) setDraftRange(selectedDate ? { from: selectedDate, to: selectedEnd } : undefined);
           setPickerOpen(open);
         }}>
           <PopoverTrigger asChild><Button variant={displayedFrom ? "outline" : "filter"} className="gis-time-picker mt-2 w-full justify-start rounded-2xl" data-active={!!displayedFrom}><IconCalendarWeek className="size-4" aria-hidden="true" /><span className="min-w-0 truncate" aria-live="polite" title={dateLabel}>{dateLabel}</span></Button></PopoverTrigger>
           <PopoverContent sticky="always" collisionPadding={16} className="w-auto max-h-[min(calc(100dvh-32px),var(--radix-popover-content-available-height))] overflow-y-auto overscroll-contain rounded-2xl p-0" align="start" aria-label="Pilih rentang tanggal Timeline">
-            <CalendarTimeline className="rounded-none border-0" mode="range" locale={id} selected={draftRange} defaultMonth={selectedDate ?? new Date(currentYear, currentMonth - 1, 1)} onSelect={setDraftRange} />
+            <CalendarTimeline captionLayout="dropdown" reverseYears className="rounded-none border-0" mode="range" locale={id} selected={draftRange} defaultMonth={selectedDate ?? new Date(currentYear, currentMonth - 1, 1)} onSelect={setDraftRange} />
             <div className="flex items-center justify-between gap-4 p-4 pt-0">
               <Button variant="outline" className="flex-1 w-full" onClick={() => { setDraftRange(undefined); onChange({ period: "custom", date: "", dateTo: "" }); }}>Hapus tanggal</Button>
               <Button className="flex-1 w-full" onClick={applyRange} disabled={!draftRange?.from}>Terapkan</Button>
@@ -94,7 +98,8 @@ export function TimelineSidebar({ year, filters, hidden, onChange }: {
             ))}</div>
           </section>
         ))}</div>
-        <p className="sr-only">Pilihan waktu hanya disimpan secara lokal dan tidak memfilter data nyata.</p>
+        <p className="sr-only">Tanpa pilihan tanggal, ringkasan histori memakai tahun berjalan. Parameter spasial tidak memiliki filter waktu.</p>
+      </div>
       </div>
     </aside>
   );

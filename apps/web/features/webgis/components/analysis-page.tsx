@@ -34,8 +34,7 @@ export function AnalysisPage({ data }: { data: AnalysisData }) {
   const summaryKey = query.toString();
   const [liveSummary, setLiveSummary] = useState<{ key: string; snapshot?: AnalysisData["snapshots"][number]; error?: string }>();
   const initialSummary = summaryYear === data.years[0] && !summaryRegionIds.length;
-  const baseSnapshot = data.source !== "backend" ? data.snapshots[summaryYear]
-    : liveSummary?.key === summaryKey && liveSummary.snapshot ? liveSummary.snapshot
+  const baseSnapshot = liveSummary?.key === summaryKey && liveSummary.snapshot ? liveSummary.snapshot
       : initialSummary ? data.snapshots[summaryYear] ?? data.snapshots[0] : data.snapshots[0];
   const facilities = useFacilityTotals(selectedRegions.length === data.rows.length ? [] : selectedRegions.map((row) => Number(row.id)), `${summaryYear}-01-01`, `${summaryYear}-12-31`, data.source === "backend" && summaryYear > 0 && !detailed && selectedRegions.length > 0);
   const populatedSnapshot = facilities?.counts ? { ...baseSnapshot, facilities: baseSnapshot.facilities.map((facility) => ({ ...facility, count: facilities.counts![facility.id] })) } : baseSnapshot;
@@ -48,7 +47,6 @@ export function AnalysisPage({ data }: { data: AnalysisData }) {
     distribution: hasVillageSelection(summaryRegionIds) || !knownClasses ? data.snapshots[0].distribution.map((entry) => ({ ...entry, value: null })) : susceptibilityDistribution(summaryDistricts).reverse(),
     facilities: data.snapshots[0].facilities.map((facility) => ({ ...facility, count: null })),
   } : populatedSnapshot;
-  const regionNote = detailed ? (hasVillageSelection(summaryRegionIds) ? "Analisis belum tersedia pada tingkat kelurahan/desa." : "Parameter spasial diringkas dari kecamatan terpilih; histori dan fasilitas Flood belum mendukung tingkat kecamatan.") : "";
   useEffect(() => {
     if (data.source !== "backend" || !data.years.length || initialSummary || detailed || !selectedRegions.length) return;
     const controller = new AbortController();
@@ -62,7 +60,7 @@ export function AnalysisPage({ data }: { data: AnalysisData }) {
     return () => controller.abort();
   }, [summaryKey, data.source, data.years.length, initialSummary, detailed, selectedRegions.length]);
   const active = !!(filters.query || filters.regionIds.length || filters.susceptibility.length);
-  return <div className="analysis-page min-h-[100dvh] bg-[#fff] text-[#171717] [&_[data-slot=card]]:border-0 [&_[data-slot=card]]:[outline:1px_solid_#d4d4d4] [&_[data-slot=card]]:[outline-offset:-1px] [&_[data-slot=chart]_.recharts-cartesian-axis-tick-value]:[fill:#a1a1a1] [&_[data-slot=chart]_.recharts-cartesian-axis-tick-value]:text-[12px]"><WebgisHeader mapCanvas dummy={data.source !== "backend"} />
+  return <div className="analysis-page min-h-[100dvh] bg-[#fff] text-[#171717] [&_[data-slot=card]]:border-0 [&_[data-slot=card]]:[outline:1px_solid_#d4d4d4] [&_[data-slot=card]]:[outline-offset:-1px] [&_[data-slot=chart]_.recharts-cartesian-axis-tick-value]:[fill:#a1a1a1] [&_[data-slot=chart]_.recharts-cartesian-axis-tick-value]:text-[12px]"><WebgisHeader mapCanvas />
     <main className="analysis-content w-[min(1200px,calc(100%_-_32px))] mx-auto py-4">
       <div className="analysis-heading min-h-10 flex items-center justify-between gap-4 [&_h1]:text-[36px] [&_h1]:leading-[40px] [&_h1]:font-medium max-[700.01px]:items-start max-[700.01px]:flex-wrap max-[700.01px]:[&_h1]:text-[28px] max-[700.01px]:[&_h1]:leading-[36px]"><div className="analysis-heading-scope flex items-center gap-2"><h1>Analisis</h1><span className="analysis-heading-divider mx-2 h-10 w-0.5 shrink-0 bg-neutral-300 max-[700.01px]:h-7" aria-hidden="true" /><AnalysisRegionFilter iconOnly regions={data.regions} value={summaryRegionIds} onChange={setSummaryRegionIds} /></div>
         <YearFilterButton years={data.years} value={summaryYear} onValueChange={setSummaryYear} label={!data.years.length ? "—" : undefined} />
@@ -78,11 +76,10 @@ export function AnalysisPage({ data }: { data: AnalysisData }) {
         </div>
       </section>
       <div className="analysis-divider h-4 my-4 flex items-center [&::after]:content-[''] [&::after]:h-0.5 [&::after]:bg-neutral-300 [&::after]:w-full" aria-hidden="true" />
-      <Card className="analysis-table-card p-4 flex flex-col gap-4 min-w-0"><div className="analysis-table-title flex items-center justify-between min-h-8 [&_h2]:text-[20px] [&_h2]:leading-[28px] [&_h2]:font-medium"><h2>Tabel Kerawanan/Wilayah</h2>{active && <Button variant="destructive" size="sm" onClick={() => setFilters(emptyAnalysisFilters)}>Reset filter</Button>}</div>
+      <Card className="analysis-table-card p-4 flex flex-col gap-4 min-w-0"><div className="analysis-table-title flex items-center justify-between min-h-8 [&_h2]:text-[20px] [&_h2]:leading-[28px] [&_h2]:font-medium"><h2>Tabel Kerawanan/Wilayah</h2>{active && <Button variant="link" size="sm" className="text-red-500 no-underline hover:text-red-600 hover:no-underline" onClick={() => setFilters(emptyAnalysisFilters)}>Reset filter</Button>}</div>
         <AnalysisFiltersBar filters={filters} regions={data.regions} classes={data.classes} onChange={setFilters} />
         <AnalysisTable rows={rows} />
       </Card>
-      <p className="analysis-data-note mt-4 text-[12px] leading-[16px] text-[#737373]" role="status">{[riverSummary?.error, riverSummary?.data?.prepared_at && `Data sungai disiapkan ${new Date(riverSummary.data.prepared_at).toLocaleDateString("id-ID", { timeZone: "Asia/Jakarta" })}.`, regionNote, liveSummary?.key === summaryKey && liveSummary.error, data.error, ...(snapshot.errors || []), facilities?.error, facilities?.counts?.prepared_at && `Snapshot fasilitas disiapkan ${new Date(facilities.counts.prepared_at).toLocaleDateString("id-ID")}.`].filter(Boolean).join(" ") + " Jumlah sungai menghitung rekaman segmen API yang berpotongan dengan wilayah, bukan nama sungai unik. Ringkasan kejadian dan kerusakan fasilitas dari Flood merupakan akumulasi catatan historis. Spatial Analysis belum memiliki periode. Elevasi memakai rata-rata berbobot n_piksel, kelas wilayah memakai modus kelas dominan kecamatan berbobot n_piksel. Distribusi menghitung kecamatan per kelas 1–5 (Sangat Rendah–Sangat Tinggi). Rata-rata bulanan dihitung total/12. Tahun berjalan dapat belum lengkap. — menandakan data tidak tersedia."}</p>
     </main>
   </div>;
 }

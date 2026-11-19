@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 
 const titles = {
+  "jenis-banjir": "Filter Jenis Banjir",
   keparahan: "Filter Keparahan",
   klasifikasi: "Filter Klasifikasi",
   kerawanan: "Filter Kerawanan",

@@ -36,7 +36,6 @@ apps/web/
 ├── lib/
 │   └── api/                   # Shared HTTP transport and error handling
 ├── config/                    # Navigation and presentation configuration
-├── mocks/                     # Small, labeled synthetic fixtures
 └── public/                    # Non-icon static assets when needed
 ```
 
@@ -46,7 +45,26 @@ The WebGIS workspace connects domain features. The map feature owns rendering me
 
 ## Local Development
 
-The landing page implementation lives in `app/landing/_components` and is served at both `/` and `/landing`. Its WebGIS buttons navigate to `/map`, which implements the Figma Map Interaktif screen with live district thematic data and a Leaflet/OpenStreetMap basemap over West Java. The Daerah panel loads West Java regencies and cities from the Geography API. It loads districts and villages on expansion, and search covers the branches loaded so far. Next.js calls FastAPI using the server-side `BEJIR_API_URL` environment variable, which defaults to `http://80.43.0.180:8000`. Set it in `apps/web/.env.local` to use a different server. The landing-page illustration remains a schematic, not geographic or flood data.
+For a fresh clone, use Node.js 24 and run from `apps/web`:
+
+```powershell
+npm ci
+npm run dev
+```
+
+The default API origin is `http://80.43.0.180:8000`; no `.env.local` is required
+for that origin. Administrative metadata now comes directly from the lightweight
+`/api/v1/geography/catalog` endpoint; no catalog backup is bundled. Do not remove the `catalog` prop from
+`RegionSelectionProvider` or replace the catalog with empty arrays to bypass errors.
+For a different API, copy `.env.example` to `.env.local`, set `BEJIR_API_URL`, and
+ensure that server provides the catalog endpoint.
+
+Prepared display boundaries and river data remain ignored by Git. Facility counts use the live impacts API; saved facility data and its legacy fallback have been removed. For the full
+map/data features, prepare them with `npm run prepare:data` and
+`npm run prepare:rivers`, or use the published prepared artifacts for the same
+API origin. See [data preparation](../../docs/deployment/web-read-models.md).
+
+The landing page implementation lives in `app/landing/_components` and is served at both `/` and `/landing`. Its WebGIS buttons navigate to `/map`, which implements the Figma Map Interaktif screen with live district thematic data and a Leaflet/OpenStreetMap basemap over West Java. The Daerah panel loads West Java regencies and cities from the Geography API. It loads districts and villages on expansion, and search covers all administrative levels using cached name metadata. Next.js calls FastAPI using the server-side `BEJIR_API_URL` environment variable, which defaults to `http://80.43.0.180:8000`. Set it in `apps/web/.env.local` to use a different server. The landing-page illustration remains a schematic, not geographic or flood data.
 
 The interface uses Google Sans Flex through `next/font`, Tabler Icons, and a customized shadcn-style Button built with Radix Slot. Google font assets are fetched at build time. The map region panel requires access to the configured FastAPI server.
 

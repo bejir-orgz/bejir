@@ -13,7 +13,7 @@ export function RainfallChart({ distribution }: { distribution: RainfallPageData
       <BarChart accessibilityLayer data={distribution} margin={{ top: 4, left: 0, right: 0, bottom: 0 }} barCategoryGap="9%">
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey="month" tickLine={false} axisLine={false} interval={0} minTickGap={0} tickMargin={8} height={24} padding={{ left: 10, right: 10 }} />
-        <YAxis domain={[0, 24]} ticks={[0, 6, 12, 18, 24]} tickLine={false} axisLine={false} width={37} tickMargin={8} />
+        <YAxis domain={[0, "auto"]} tickLine={false} axisLine={false} width={45} tickMargin={8} />
         <ChartTooltip cursor={{ fill: "var(--primary)", opacity: .06 }} content={<ChartTooltipContent />} />
         <Bar dataKey="rainfallMm" fill="var(--color-rainfallMm)" maxBarSize={48} isAnimationActive={false} />
       </BarChart>

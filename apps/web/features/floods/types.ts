@@ -7,7 +7,8 @@ export interface FloodHistoryRow {
   district: string;
   village: string;
   severity: FloodSeverity | null;
-  areaKm2: number | null;
+  floodType: string | null;
+  housesFlooded: number | null;
   deaths: number | null;
   missing: number | null;
 }
@@ -15,23 +16,23 @@ export interface FloodHistoryRow {
 export interface HistoryFilters {
   query: string;
   regionIds: string[];
-  severities: FloodSeverity[];
+  floodTypes: string[];
   from: string;
   to: string;
 }
 
 export interface FloodHistoryData {
-  source?: "backend" | "dummy";
+  source?: "backend";
   error?: string;
-  previousCounts?: { region: string; events: number }[];
+  previousCounts?: { region: string; events: number; housesFlooded?: number | null }[];
   years: number[];
   regions: string[];
   rows: FloodHistoryRow[];
   snapshots: Record<number, {
     events: string;
     eventChange: string;
-    area: string;
-    areaChange: string;
+    housesFlooded: string;
+    housesFloodedNote: string;
     deaths: number | null;
     missing: number | null;
     timeline: { month: string; events: number }[];

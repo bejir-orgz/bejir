@@ -1,4 +1,4 @@
-// Generated from OpenAPI; assistant sources include the local rivers extension.
+// Types for documented API responses and web presentation projections.
 
 export type AssistantChatRequest = {
   "messages": Array<AssistantMessage>;
@@ -85,4 +85,64 @@ export interface FacilityTotalsResponse {
   worship: number | null;
   public: null;
   data_kind: "historical_damage";
+}
+
+export interface FloodImpactTotals {
+  fatalities?: number;
+  missing?: number;
+  injured?: number;
+  affected_displaced?: number;
+  houses_heavily_damaged?: number;
+  houses_moderately_damaged?: number;
+  houses_slightly_damaged?: number;
+  houses_flooded?: number;
+  schools_damaged?: number;
+  religious_facilities_damaged?: number;
+  health_facilities_damaged?: number;
+  offices_damaged?: number;
+  bridges_damaged?: number;
+}
+
+export interface FloodRegencyImpacts {
+  fatalities?: number;
+  missing?: number;
+  injured?: number;
+  affected_displaced?: number;
+  houses_heavily_damaged?: number;
+  houses_moderately_damaged?: number;
+  houses_slightly_damaged?: number;
+  houses_flooded?: number;
+  schools_damaged?: number;
+  religious_facilities_damaged?: number;
+  health_facilities_damaged?: number;
+  offices_damaged?: number;
+  bridges_damaged?: number;
+  regency_id: number;
+  regency_name?: string | null;
+}
+
+export interface FloodImpactsResponse {
+  overall: FloodImpactTotals;
+  by_regency: FloodRegencyImpacts[];
+}
+
+export interface DistrictRainfallMonthlyResponse {
+  district_id: number;
+  year?: number | null;
+  month: number;
+  n_piksel?: number | null;
+  hujan_mm?: number | null;
+  kelas_hujan?: number | null;
+  label_hujan?: string | null;
+}
+
+export interface RegencyRainfallClassificationResponse {
+  regency_id: number;
+  n_kec?: number | null;
+  n_kec_berdata?: number | null;
+  mean_hujan_mm?: number | null;
+  min_kec_mm?: number | null;
+  maks_kec_mm?: number | null;
+  kelas_hujan?: number | null;
+  label_hujan?: string | null;
 }
