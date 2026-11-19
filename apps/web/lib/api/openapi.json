@@ -1172,6 +1172,60 @@
         }
       }
     },
+    "/api/v1/spatial-analysis/regency-rainfall-classification": {
+      "get": {
+        "tags": [
+          "Spatial Analysis"
+        ],
+        "summary": "Get Regency Rainfall Classification",
+        "operationId": "get_regency_rainfall_classification_api_v1_spatial_analysis_regency_rainfall_classification_get",
+        "parameters": [
+          {
+            "name": "regency_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "exclusiveMinimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Regency Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RegencyRainfallClassificationResponse"
+                  },
+                  "title": "Response Get Regency Rainfall Classification Api V1 Spatial Analysis Regency Rainfall Classification Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/spatial-analysis/district-hazards": {
       "get": {
         "tags": [
@@ -2080,6 +2134,28 @@
               }
             ],
             "title": "Hujan Mm"
+          },
+          "kelas_hujan": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kelas Hujan"
+          },
+          "label_hujan": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label Hujan"
           }
         },
         "type": "object",
@@ -2413,6 +2489,96 @@
           "name"
         ],
         "title": "RegencyMetadata"
+      },
+      "RegencyRainfallClassificationResponse": {
+        "properties": {
+          "regency_id": {
+            "type": "integer",
+            "title": "Regency Id"
+          },
+          "n_kec": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "N Kec"
+          },
+          "n_kec_berdata": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "N Kec Berdata"
+          },
+          "mean_hujan_mm": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean Hujan Mm"
+          },
+          "min_kec_mm": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Kec Mm"
+          },
+          "maks_kec_mm": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Maks Kec Mm"
+          },
+          "kelas_hujan": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kelas Hujan"
+          },
+          "label_hujan": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label Hujan"
+          }
+        },
+        "type": "object",
+        "required": [
+          "regency_id"
+        ],
+        "title": "RegencyRainfallClassificationResponse"
       },
       "RouteRequest": {
         "properties": {

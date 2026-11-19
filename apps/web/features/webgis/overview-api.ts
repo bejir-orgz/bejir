@@ -1,8 +1,10 @@
+import { yearOverYear } from "../../lib/year-over-year";
+import { subYears, format, parseISO } from "date-fns";
 import { getRiverSummary } from "../rivers/api";
 import { getFloodStatistics } from "../floods/api";
 import type { WorkspaceData } from "./types";
 import { getOverviewDateRange } from "./timeline";
-import { classLabels, dominantClass, selectedHazards, weightedMean } from "../geography/spatial-data";
+import { classLabels, dominantClass, selectedHazards, weightedMean, nullableSum } from "../geography/spatial-data";
 
 export function emptyOverview(message = "Memuat data backend…"): WorkspaceData["overview"] {
   return {
@@ -34,13 +36,20 @@ export async function getWorkspaceOverview(regionIds: string[], from: string, to
   const supported = regionIds.every((id) => /^\d+$/.test(id));
   const scope = `${period.from} s.d. ${period.to}`;
   const ids = [...new Set(regionIds)];
-  const [spatialResult, historyResult, riversResult] = await Promise.allSettled([spatial, supported ? Promise.all((ids.length ? ids : [""]).map(async (id) => {
-      const query = new URLSearchParams();
-      if (id) query.set("regency_id", id);
-      query.set("start_date", `${period.from}T00:00:00`);
-      query.set("end_date", `${period.to}T23:59:59.999999`);
-      return getFloodStatistics(query.toString());
-    })) : Promise.resolve([]), getRiverSummary(regionIds)]);
+  const readStatistics = (range: { from: string; to: string }) => supported ? Promise.all((ids.length ? ids : [""]).map((id) => {
+    const query = new URLSearchParams();
+    if (id) query.set("regency_id", id);
+    query.set("start_date", `${range.from}T00:00:00`);
+    query.set("end_date", `${range.to}T23:59:59.999999`);
+    return getFloodStatistics(query.toString());
+  })) : Promise.resolve([]);
+  const previousPeriod = {
+    from: format(subYears(parseISO(period.from), 1), "yyyy-MM-dd"),
+    to: format(subYears(parseISO(period.to), 1), "yyyy-MM-dd"),
+  };
+  const [spatialResult, historyResult, riversResult, previousResult] = await Promise.allSettled([
+    spatial, readStatistics(period), getRiverSummary(regionIds), readStatistics(previousPeriod),
+  ]);
   if (riversResult.status === "fulfilled" && riversResult.value.total !== null) overview.rivers = `${riversResult.value.total.toLocaleString("id-ID")} segmen`;
   const records = spatialResult.status === "fulfilled" ? spatialResult.value : [];
   const statistics = historyResult.status === "fulfilled" ? historyResult.value : [];
@@ -51,16 +60,17 @@ export async function getWorkspaceOverview(regionIds: string[], from: string, to
   if (supported && historyResult.status === "fulfilled") {
     const total = statistics.reduce((sum, row) => sum + row.summary.total_events, 0);
     overview.metrics[0].value = total.toLocaleString("id-ID");
-    overview.metrics[0].change = scope;
+    const previous = previousResult.status === "fulfilled" ? previousResult.value : null;
+    Object.assign(overview.metrics[0], yearOverYear(total, previous?.reduce((sum, row) => sum + row.summary.total_events, 0)));
     const houses = statistics.map((row) => row.impacts.houses_flooded);
     if (houses.every((value) => value != null)) {
       overview.metrics[1].value = houses.reduce<number>((sum, value) => sum + (value ?? 0), 0).toLocaleString("id-ID") + " unit";
-      overview.metrics[1].change = "Akumulasi rumah terendam banjir";
+      Object.assign(overview.metrics[1], yearOverYear(nullableSum(houses.map((value) => value ?? null)), previous ? nullableSum(previous.map((row) => row.impacts.houses_flooded ?? null)) : null));
     }
     const affected = statistics.map((row) => row.impacts.affected_displaced);
     if (affected.every((value) => value !== null)) {
       overview.metrics[3].value = affected.reduce<number>((sum, value) => sum + (value ?? 0), 0).toLocaleString("id-ID") + " jiwa";
-      overview.metrics[3].change = "Akumulasi terdampak/mengungsi";
+      Object.assign(overview.metrics[3], yearOverYear(nullableSum(affected), previous ? nullableSum(previous.map((row) => row.impacts.affected_displaced)) : null));
     }
     overview.summary = `${total.toLocaleString("id-ID")} kejadian tercatat untuk ${scope}. Penduduk terdampak/mengungsi merupakan akumulasi catatan kejadian dan dapat mencakup orang yang sama.`;
   } else if (supported) {
@@ -68,6 +78,7 @@ export async function getWorkspaceOverview(regionIds: string[], from: string, to
   } else {
     overview.summary = "Filter histori tersedia pada tingkat kabupaten/kota. Statistik kecamatan atau desa/kelurahan belum tersedia pada API Flood.";
   }
+  if (previousResult.status === "rejected") overview.summary += " Perbandingan tahun sebelumnya gagal dimuat.";
   if (spatialResult.status === "rejected") overview.summary += " Parameter spasial gagal dimuat.";
   const classification = dominantClass(records);
   overview.susceptibility.label = classification === null ? "—" : classLabels[classification - 1];

@@ -1,5 +1,6 @@
+import { yearOverYear } from "../../lib/year-over-year";
 import { weightedMean } from "../geography/aggregation";
-import type { RainfallPageData, RainfallParameter, RainfallRow } from "./types";
+import type { MonthlyRainfallParameter, RainfallPageData, RainfallParameter, RainfallRow } from "./types";
 
 export function aggregateRainfall(parameters: RainfallParameter[]) {
   const known = parameters.filter((row) => row.mean_hujan_mm !== null);
@@ -13,17 +14,32 @@ export function aggregateRainfall(parameters: RainfallParameter[]) {
   };
 }
 
-export function rainfallSnapshot(rows: RainfallRow[]): RainfallPageData["snapshots"][number] {
+/** Approved mode of API classes, weighted by pixels for each selected district/month. */
+export function rainfallClassification(parameters: readonly MonthlyRainfallParameter[]): string | null {
+  const classes = new Map<number, { weight: number; label: string }>();
+  for (const row of parameters) {
+    if (row.kelas_hujan == null || !row.label_hujan || row.n_piksel == null || row.n_piksel <= 0) return null;
+    const previous = classes.get(row.kelas_hujan);
+    if (previous && previous.label !== row.label_hujan) return null;
+    classes.set(row.kelas_hujan, { weight: (previous?.weight ?? 0) + row.n_piksel, label: row.label_hujan });
+  }
+  const highest = Math.max(...[...classes.values()].map((entry) => entry.weight));
+  const winners = [...classes.values()].filter((entry) => entry.weight === highest);
+  return winners.length === 1 ? winners[0].label : null;
+}
+
+export function rainfallSnapshot(rows: RainfallRow[], previousRows: RainfallRow[] = []): RainfallPageData["snapshots"][number] {
   const parameters = rows.flatMap((row) => row.parameters);
   const totals = aggregateRainfall(parameters);
+  const previous = aggregateRainfall(previousRows.flatMap((row) => row.parameters));
   const monthly = rows.flatMap((row) => row.monthly ?? []);
   const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
   const format = (value: number | null) => value === null ? "—" : value.toLocaleString("id-ID", { maximumFractionDigits: 1 }) + " mm";
   return {
     metrics: [
-      { label: "Rata-Rata Curah Hujan", value: format(totals.average), change: `${totals.known}/${totals.total} ${parameters.some((row) => "month" in row) ? "pengamatan kecamatan/bulan" : "kecamatan"} · berbobot piksel`, trend: "increase" },
-      { label: "Curah Hujan Minimum", value: format(totals.minimum), change: "Rata-rata kecamatan terendah", trend: "decrease" },
-      { label: "Curah Hujan Maksimum", value: format(totals.maximum), change: "Rata-rata kecamatan tertinggi", trend: "increase" },
+      { label: "Rata-Rata Curah Hujan", value: format(totals.average), ...yearOverYear(totals.average, previous.average) },
+      { label: "Curah Hujan Minimum", value: format(totals.minimum), ...yearOverYear(totals.minimum, previous.minimum) },
+      { label: "Curah Hujan Maksimum", value: format(totals.maximum), ...yearOverYear(totals.maximum, previous.maximum) },
     ],
     distribution: monthly.length ? months.map((month, index) => ({ month, rainfallMm: aggregateRainfall(monthly.filter((row) => row.month === index + 1)).average })) : [],
   };

@@ -24,7 +24,7 @@ export interface HistoryFilters {
 export interface FloodHistoryData {
   source?: "backend";
   error?: string;
-  previousCounts?: { region: string; events: number }[];
+  previousCounts?: { region: string; events: number; housesFlooded?: number | null }[];
   years: number[];
   regions: string[];
   rows: FloodHistoryRow[];

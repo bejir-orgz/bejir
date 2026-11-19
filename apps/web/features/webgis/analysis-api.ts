@@ -1,3 +1,4 @@
+import { yearOverYear } from "../../lib/year-over-year";
 import type { AnalysisData, AnalysisRow } from "./analysis-types";
 import { classLabels, dominantClass, getHazardParameters, getSpatialDistricts, nullableSum, susceptibilityDistribution, weightedMean, type DistrictParameters } from "../geography/spatial-data";
 import { getFloodStatistics, type FloodStatistics } from "../floods/api";
@@ -89,21 +90,22 @@ export async function getAnalysisSummary(year: number, regencyIds: number[], dis
   if (current.status === "fulfilled") {
     const total = current.value.reduce((sum, group) => sum + group.summary.total_events, 0);
     const prior = previous.status === "fulfilled" ? previous.value.reduce((sum, group) => sum + group.summary.total_events, 0) : null;
-    const change = prior ? (total - prior) / prior * 100 : null;
+    const comparison = yearOverYear(total, prior);
     snapshot.metrics[0].value = total.toLocaleString("id-ID");
-    snapshot.metrics[0].change = change === null ? "—" : `${change >= 0 ? "+" : ""}${change.toLocaleString("id-ID", { maximumFractionDigits: 1 })}% dari ${year - 1}`;
-    snapshot.metrics[0].trend = change !== null && change < 0 ? "decrease" : "increase";
+    Object.assign(snapshot.metrics[0], comparison);
     snapshot.metrics[3].value = (total / 12).toLocaleString("id-ID", { maximumFractionDigits: 1 });
-    snapshot.metrics[3].change = "Total kejadian dibagi 12 bulan";
+    Object.assign(snapshot.metrics[3], comparison);
     const houses = current.value.map((group) => group.impacts.houses_flooded);
     if (houses.every((value) => value != null)) {
       snapshot.metrics[1].value = houses.reduce<number>((sum, value) => sum + (value ?? 0), 0).toLocaleString("id-ID") + " unit";
-      snapshot.metrics[1].change = "Akumulasi rumah terendam banjir";
+      const priorHouses = previous.status === "fulfilled" ? nullableSum(previous.value.map((group) => group.impacts.houses_flooded ?? null)) : null;
+      Object.assign(snapshot.metrics[1], yearOverYear(nullableSum(houses.map((value) => value ?? null)), priorHouses));
     }
     const affected = current.value.map((group) => group.impacts.affected_displaced);
     if (affected.every((value) => value !== null)) {
       snapshot.metrics[2].value = affected.reduce<number>((sum, value) => sum + (value ?? 0), 0).toLocaleString("id-ID") + " jiwa";
-      snapshot.metrics[2].change = "Akumulasi terdampak/mengungsi";
+      const priorAffected = previous.status === "fulfilled" ? nullableSum(previous.value.map((group) => group.impacts.affected_displaced)) : null;
+      Object.assign(snapshot.metrics[2], yearOverYear(nullableSum(affected), priorAffected));
     }
     snapshot.frequency = current.value.flatMap((group) => group.by_regency).map((row) => ({
       id: String(row.regency_id), region: row.regency_name === null ? "—" : /^(Kota|Kabupaten)\s/i.test(row.regency_name) ? row.regency_name : `Kabupaten ${row.regency_name}`, events: row.total_events,

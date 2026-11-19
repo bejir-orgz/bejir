@@ -4,7 +4,7 @@ import "../../lib/api/test-setup.mjs";
 import assert from "node:assert/strict";
 import test from "node:test";
 const { getRainfallPageData } = await import("./api.ts");
-const { aggregateRainfall, rainfallSnapshot } = await import("./summary.ts");
+const { aggregateRainfall, rainfallSnapshot, rainfallClassification } = await import("./summary.ts");
 const { emptyRainfallFilters, filterRainfallRows } = await import("./filter.ts");
 
 test("rainfall loads regional parameters, uses pixel weights and keeps missing periods and classification explicit", async () => {
@@ -32,7 +32,7 @@ test("rainfall loads regional parameters, uses pixel weights and keeps missing p
     assert.equal(data.rows[0].period, null);
     assert.equal(data.rows[0].classification, null);
     assert.equal(data.rows[1].rainfallMm, 0);
-    assert.match(data.snapshots[0].metrics[0].change, /3\/4 kecamatan/);
+    assert.equal(data.snapshots[0].metrics[0].change, "—");
     assert.equal(data.snapshots[0].metrics[0].value, "2.333,3 mm");
     assert.deepEqual(data.snapshots[0].distribution, []);
     const scoped = filterRainfallRows(data.rows, 0, { ...emptyRainfallFilters, regionIds: ["region:Kota%20Bogor"] });
@@ -59,13 +59,18 @@ test("monthly rainfall is pixel weighted, region/district scoped, and never assi
   let requests = 0;
   globalThis.fetch = async (url) => {
     if (url.includes("/catalog")) return Response.json(catalog);
-    if (url.includes("/district-rainfall-monthly")) { requests++; return Response.json(monthly); }
+    if (url.includes("/district-rainfall-monthly")) {
+      requests++;
+      const id = Number(new URL(url).searchParams.get("regency_id"));
+      assert.ok(id > 0);
+      return Response.json(monthly.filter((row) => catalog.districts.find((district) => district.id === row.district_id)?.regency_id === id));
+    }
     assert.match(url, /district-hazards$/);
     return Response.json(catalog.districts.map((row) => ({ district_id: row.id, n_piksel: 100, mean_hujan_mm: 2000 })));
   };
   try {
     const data = await getRainfallPageData();
-    assert.equal(requests, 1);
+    assert.equal(requests, 2);
     assert.deepEqual(data.years, []);
     const all = filterRainfallRows(data.rows, 0, emptyRainfallFilters);
     const chart = rainfallSnapshot(all).distribution;
@@ -99,4 +104,88 @@ test("rainfall aggregation preserves unknown values and rejects invalid source v
   assert.deepEqual(aggregateRainfall([{ n_piksel: 100, mean_hujan_mm: null }]), { average: null, minimum: null, maximum: null, known: 0, total: 1 });
   assert.equal(aggregateRainfall([{ n_piksel: null, mean_hujan_mm: 10 }]).average, null);
   assert.throws(() => aggregateRainfall([{ n_piksel: 100, mean_hujan_mm: -1 }]));
+});
+
+
+test("monthly API supplies years and pixel-weighted classifications with region and month scope", async () => {
+  const original = globalThis.fetch;
+  let monthly = [
+    { district_id: 1, year: 2023, month: 1, n_piksel: 100, hujan_mm: 100, kelas_hujan: 2, label_hujan: "Rendah" },
+    { district_id: 1, year: 2024, month: 1, n_piksel: 100, hujan_mm: 200, kelas_hujan: 3, label_hujan: "Sedang" },
+    { district_id: 2, year: 2024, month: 1, n_piksel: 300, hujan_mm: 400, kelas_hujan: 5, label_hujan: "Sangat Tinggi" },
+    { district_id: 1, year: 2024, month: 2, n_piksel: 100, hujan_mm: 300, kelas_hujan: 2, label_hujan: "Rendah" },
+  ];
+  globalThis.fetch = async (url) => {
+    if (url.includes("/catalog")) return Response.json({ regencies: [{ id: 1, name: "Bandung" }], districts: [{ id: 1, name: "A", regency_id: 1 }, { id: 2, name: "B", regency_id: 1 }] });
+    if (url.includes("district-rainfall-monthly")) return Response.json(monthly);
+    assert.match(url, /district-hazards$/);
+    return Response.json([{ district_id: 1, n_piksel: 100, mean_hujan_mm: 2000 }, { district_id: 2, n_piksel: 100, mean_hujan_mm: 4000 }]);
+  };
+  try {
+    const data = await getRainfallPageData();
+    assert.equal(data.error, undefined);
+    assert.deepEqual(data.years, [2024, 2023]);
+    assert.equal(filterRainfallRows(data.rows, 2024, emptyRainfallFilters)[0].classification, "Sangat Tinggi");
+    assert.equal(filterRainfallRows(data.rows, 2023, emptyRainfallFilters)[0].classification, "Rendah");
+    assert.equal(filterRainfallRows(data.rows, 2024, { ...emptyRainfallFilters, month: "02" })[0].classification, "Rendah");
+    assert.equal(filterRainfallRows(data.rows, 2024, { ...emptyRainfallFilters, month: "01", regionIds: ["region:Kabupaten%20Bandung/district:A"] })[0].classification, "Sedang");
+    assert.equal(filterRainfallRows(data.rows, 2024, { ...emptyRainfallFilters, classifications: ["Sangat Tinggi"] }).length, 1);
+    for (const invalid of [{ ...monthly[0], kelas_hujan: 6 }, { ...monthly[0], label_hujan: 3 }, { ...monthly[0], label_hujan: " " }]) {
+      monthly = [invalid];
+      await assert.rejects(getRainfallPageData(), /tidak valid/);
+    }
+  } finally { globalThis.fetch = original; }
+});
+
+test("rainfall classification preserves ties and missing metadata instead of inventing labels", () => {
+  const a = { year: 2024, month: 1, n_piksel: 100, kelas_hujan: 2, label_hujan: "Rendah", mean_hujan_mm: 100 };
+  const b = { ...a, kelas_hujan: 3, label_hujan: "Sedang" };
+  assert.equal(rainfallClassification([a, b]), null);
+  assert.equal(rainfallClassification([a, { ...b, n_piksel: 300 }]), "Sedang");
+  assert.equal(rainfallClassification([a, { ...b, label_hujan: null }]), null);
+  assert.equal(rainfallClassification([a, { ...a, label_hujan: "Other" }]), null);
+  assert.equal(rainfallClassification([]), null);
+});
+
+test("rainfall card comparisons use dated regional data and retain missing previous years", () => {
+  const row = { id: "1", region: "Kabupaten Bandung", period: null, classification: null, parameters: [], monthly: [
+    { district_name: "A", year: 2025, month: 1, n_piksel: 100, mean_hujan_mm: 100 },
+    { district_name: "A", year: 2026, month: 1, n_piksel: 100, mean_hujan_mm: 39 },
+  ] };
+  const current = filterRainfallRows([row], 2026, emptyRainfallFilters);
+  const previous = filterRainfallRows([row], 2025, emptyRainfallFilters);
+  for (const metric of rainfallSnapshot(current, previous).metrics) assert.equal(metric.change, "-61% dari tahun sebelumnya");
+  for (const metric of rainfallSnapshot(current).metrics) assert.equal(metric.change, "—");
+});
+
+
+test("multi-year rainfall stays in bounded regional cache requests even when combined data exceeds 2 MB", async () => {
+  const original = globalThis.fetch;
+  const catalog = { regencies: Array.from({ length: 20 }, (_, i) => ({ id: i + 1, name: `Wilayah ${i + 1}` })), districts: Array.from({ length: 20 }, (_, i) => ({ id: i + 1, name: `Kecamatan ${i + 1}`, regency_id: i + 1 })) };
+  let active = 0, peak = 0;
+  const seen = new Set();
+  globalThis.fetch = async (input, init) => {
+    const url = new URL(input);
+    if (url.pathname.endsWith("/catalog")) return Response.json(catalog);
+    if (url.pathname.endsWith("/district-hazards")) return Response.json(catalog.districts.map((d) => ({ district_id: d.id, n_piksel: 100, mean_hujan_mm: 100 })));
+    const id = Number(url.searchParams.get("regency_id"));
+    assert.ok(id > 0);
+    assert.equal(init.next.revalidate, 300);
+    assert.equal(seen.has(id), false);
+    seen.add(id);
+    active++; peak = Math.max(peak, active);
+    await new Promise(setImmediate);
+    active--;
+    const response = Response.json(Array.from({ length: 1200 }, (_, index) => ({ district_id: id, year: 1900 + Math.floor(index / 12), month: index % 12 + 1, n_piksel: 100, hujan_mm: 100, kelas_hujan: 3, label_hujan: "Sedang" })));
+    assert.ok(Buffer.byteLength(await response.clone().text()) < 2 * 1024 * 1024);
+    return response;
+  };
+  try {
+    const data = await getRainfallPageData();
+    assert.equal(data.error, undefined);
+    assert.equal(seen.size, 20);
+    assert.ok(peak <= 6);
+    assert.equal(data.rows.flatMap((row) => row.monthly).length, 24000);
+    assert.ok(Buffer.byteLength(JSON.stringify(data)) > 2 * 1024 * 1024);
+  } finally { globalThis.fetch = original; }
 });

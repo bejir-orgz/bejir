@@ -132,4 +132,17 @@ export interface DistrictRainfallMonthlyResponse {
   month: number;
   n_piksel?: number | null;
   hujan_mm?: number | null;
+  kelas_hujan?: number | null;
+  label_hujan?: string | null;
+}
+
+export interface RegencyRainfallClassificationResponse {
+  regency_id: number;
+  n_kec?: number | null;
+  n_kec_berdata?: number | null;
+  mean_hujan_mm?: number | null;
+  min_kec_mm?: number | null;
+  maks_kec_mm?: number | null;
+  kelas_hujan?: number | null;
+  label_hujan?: string | null;
 }

@@ -1,3 +1,4 @@
+import type { FloodImpactsResponse } from "../../lib/api/schemas";
 import type { FloodHistoryData, FloodHistoryRow } from "./types";
 import { unavailableSnapshot } from "./history-summary";
 import { fetchBackend } from "../../lib/api/backend";
@@ -83,7 +84,15 @@ export async function getFloodHistory(requestedYear?: number): Promise<FloodHist
   const year = requestedYear ?? years[0] ?? Number(new Intl.DateTimeFormat("en", { year: "numeric", timeZone: "Asia/Jakarta" }).format(new Date()));
   if (!years.includes(year)) years.push(year);
   const dates = (value: number) => `start_date=${value}-01-01T00:00:00&end_date=${value}-12-31T23:59:59.999999`;
-  const previous = await getFloodStatistics(dates(year - 1));
+  const [previous, previousImpacts] = await Promise.all([
+    getFloodStatistics(dates(year - 1)),
+    readFlood<FloodImpactsResponse>(`impacts?${dates(year - 1)}`).then((data) => {
+      if (!Array.isArray(data.by_regency) || data.by_regency.some((row) => !Number.isSafeInteger(row.regency_id) || row.regency_id < 1 ||
+          (row.houses_flooded != null && (!Number.isSafeInteger(row.houses_flooded) || row.houses_flooded < 0))) ||
+          new Set(data.by_regency.map((row) => row.regency_id)).size !== data.by_regency.length) throw new Error("Impacts tidak valid.");
+      return new Map(data.by_regency.map((row) => [row.regency_id, row.houses_flooded ?? null]));
+    }).catch(() => new Map<number, number | null>()),
+  ]);
   const events = await listFloodEvents(dates(year));
 
   const names = new Map(statistics.by_regency.map((entry) => [entry.regency_id, regionName(entry.regency_name)]));
@@ -110,7 +119,7 @@ export async function getFloodHistory(requestedYear?: number): Promise<FloodHist
   }
   return {
     source: "backend", years, regions: [...names.values()], rows,
-    previousCounts: previous.by_regency.map((entry) => ({ region: regionName(entry.regency_name), events: entry.total_events })),
+    previousCounts: previous.by_regency.map((entry) => ({ region: regionName(entry.regency_name), events: entry.total_events, housesFlooded: previousImpacts.get(entry.regency_id) ?? null })),
     snapshots: { [year]: unavailableSnapshot },
   };
 }

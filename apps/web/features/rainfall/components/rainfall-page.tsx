@@ -21,7 +21,9 @@ export function RainfallPage({ data }: { data: RainfallPageData }) {
   const [tableYear, setTableYear] = useState(data.years[0] ?? 0);
   const [filters, setFilters] = useRegionalFilters<RainfallFilters>(emptyRainfallFilters);
   const rows = useMemo(() => filterRainfallRows(data.rows, tableYear, filters), [data.rows, tableYear, filters]);
-  const snapshot = rainfallSnapshot(filterRainfallRows(data.rows, summaryYear, { ...emptyRainfallFilters, regionIds: summaryRegionIds }));
+  const summaryFilters = { ...emptyRainfallFilters, regionIds: summaryRegionIds };
+  const snapshot = rainfallSnapshot(filterRainfallRows(data.rows, summaryYear, summaryFilters),
+    summaryYear > 1 ? filterRainfallRows(data.rows, summaryYear - 1, summaryFilters) : []);
   function changeTableYear(value: number) {
     setTableYear(value);
     setFilters({ ...emptyRainfallFilters, regionIds: summaryRegionIds });
@@ -43,10 +45,10 @@ export function RainfallPage({ data }: { data: RainfallPageData }) {
       </section>
       <div className="rainfall-divider h-4 my-4 flex items-center [&::after]:content-[''] [&::after]:h-0.5 [&::after]:bg-neutral-300 [&::after]:w-full" aria-hidden="true" />
       <Card className="rainfall-table-card p-4 flex flex-col gap-4 min-w-0"><div className="rainfall-table-title flex items-center justify-between min-h-8 [&_h2]:text-[20px] [&_h2]:leading-[28px] [&_h2]:font-medium"><h2>Tabel Curah Hujan</h2>{active && <Button variant="link" size="sm" className="text-red-500 no-underline hover:text-red-600 hover:no-underline" onClick={() => { setFilters(emptyRainfallFilters); setTableYear(data.years[0] ?? 0); }}>Reset filter</Button>}</div>
-        <RainfallFiltersBar monthlyAvailable={data.rows.some((row) => row.monthly?.length)} filters={filters} regions={data.regions} legend={data.legend} year={tableYear} years={data.years} onYearChange={changeTableYear} onChange={setFilters} />
-        <RainfallTable rows={rows} error={data.error} />
+        <RainfallFiltersBar monthlyAvailable={data.rows.some((row) => row.monthly?.length)} filters={filters} regions={data.regions} classificationOptions={[...new Set([...filters.classifications, ...filterRainfallRows(data.rows, tableYear, { ...filters, query: "", classifications: [] }).flatMap((row) => row.classification === null ? [] : [row.classification])])]} year={tableYear} years={data.years} onYearChange={changeTableYear} onChange={setFilters} />
+        <RainfallTable rows={rows} error={data.rows.length ? undefined : data.error} />
       </Card>
-      <p className="rainfall-data-note mt-4 text-[12px] leading-[16px] text-[#737373]" role="status">{regionNote + " " + (data.error || "Data parameter dan seri bulanan hujan dari Spatial Analysis. Agregasi memakai bobot n_piksel pada nilai yang tersedia. Grafik menunjukkan rata-rata bulanan wilayah; filter bulan memakai nilai kecamatan pada bulan terpilih. Tanpa filter bulan, tabel memakai parameter hujan spasial; jika tahun dipilih, nilai merangkum pengamatan bulanan pada tahun itu, bukan total tahunan. Tahun kosong pada API tetap ditandai belum tersedia. Ambang klasifikasi belum tersedia. — menandakan data tidak tersedia.")}</p>
+      <p className="rainfall-data-note mt-4 text-[12px] leading-[16px] text-[#737373]" role="status">{regionNote + " " + (data.error || "Data parameter dan seri bulanan hujan dari Spatial Analysis. Agregasi memakai bobot n_piksel pada nilai yang tersedia. Grafik menunjukkan rata-rata bulanan wilayah; filter bulan memakai nilai kecamatan pada bulan terpilih. Tanpa filter bulan, tabel memakai parameter hujan spasial; jika tahun dipilih, nilai merangkum pengamatan bulanan pada tahun itu, bukan total tahunan. Tahun kosong pada API tetap ditandai belum tersedia. Tahun dan kelas hujan berasal dari seri bulanan API. Klasifikasi wilayah memakai modus kelas kecamatan/bulan berbobot n_piksel pada daerah dan periode terpilih; bobot seri atau kelas tidak lengkap ditampilkan —. Ambang klasifikasi belum tersedia. — menandakan data tidak tersedia.")}</p>
     </main>
   </div>;
 }

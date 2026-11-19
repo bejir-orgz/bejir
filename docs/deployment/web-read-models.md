@@ -42,13 +42,19 @@ with empty or dummy geometry. The API host must be reachable from the web server
 
 ## Monthly rainfall
 
-The web loads `/api/v1/spatial-analysis/district-rainfall-monthly` once per cached
-page data refresh and aggregates available observations using each record's
-`n_piksel`. District selections preserve the matching observations. Unknown
-rainfall values remain unavailable; zero is a valid observation.
-Current live rows have `year: null`. They support month selection and a 12-month
-chart, while the year selector remains unavailable. No current year is invented.
-Without a month/year selection the table retains the spatial rainfall parameter;
-a selected month uses the monthly observations. A known selected year summarizes
-its monthly observations, not an annual total. Classification thresholds remain
-unavailable because the API does not provide an approved classification.
+The web loads `/api/v1/spatial-analysis/district-rainfall-monthly?regency_id=...`
+per regency, with at most six requests running concurrently. Each source response
+is cached for five minutes. The combined page result is not wrapped in
+unstable_cache: its roughly 12.8 MB serialized payload exceeds Next's 2 MB entry
+limit. Live verification found a largest regional response of 659,702 bytes and
+preserved all 82,764 records. Regional request failures are reported separately;
+other regions and spatial parameter data remain usable.
+As verified on 19 November 2026, it supplies 2015-2024 plus undated observations,
+and official class numbers/labels. The latest available year is the default.
+Undated rows are kept separate and never assigned a fabricated year.
+Rainfall summaries use n_piksel-weighted observations; an all-month value is a
+mean of observations, not an annual total. Selected regions and months also
+scope classification: use the approved pixel-weighted mode of source classes.
+Ties and incomplete class/weight metadata stay unavailable. No threshold
+ranges are inferred. The former regency-classification request is no longer
+required by the page. The gateway retains the full documented API contract.
