@@ -3,7 +3,7 @@ process.env.BEJIR_PREPARED_DATA_DIR = resolve(import.meta.dirname, "missing-prep
 import "../../lib/api/test-setup.mjs";
 import assert from "node:assert/strict";
 import test from "node:test";
-const { getRainfallPageData } = await import("./api.ts");
+const { getRainfallPageData, emptyRainfallData } = await import("./api.ts");
 const { aggregateRainfall, rainfallSnapshot, rainfallClassification } = await import("./summary.ts");
 const { buildRainfallView } = await import("./view.ts");
 const { emptyRainfallFilters, filterRainfallRows } = await import("./filter.ts");
@@ -194,4 +194,18 @@ test("multi-year rainfall stays in bounded regional cache requests even when com
     assert.equal(view.snapshot.distribution.length, 12);
     assert.ok(view.rows.every((row) => !row.monthly && !row.parameters.length));
   } finally { globalThis.fetch = original; }
+});
+
+
+test("rainfall legend exposes the supplied annual thresholds independently of monthly observations", () => {
+  const data = emptyRainfallData();
+  assert.deepEqual(data.legend.map(({ label, range }) => [label, range]), [
+    ["Sangat Rendah", "< 2.500 mm/tahun"],
+    ["Rendah", "2.500\u2013<3.000 mm/tahun"],
+    ["Sedang", "3.000\u2013<3.400 mm/tahun"],
+    ["Tinggi", "3.400\u2013<3.900 mm/tahun"],
+    ["Sangat Tinggi", "\u2265 3.900 mm/tahun"],
+  ]);
+  assert.deepEqual(buildRainfallView(data).legend, data.legend);
+  assert.equal(rainfallClassification([{ year: 2024, month: 1, mean_hujan_mm: 511, n_piksel: 100, kelas_hujan: 5, label_hujan: "Sangat Tinggi" }]), "Sangat Tinggi");
 });

@@ -55,8 +55,8 @@ Undated rows are kept separate and never assigned a fabricated year.
 Rainfall summaries use n_piksel-weighted observations; an all-month value is a
 mean of observations, not an annual total. Selected regions and months also
 scope classification: use the approved pixel-weighted mode of source classes.
-Ties and incomplete class/weight metadata stay unavailable. No threshold
-ranges are inferred. The former regency-classification request is no longer
+Ties and incomplete class/weight metadata stay unavailable. Annual legend thresholds use the backend-engineer specification in
+docs/api/web-integration.md; they are not applied to monthly values. The former regency-classification request is no longer
 required by the page. The gateway retains the full documented API contract.
 
 
