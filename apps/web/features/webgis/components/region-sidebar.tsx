@@ -110,7 +110,8 @@ export function RegionSidebar({ filters, onChange, hidden, onWidthChange }: {
   }
 
   return (
-    <aside ref={panel} data-hidden={!!hidden} aria-hidden={hidden} inert={hidden} id="gis-regions-panel" className="gis-left absolute z-2 [inset:0_auto_0_0] w-max min-w-[min(264px,calc(100vw_-_48px))] max-w-[min(480px,calc(100vw_-_48px))] min-h-26 p-4 pl-3 pr-5 border-0 rounded-[0_16px_16px_0] bg-[white] overflow-y-auto [direction:rtl] [clip-path:inset(0_round_0_16px_16px_0)] [transform:translateX(0)] [transition:transform_var(--gis-slide-duration)_var(--gis-slide-easing),visibility_var(--gis-slide-duration)] [&[data-hidden=true]]:invisible [&[data-hidden=true]]:[transform:translateX(-100%)] starting:[&[data-hidden=false]]:[transform:translateX(-100%)] [&_h1]:text-[24px] [&_h1]:leading-[32px] [&_h1]:font-medium [&_h2]:text-[24px] [&_h2]:leading-[32px] [&_h2]:font-medium max-[999.01px]:min-h-22 max-[999.01px]:bottom-6 [--sb-thumb-color:#8EC5FF] [--sb-size:5px] motion-reduce:[transition:none]" aria-label="Daerah">
+    <aside ref={panel} data-hidden={!!hidden} aria-hidden={hidden} inert={hidden} id="gis-regions-panel" className="gis-left absolute z-2 [inset:0_auto_0_0] w-max min-w-[min(264px,calc(100vw_-_48px))] max-w-[min(480px,calc(100vw_-_48px))] min-h-26 py-4 pr-4 border-0 rounded-[0_16px_16px_0] bg-[white] overflow-hidden flex flex-col [clip-path:inset(0_round_0_16px_16px_0)] [transform:translateX(0)] [transition:transform_var(--gis-slide-duration)_var(--gis-slide-easing),visibility_var(--gis-slide-duration)] [&[data-hidden=true]]:invisible [&[data-hidden=true]]:[transform:translateX(-100%)] starting:[&[data-hidden=false]]:[transform:translateX(-100%)] [&_h1]:text-[24px] [&_h1]:leading-[32px] [&_h1]:font-medium [&_h2]:text-[24px] [&_h2]:leading-[32px] [&_h2]:font-medium max-[999.01px]:min-h-22 max-[999.01px]:bottom-6 [--sb-thumb-color:#8EC5FF] [--sb-size:5px] motion-reduce:[transition:none]" aria-label="Daerah">
+      <div className="gis-sidebar-scroll min-h-0 overflow-y-auto pl-[calc(16px_-_var(--sb-size))] [scrollbar-gutter:stable] [direction:rtl]">
       <div dir="ltr">
       <div className="flex items-center justify-between gap-4">
         <h1>Daerah</h1>
@@ -120,6 +121,7 @@ export function RegionSidebar({ filters, onChange, hidden, onWidthChange }: {
       <div className="gis-region-scroll mt-4">
         <RegionTree nodes={regions} expandedIds={expandedIds} selectedIds={filters.regionIds} branches={branches} searching={Boolean(query.trim())} onExpand={expandRegion} onSelect={(id) => onChange({ regionIds: toggleRegionSelection(filters.regionIds, id) })} />
         {term && !result?.nodes ? <p className="gis-empty p-[16px_0] text-[var(--gis-muted)] text-[12px]" role="status">{result?.error ? "Pencarian daerah gagal dimuat. Ubah pencarian untuk mencoba lagi." : "Mencari daerah…"}</p> : regions.length === 0 ? <p className="gis-empty p-[16px_0] text-[var(--gis-muted)] text-[12px]" role="status">{roots === null ? "Daerah gagal dimuat." : roots ? "Daerah tidak ditemukan." : "Memuat daerah…"}</p> : null}
+      </div>
       </div>
       </div>
     </aside>

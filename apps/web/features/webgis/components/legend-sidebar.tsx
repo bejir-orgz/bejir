@@ -7,7 +7,8 @@ const relativeLabels = ["Minimum", "25% rentang", "50% rentang", "75% rentang", 
 export function LegendSidebar({ layers, hidden }: { layers: WorkspaceData["layers"]; hidden: boolean }) {
   const legends = layers.filter((layer) => ["rainfall", "evacuation", "rivers", "dem", "susceptibility", "land-cover"].includes(layer.id));
   return (
-    <aside id="gis-legends-panel" hidden={hidden} aria-label="Legenda peta" className="gis-left gis-legend-sidebar absolute z-2 [inset:0_auto_0_0] w-[var(--sidebar-width)] rounded-[0_16px_16px_0] bg-white p-4 overflow-y-auto text-[14px] leading-5 [direction:rtl] [clip-path:inset(0_round_0_16px_16px_0)] [transform:translateX(0)] [transition:transform_var(--gis-slide-duration)_var(--gis-slide-easing),display_var(--gis-slide-duration)_allow-discrete] [&[hidden]]:hidden [&[hidden]]:[transform:translateX(-100%)] starting:[&:not([hidden])]:[transform:translateX(-100%)] [--sb-thumb-color:#8EC5FF] [--sb-size:5px] motion-reduce:[transition:none]">
+    <aside id="gis-legends-panel" hidden={hidden} aria-label="Legenda peta" className="gis-left gis-legend-sidebar absolute z-2 [inset:0_auto_0_0] w-[var(--sidebar-width)] rounded-[0_16px_16px_0] bg-white py-4 pr-4 overflow-hidden flex flex-col text-[14px] leading-5 [clip-path:inset(0_round_0_16px_16px_0)] [transform:translateX(0)] [transition:transform_var(--gis-slide-duration)_var(--gis-slide-easing),display_var(--gis-slide-duration)_allow-discrete] [&[hidden]]:hidden [&[hidden]]:[transform:translateX(-100%)] starting:[&:not([hidden])]:[transform:translateX(-100%)] [--sb-thumb-color:#8EC5FF] [--sb-size:5px] motion-reduce:[transition:none]">
+      <div className="gis-sidebar-scroll min-h-0 overflow-y-auto pl-[calc(16px_-_var(--sb-size))] [scrollbar-gutter:stable] [direction:rtl]">
       <div dir="ltr">
         <h2 className="text-[24px] leading-8 font-medium">Legenda</h2>
           <div className="mt-4 flex min-w-0 flex-col gap-6">
@@ -36,6 +37,7 @@ export function LegendSidebar({ layers, hidden }: { layers: WorkspaceData["layer
               </section>
             ))}
           </div>
+      </div>
       </div>
     </aside>
   );
