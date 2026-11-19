@@ -5,6 +5,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 const { getRainfallPageData } = await import("./api.ts");
 const { aggregateRainfall, rainfallSnapshot, rainfallClassification } = await import("./summary.ts");
+const { buildRainfallView } = await import("./view.ts");
 const { emptyRainfallFilters, filterRainfallRows } = await import("./filter.ts");
 
 test("rainfall loads regional parameters, uses pixel weights and keeps missing periods and classification explicit", async () => {
@@ -187,5 +188,10 @@ test("multi-year rainfall stays in bounded regional cache requests even when com
     assert.ok(peak <= 6);
     assert.equal(data.rows.flatMap((row) => row.monthly).length, 24000);
     assert.ok(Buffer.byteLength(JSON.stringify(data)) > 2 * 1024 * 1024);
+    const view = buildRainfallView(data);
+    assert.ok(Buffer.byteLength(JSON.stringify(view)) < 20000);
+    assert.equal(view.rows.length, 20);
+    assert.equal(view.snapshot.distribution.length, 12);
+    assert.ok(view.rows.every((row) => !row.monthly && !row.parameters.length));
   } finally { globalThis.fetch = original; }
 });

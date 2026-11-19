@@ -58,3 +58,12 @@ scope classification: use the approved pixel-weighted mode of source classes.
 Ties and incomplete class/weight metadata stay unavailable. No threshold
 ranges are inferred. The former regency-classification request is no longer
 required by the page. The gateway retains the full documented API contract.
+
+
+## Browser rainfall views
+
+Do not pass the complete getRainfallPageData result into a Client Component.
+It is a server-only read model. The page and `/api/rainfall` build a compact
+view with aggregates and table values; raw district/month data stays server-side.
+The browser requests views when filters change. This preserves district filters
+and all available years without serializing all 82,764 observations on navigation.

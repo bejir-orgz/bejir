@@ -7,7 +7,7 @@ import { IconMap, IconLayoutNavbarCollapse, IconLayoutNavbarCollapseFilled, Icon
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { OverviewButton } from "@/components/ui/overview-button";
-import { BejirAssistant } from "@/features/assistant/components/assistant";
+import dynamic from "next/dynamic";
 import { InteractiveMap } from "@/features/map/components/interactive-map";
 import { EvacuationLayer } from "@/features/evacuation/evacuation-layer";
 import { useEvacuationSites } from "@/features/evacuation/use-evacuation-sites";
@@ -23,6 +23,8 @@ import { OptionsSidebar } from "./options-sidebar";
 import { LegendSidebar } from "./legend-sidebar";
 import { TimelineSidebar } from "./timeline-sidebar";
 import { initialPanelState, panelReducer, type LeftPanel } from "../panel-state";
+
+const BejirAssistant = dynamic(() => import("@/features/assistant/components/assistant").then((module) => module.BejirAssistant));
 
 const leftTools = [
   { id: "regions", label: "daerah", icon: IconMap, filledIcon: IconMap },
@@ -44,6 +46,7 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
   const { mapRegionIds, dataRegionIds, setMapRegionIds } = useRegionSelection();
   const [localFilters, setFilters] = useState(data.initialFilters);
   const [sidebarWidth, setSidebarWidth] = useState(264);
+  const [aiOpened, setAiOpened] = useState(false);
   const filters = { ...localFilters, regionIds: mapRegionIds };
   useEffect(() => {
     if (data.initialFilters.regionIds.length) setMapRegionIds(data.initialFilters.regionIds);
@@ -112,10 +115,10 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
         </div>
         <aside id="gis-overview-panel" hidden={!overviewOpen} className="gis-right [clip-path:inset(0_round_16px_0_0_16px)] [transform:translateX(0)] [transition:transform_var(--gis-slide-duration)_var(--gis-slide-easing),display_var(--gis-slide-duration)_allow-discrete] [&[hidden]]:hidden [&[hidden]]:[transform:translateX(100%)] starting:[&:not([hidden])]:[transform:translateX(100%)] absolute z-2 [inset:0_0_0_auto] w-[var(--overview-width)] border-0 rounded-[16px_0_0_16px] bg-[white] overflow-hidden py-4 pl-4 max-[999.01px]:bottom-6 [--sb-thumb-color:#8EC5FF] [--sb-size:5px] motion-reduce:[transition:none] [&:has(.gis-ai-tab[data-state=active])]:pb-4 [&:has(.gis-ai-tab[data-state=active])_.gis-overview-scroll_>_.gis-tabs]:min-h-full [&:has(.gis-ai-tab[data-state=active])_.gis-overview-scroll_>_.gis-tabs]:min-h-0 [&:has(.gis-ai-tab[data-state=active])_.gis-overview-scroll_>_.gis-data-note]:hidden [&:has(.gis-ai-tab[data-state=active])_.gis-panel-tabs]:shrink-0 [&:has(.gis-ai-tab[data-state=active])_.gis-panel-tabs]:sticky [&:has(.gis-ai-tab[data-state=active])_.gis-panel-tabs]:top-0 [&:has(.gis-ai-tab[data-state=active])_.gis-panel-tabs]:z-10" aria-label="Ringkasan dan asisten">
           <div ref={overviewPanel} className="gis-overview-scroll h-full overflow-y-auto pr-[calc(16px_-_var(--sb-size))] [scrollbar-gutter:stable]">
-          <Tabs defaultValue="overview" className="gis-tabs gap-4" onValueChange={() => overviewPanel.current?.scrollTo({ top: 0 })}>
+          <Tabs defaultValue="overview" className="gis-tabs gap-4" onValueChange={(value) => { if (value === "ai") setAiOpened(true); overviewPanel.current?.scrollTo({ top: 0 }); }}>
             <OverviewButton className="gis-panel-tabs relative before:content-[''] before:absolute before:inset-x-0 before:top-[calc(-16px_-_1px)] before:h-4 before:bg-white before:pointer-events-none after:content-[''] after:absolute after:inset-x-0 after:top-[calc(100%_+_1px)] after:h-4 after:bg-white after:pointer-events-none" />
             <TabsContent value="overview"><OverviewPanel overview={overview} /></TabsContent>
-            <TabsContent value="ai" className="gis-ai-tab [&[data-state=active]]:flex [&[data-state=active]]:min-h-0 [&[data-state=inactive]]:hidden" forceMount><BejirAssistant defaultLayerIds={filters.layerIds} /></TabsContent>
+            <TabsContent value="ai" className="gis-ai-tab [&[data-state=active]]:flex [&[data-state=active]]:min-h-0 [&[data-state=inactive]]:hidden" forceMount>{aiOpened && <BejirAssistant defaultLayerIds={filters.layerIds} />}</TabsContent>
           </Tabs>
           <p className="gis-data-note text-[var(--gis-muted)] text-[11px] leading-[16px] mt-4">Sumber backend. — menandakan data tidak tersedia. Filter waktu berlaku pada histori kejadian.</p>
           </div>

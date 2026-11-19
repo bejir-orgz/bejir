@@ -11,7 +11,6 @@ import type { FloodHistoryData, HistoryFilters } from "../types";
 import { CasualtyChart, TimelineChart } from "./history-charts";
 import { HistoryFiltersBar, RegionFilter } from "./history-filters";
 import { HistoryTable } from "./history-table";
-import { hasDistrictSelection } from "@/features/webgis/region-tree";
 import { summarizeHistory, unavailableSnapshot } from "../history-summary";
 
 export function HistoryPage({ data }: { data: FloodHistoryData }) {
@@ -60,9 +59,8 @@ export function HistoryPage({ data }: { data: FloodHistoryData }) {
       <div className="history-divider h-4 my-4 flex items-center [&::after]:content-[''] [&::after]:h-0.5 [&::after]:bg-neutral-300 [&::after]:w-full" aria-hidden="true" />
       <Card className="history-table-card p-4 flex flex-col gap-4 min-w-0"><div className="history-table-title flex items-center justify-between min-h-8 [&_h2]:text-[20px] [&_h2]:leading-[28px] [&_h2]:font-medium"><h2>Tabel Histori Banjir</h2>{active && <Button variant="link" size="sm" className="text-red-500 no-underline hover:text-red-600 hover:no-underline" onClick={() => { setFilters(emptyHistoryFilters); setTableYear(data.years[0]); }}>Reset filter</Button>}</div>
         <HistoryFiltersBar districtRows={data.rows} year={tableYear} years={data.years} onYearChange={(value) => { setTableYear(value); setFilters((current) => ({ ...current, from: "", to: "" })); }} filters={filters} regions={data.regions} onChange={setFilters} />
-        <HistoryTable rows={rows} />
+        <HistoryTable rows={rows} error={error || undefined} loading={loading} />
       </Card>
-      <p className="history-data-note mt-4 text-[12px] leading-[16px] text-[#737373]" role="status">{(hasDistrictSelection(summaryRegionIds) ? "Histori Flood belum memiliki lokasi kecamatan/kelurahan. Ringkasan dan tabel untuk pilihan ini belum tersedia." : "") || error || (loading ? "Memuat histori banjir…" : "Sumber API Flood. Jenis banjir berasal dari jenis kejadian API. Jumlah rumah merupakan akumulasi rumah terendam banjir dan dapat mencakup rumah yang sama pada kejadian berbeda. — menandakan data tidak tersedia.")}</p>
     </main>
   </div>;
 }

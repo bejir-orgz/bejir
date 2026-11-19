@@ -47,7 +47,6 @@ export function AnalysisPage({ data }: { data: AnalysisData }) {
     distribution: hasVillageSelection(summaryRegionIds) || !knownClasses ? data.snapshots[0].distribution.map((entry) => ({ ...entry, value: null })) : susceptibilityDistribution(summaryDistricts).reverse(),
     facilities: data.snapshots[0].facilities.map((facility) => ({ ...facility, count: null })),
   } : populatedSnapshot;
-  const regionNote = detailed ? (hasVillageSelection(summaryRegionIds) ? "Analisis belum tersedia pada tingkat kelurahan/desa." : "Parameter spasial diringkas dari kecamatan terpilih; histori dan fasilitas Flood belum mendukung tingkat kecamatan.") : "";
   useEffect(() => {
     if (data.source !== "backend" || !data.years.length || initialSummary || detailed || !selectedRegions.length) return;
     const controller = new AbortController();
@@ -81,7 +80,6 @@ export function AnalysisPage({ data }: { data: AnalysisData }) {
         <AnalysisFiltersBar filters={filters} regions={data.regions} classes={data.classes} onChange={setFilters} />
         <AnalysisTable rows={rows} />
       </Card>
-      <p className="analysis-data-note mt-4 text-[12px] leading-[16px] text-[#737373]" role="status">{[riverSummary?.error, riverSummary?.data?.prepared_at && `Data sungai disiapkan ${new Date(riverSummary.data.prepared_at).toLocaleDateString("id-ID", { timeZone: "Asia/Jakarta" })}.`, regionNote, liveSummary?.key === summaryKey && liveSummary.error, data.error, ...(snapshot.errors || []), facilities?.error].filter(Boolean).join(" ") + " Jumlah sungai menghitung rekaman segmen API yang berpotongan dengan wilayah, bukan nama sungai unik. Ringkasan kejadian dan kerusakan fasilitas dari Flood merupakan akumulasi catatan historis. Spatial Analysis belum memiliki periode. Elevasi memakai rata-rata berbobot n_piksel, kelas wilayah memakai modus kelas dominan kecamatan berbobot n_piksel. Distribusi menghitung kecamatan per kelas 1–5 (Sangat Rendah–Sangat Tinggi). Rata-rata bulanan dihitung total/12. Tahun berjalan dapat belum lengkap. — menandakan data tidak tersedia."}</p>
     </main>
   </div>;
 }

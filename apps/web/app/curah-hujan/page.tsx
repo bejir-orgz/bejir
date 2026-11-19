@@ -1,3 +1,4 @@
+import { buildRainfallView } from "@/features/rainfall/view";
 import type { Metadata } from "next";
 import { connection } from "next/server";
 import { RainfallPage } from "@/features/rainfall/components/rainfall-page";
@@ -11,5 +12,5 @@ export default async function Page() {
   let data;
   try { data = await getRainfallPageData(); }
   catch { data = emptyRainfallData("Data curah hujan gagal dimuat. Muat ulang halaman untuk mencoba lagi."); }
-  return <RainfallPage data={data} />;
+  return <RainfallPage data={buildRainfallView(data)} />;
 }

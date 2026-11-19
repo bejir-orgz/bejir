@@ -39,3 +39,23 @@ export interface RainfallPageData {
     distribution: { month: string; rainfallMm: number | null }[];
   }>;
 }
+
+
+export interface RainfallRequest {
+  summaryYear: number;
+  tableYear: number;
+  summaryRegionIds: string[];
+  filters: RainfallFilters;
+}
+
+export interface RainfallView {
+  key: string;
+  years: number[];
+  regions: string[];
+  legend: RainfallPageData["legend"];
+  rows: RainfallRow[];
+  snapshot: RainfallPageData["snapshots"][number];
+  classificationOptions: string[];
+  monthlyAvailable: boolean;
+  error?: string;
+}
