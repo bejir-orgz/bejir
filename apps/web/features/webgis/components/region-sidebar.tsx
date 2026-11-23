@@ -31,8 +31,8 @@ function RegionTree({ nodes, depth = 0, expandedIds, selectedIds, branches, sear
         const expanded = expandedIds.includes(node.id) || (searching && Boolean(node.children?.length));
         return (
           <li key={node.id}>
-            <div className="gis-region-row flex items-center gap-2 min-h-6 mb-2 whitespace-nowrap" style={{ paddingLeft: depth === 0 ? 0 : depth === 1 ? 48 : 64 }}>
-              {branch && depth === 0 ? <Button variant="ghost" type="button" className="gis-tree-toggle w-6 h-6 flex shrink-0 items-center justify-center p-0 cursor-pointer text-[#111]" aria-label={`${expanded ? "Tutup" : "Buka"} ${node.name}`} aria-expanded={expanded} onClick={() => onExpand(node.id)}>{expanded ? <IconChevronDown className="size-6" aria-hidden="true" /> : <IconChevronRight className="size-6" aria-hidden="true" />}</Button> : null}
+            <div className="gis-region-row flex items-center gap-2 min-h-6 mb-2 whitespace-nowrap" style={{ paddingLeft: depth === 0 ? 0 : depth === 1 ? 32 : 64 }}>
+              {branch ? <Button variant="ghost" type="button" className="gis-tree-toggle w-6 h-6 flex shrink-0 items-center justify-center p-0 cursor-pointer text-[#111]" aria-label={`${expanded ? "Tutup" : "Buka"} ${node.name}`} aria-expanded={expanded} onClick={() => onExpand(node.id)}>{expanded ? <IconChevronDown className="size-6" aria-hidden="true" /> : <IconChevronRight className="size-6" aria-hidden="true" />}</Button> : null}
               <RegionCheckbox label={`Pilih ${node.name}`} checked={isRegionSelected(selectedIds, node.id)} onChange={() => onSelect(node.id)} />
               {branch ? <Button variant="ghost" type="button" className="gis-folder-toggle w-6 h-6 flex shrink-0 items-center justify-center p-0 cursor-pointer text-[#737373]" aria-label={`${expanded ? "Tutup" : "Buka"} folder ${node.name}`} aria-expanded={expanded} onClick={() => onExpand(node.id)}>{expanded ? <IconFolderOpen className="size-6" aria-hidden="true" /> : <IconFolder className="size-6" aria-hidden="true" />}</Button> : null}
               <span className="min-w-0 whitespace-normal break-words">{node.name}</span>
