@@ -11,7 +11,7 @@ export function emptyOverview(message = "Memuat data backend…"): WorkspaceData
     metrics: [
       { id: "floods", label: "Total Kejadian Banjir", value: "—", change: "—", trend: "increase" },
       { id: "housesFlooded", label: "Rumah Terpendam", value: "—", change: "—", trend: "increase" },
-      { id: "rainfall", label: "Curah Hujan Tahunan", value: "—", change: "—", trend: "increase" },
+      { id: "fatalities", label: "Korban Meninggal", value: "—", change: "—", trend: "increase" },
       { id: "population", label: "Penduduk Terdampak", value: "—", change: "—", trend: "decrease" },
     ],
     summary: message,
@@ -66,6 +66,11 @@ export async function getWorkspaceOverview(regionIds: string[], from: string, to
     if (houses.every((value) => value != null)) {
       overview.metrics[1].value = houses.reduce<number>((sum, value) => sum + (value ?? 0), 0).toLocaleString("id-ID") + " unit";
       Object.assign(overview.metrics[1], yearOverYear(nullableSum(houses.map((value) => value ?? null)), previous ? nullableSum(previous.map((row) => row.impacts.houses_flooded ?? null)) : null));
+    }
+    const fatalities = nullableSum(statistics.map((row) => row.impacts.fatalities ?? null));
+    if (fatalities !== null) {
+      overview.metrics[2].value = fatalities.toLocaleString("id-ID") + " jiwa";
+      Object.assign(overview.metrics[2], yearOverYear(fatalities, previous ? nullableSum(previous.map((row) => row.impacts.fatalities ?? null)) : null));
     }
     const affected = statistics.map((row) => row.impacts.affected_displaced);
     if (affected.every((value) => value !== null)) {

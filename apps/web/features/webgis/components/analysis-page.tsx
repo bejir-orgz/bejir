@@ -1,5 +1,7 @@
 "use client";
 
+import { percentageChangeColor } from "@/lib/year-over-year";
+
 import { useEffect, useMemo, useState } from "react";
 import { useRegionSelection, useRegionalFilters } from "@/features/regions/region-selection";
 import { WebgisHeader } from "@/components/layout/webgis-header";
@@ -67,7 +69,7 @@ export function AnalysisPage({ data }: { data: AnalysisData }) {
       </div>
       <div className="analysis-divider h-4 my-4 flex items-center [&::after]:content-[''] [&::after]:h-0.5 [&::after]:bg-neutral-300 [&::after]:w-full" aria-hidden="true" />
       <section className="analysis-summary grid gap-4" aria-label={`Ringkasan analisis Jawa Barat ${summaryYear || "periode belum tersedia"}`}>
-        <div className="analysis-metrics grid grid-cols-[repeat(4,minmax(0,1fr))] gap-4 max-[1000.01px]:grid-cols-[repeat(2,minmax(0,1fr))] max-[700.01px]:gap-2">{snapshot.metrics.map((metric) => <Card className="analysis-metric h-[110px] p-4 [&_h2]:text-[14px] [&_h2]:leading-[20px] [&_h2]:font-normal [&_strong]:block [&_strong]:text-[24px] [&_strong]:leading-[32px] [&_strong]:font-medium [&_>_span]:block [&_>_span]:text-[#2bb600] [&_>_span]:text-[12px] [&_>_span]:leading-[16px] [&_>_span]:mt-2 [&_>_span[data-trend=decrease]]:text-[#ff0000] max-[700.01px]:p-3 max-[700.01px]:[&_h2]:text-[12px] max-[700.01px]:[&_strong]:text-[20px]" key={metric.id}><h2>{metric.label}</h2><strong>{metric.value}</strong><span data-trend={metric.trend}>{metric.change}</span></Card>)}</div>
+        <div className="analysis-metrics grid grid-cols-[repeat(4,minmax(0,1fr))] gap-4 max-[1000.01px]:grid-cols-[repeat(2,minmax(0,1fr))] max-[700.01px]:gap-2">{snapshot.metrics.map((metric) => <Card className="analysis-metric h-[110px] p-4 [&_h2]:text-[14px] [&_h2]:leading-[20px] [&_h2]:font-normal [&_strong]:block [&_strong]:text-[24px] [&_strong]:leading-[32px] [&_strong]:font-medium [&_>_span]:block [&_>_span]:text-[12px] [&_>_span]:leading-[16px] [&_>_span]:mt-2 max-[700.01px]:p-3 max-[700.01px]:[&_h2]:text-[12px] max-[700.01px]:[&_strong]:text-[20px]" key={metric.id}><h2>{metric.label}</h2><strong>{metric.value}</strong><span className={percentageChangeColor(metric.change)}>{metric.change}</span></Card>)}</div>
         <div className="analysis-panels grid grid-cols-[repeat(2,minmax(0,1fr))] gap-4 [&_>_[data-slot=card]]:p-4 [&_>_[data-slot=card]]:min-w-0 [&_h2]:text-[16px] [&_h2]:leading-[24px] [&_h2]:font-medium [&_h2]:mb-4 max-[1000.01px]:grid-cols-[minmax(0,1fr)] max-[700.01px]:[&_>_[data-slot=card]]:px-3">
           <FrequencyChart frequency={snapshot.frequency} />
           <SusceptibilityChart distribution={snapshot.distribution} />

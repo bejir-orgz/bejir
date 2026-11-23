@@ -120,7 +120,6 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
             <TabsContent value="overview"><OverviewPanel overview={overview} /></TabsContent>
             <TabsContent value="ai" className="gis-ai-tab [&[data-state=active]]:flex [&[data-state=active]]:min-h-0 [&[data-state=inactive]]:hidden" forceMount>{aiOpened && <BejirAssistant defaultLayerIds={filters.layerIds} />}</TabsContent>
           </Tabs>
-          <p className="gis-data-note text-[var(--gis-muted)] text-[11px] leading-[16px] mt-4">Sumber backend. — menandakan data tidak tersedia. Filter waktu berlaku pada histori kejadian.</p>
           </div>
         </aside>
       </main>
