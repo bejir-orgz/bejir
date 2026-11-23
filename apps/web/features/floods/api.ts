@@ -11,7 +11,7 @@ export interface FloodEvent {
 
 export interface FloodStatistics {
   summary: { total_events: number };
-  impacts: { affected_displaced: number | null; houses_flooded?: number | null };
+  impacts: { affected_displaced: number | null; houses_flooded?: number | null; fatalities?: number | null };
   by_year: { year: number; total_events: number }[];
   by_regency: { regency_id: number; regency_name: string | null; total_events: number }[];
 }
@@ -21,6 +21,7 @@ export async function getFloodStatistics(query = ""): Promise<FloodStatistics> {
   const count = (value: unknown) => typeof value === "number" && Number.isSafeInteger(value) && value >= 0;
   if (!data || !count(data.summary?.total_events) || !data.impacts || (data.impacts.affected_displaced !== null && !count(data.impacts.affected_displaced)) ||
       (data.impacts.houses_flooded != null && !count(data.impacts.houses_flooded)) ||
+      (data.impacts.fatalities != null && !count(data.impacts.fatalities)) ||
       !Array.isArray(data.by_year) || data.by_year.some((row) => !Number.isSafeInteger(row.year) || row.year < 1 || !count(row.total_events)) ||
       !Array.isArray(data.by_regency) || data.by_regency.some((row) => !Number.isSafeInteger(row.regency_id) || row.regency_id < 1 || (row.regency_name !== null && typeof row.regency_name !== "string") || !count(row.total_events))) {
     throw new Error("Respons statistik Flood tidak valid.");

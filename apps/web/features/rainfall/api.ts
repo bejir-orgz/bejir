@@ -8,12 +8,13 @@ import type { RainfallPageData } from "./types";
 export function emptyRainfallData(error?: string): RainfallPageData {
   return {
     source: "backend", error, years: [], regions: [], rows: [],
+    // Annual mean_hujan_mm thresholds supplied by the backend engineer; monthly API labels stay unchanged.
     legend: [
-      { label: "Sangat Rendah", range: "—", color: "var(--status-very-low)" },
-      { label: "Rendah", range: "—", color: "var(--status-low)" },
-      { label: "Sedang", range: "—", color: "var(--status-medium)" },
-      { label: "Tinggi", range: "—", color: "var(--status-high)" },
-      { label: "Sangat Tinggi", range: "—", color: "var(--status-very-high)" },
+      { label: "Sangat Rendah", range: "< 2.500 mm/tahun", color: "var(--status-very-low)" },
+      { label: "Rendah", range: "2.500–<3.000 mm/tahun", color: "var(--status-low)" },
+      { label: "Sedang", range: "3.000–<3.400 mm/tahun", color: "var(--status-medium)" },
+      { label: "Tinggi", range: "3.400–<3.900 mm/tahun", color: "var(--status-high)" },
+      { label: "Sangat Tinggi", range: "≥ 3.900 mm/tahun", color: "var(--status-very-high)" },
     ],
     snapshots: {
       0: {

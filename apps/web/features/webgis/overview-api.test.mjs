@@ -6,6 +6,40 @@ import test from "node:test";
 const { getWorkspaceOverview } = await import("./overview-api.ts");
 const { getAnalysisSummary } = await import("./analysis-api.ts");
 
+test("Overview fatalities sum distinct regencies, compare the same period and preserve missing data", async () => {
+  const original = globalThis.fetch;
+  const { getFloodStatistics } = await import("../floods/api.ts");
+  let count = 3;
+  const calls = [];
+  globalThis.fetch = async (input) => {
+    const url = new URL(input);
+    if (!url.pathname.endsWith("/statistics")) return new Response(null, { status: 503 });
+    const start = url.searchParams.get("start_date");
+    const region = url.searchParams.get("regency_id");
+    calls.push([region, start]);
+    return Response.json({ summary: { total_events: 1 }, impacts: { affected_displaced: 0, fatalities: start.startsWith("2025") ? 6 : count }, by_year: [], by_regency: [] });
+  };
+  try {
+    const overview = await getWorkspaceOverview(["4", "14", "4"], "2026-01-01", "2026-01-31");
+    assert.equal(calls.length, 4);
+    assert.deepEqual(new Set(calls.map(([region]) => region)), new Set(["4", "14"]));
+    assert.ok(calls.every(([, start]) => ["2025-01-01T00:00:00", "2026-01-01T00:00:00"].includes(start)));
+    assert.equal(overview.metrics[2].label, "Korban Meninggal");
+    assert.equal(overview.metrics[2].value, "6 jiwa");
+    assert.equal(overview.metrics[2].change, "-50% dari tahun sebelumnya");
+    assert.equal(overview.metrics[2].trend, "decrease");
+    for (const value of [0, null, undefined]) {
+      count = value;
+      const result = await getWorkspaceOverview([], "2026-01-01", "2026-01-31");
+      assert.equal(result.metrics[2].value, value === 0 ? "0 jiwa" : "—");
+    }
+    for (const invalid of [-1, 1.5, "7"]) {
+      count = invalid;
+      await assert.rejects(getFloodStatistics("start_date=2026-01-01"), /tidak valid/);
+    }
+  } finally { globalThis.fetch = original; }
+});
+
 test("initial Overview compares current and previous years without changing region scope", async () => {
   const original = globalThis.fetch;
   const { getOverviewDateRange } = await import("./timeline.ts");
