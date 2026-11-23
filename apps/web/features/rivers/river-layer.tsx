@@ -20,7 +20,7 @@ export function RiverLayer({ map, enabled, regionIds, onStatus }: { map: Leaflet
       for (const id of scope.split(",").filter(Boolean)) query.append("region", id);
       onStatus({ message: "Memuat jaringan sungai…" });
       try {
-        const response = await fetch(`/api/rivers/layers?${query}`, { signal: active.signal });
+        const response = await fetch(`/backend/web/rivers/layers?${query}`, { signal: active.signal });
         if (!response.ok) throw new Error("Jaringan sungai belum dapat dimuat.");
         const data: FeatureCollection<MultiLineString, RiverProperties> & { returned: number; total_matching: number; truncated: boolean; village_unsupported: boolean } = await response.json();
         const L = await import("leaflet");

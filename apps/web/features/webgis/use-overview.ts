@@ -17,7 +17,7 @@ export function useOverview(initial: WorkspaceData["overview"], filters: Workspa
   useEffect(() => {
     if (!enabled) return;
     const controller = new AbortController();
-    fetch(`/api/workspace/overview?${key}`, { signal: controller.signal }).then(async (response) => {
+    fetch(`/backend/web/workspace/overview?${key}`, { signal: controller.signal }).then(async (response) => {
       if (!response.ok) throw new Error("Ringkasan backend gagal dimuat.");
       const overview: WorkspaceData["overview"] = await response.json();
       if (!controller.signal.aborted) setResult({ key, overview });

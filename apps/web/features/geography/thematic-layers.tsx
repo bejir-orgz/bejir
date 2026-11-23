@@ -33,7 +33,7 @@ export function ThematicLayers({ map, layerIds, regionIds, onStatus }: {
     if (!hasActive || collection) return;
     const controller = new AbortController();
     onStatus({ message: "Memuat layer parameter kecamatan…" });
-    fetch("/api/spatial/layers", { signal: controller.signal }).then(async (response) => {
+    fetch("/backend/web/spatial/layers", { signal: controller.signal }).then(async (response) => {
       if (!response.ok) throw new Error("Layer parameter kecamatan belum dapat dimuat.");
       const data: ThematicCollection = await response.json();
       if (!controller.signal.aborted) { setCollection(data); onStatus(undefined); }

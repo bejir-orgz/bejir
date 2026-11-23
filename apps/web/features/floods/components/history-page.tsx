@@ -33,7 +33,7 @@ export function HistoryPage({ data }: { data: FloodHistoryData }) {
     if (!years.length) return;
     const controller = new AbortController();
     Promise.all(years.map(async (year) => {
-      const response = await fetch(`/api/flood/history?year=${year}`, { signal: controller.signal });
+      const response = await fetch(`/backend/web/flood/history?year=${year}`, { signal: controller.signal });
       if (!response.ok) throw new Error("Data histori banjir gagal dimuat.");
       return [year, await response.json() as FloodHistoryData] as const;
     })).then((entries) => {

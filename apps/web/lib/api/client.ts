@@ -1,5 +1,5 @@
 export async function requestBackend<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const response = await fetch(`/api/backend${path === "/" ? "" : path}`, init);
+  const response = await fetch(`/backend${path === "/" ? "" : path}`, init);
   if (!response.ok) {
     let message = "Permintaan API gagal.";
     try {

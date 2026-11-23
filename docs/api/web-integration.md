@@ -6,7 +6,7 @@ Copy `apps/web/.env.example` to `apps/web/.env.local` and set the server-side `B
 
 ## Endpoint coverage
 
-All 31 documented live operations are available through the same-origin web gateway. Append the backend path to `/api/backend`. For example, `/api/backend/api/v1/flood/statistics` forwards to `/api/v1/flood/statistics`. The API root is available at `/api/backend`.
+All 31 documented live operations are available through the same-origin web gateway. Browser requests append the backend path to `/backend`. For example, `/backend/api/v1/flood/statistics` forwards through the existing validated gateway to `/api/v1/flood/statistics`. The API root is available at `/backend`. Next aggregation endpoints use `/backend/web/...` (for example `/backend/web/workspace/overview`) and are internally rewritten to their existing `/api/...` route handlers. This preserves aggregation, AI grounding, validation, timeouts, and bounded geometry responses. Legacy `/api/...` handlers remain available for compatibility; application browser requests use the `/backend` prefix. Server data loaders and preparation scripts use the absolute server-only `BEJIR_API_URL`; they do not fetch the Next application itself during rendering or builds.
 
 | Group | Operations | Coverage |
 | --- | --- | --- |

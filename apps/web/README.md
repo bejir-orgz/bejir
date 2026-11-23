@@ -52,7 +52,7 @@ npm ci
 npm run dev
 ```
 
-The default API origin is `http://80.43.0.180:8000`; no `.env.local` is required
+Browser API requests use `/backend/...` through the rewrites in `next.config.ts`. Aggregated web data uses `/backend/web/...`; documented API operations use `/backend/api/v1/...`. The default server-only API origin is `http://80.43.0.180:8000`; no `.env.local` is required
 for that origin. Administrative metadata now comes directly from the lightweight
 `/api/v1/geography/catalog` endpoint; no catalog backup is bundled. Do not remove the `catalog` prop from
 `RegionSelectionProvider` or replace the catalog with empty arrays to bypass errors.

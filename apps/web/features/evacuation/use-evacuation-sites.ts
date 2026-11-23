@@ -10,7 +10,7 @@ export function useEvacuationSites(enabled: boolean) {
   useEffect(() => {
     if (!enabled) return;
     const controller = new AbortController();
-    fetch("/api/evacuation/sites", { signal: controller.signal })
+    fetch("/backend/web/evacuation/sites", { signal: controller.signal })
       .then(async (response) => {
         if (!response.ok) throw new Error("Titik evakuasi gagal dimuat.");
         const sites: EvacuationSite[] = await response.json();

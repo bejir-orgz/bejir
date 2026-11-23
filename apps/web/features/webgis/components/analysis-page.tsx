@@ -52,7 +52,7 @@ export function AnalysisPage({ data }: { data: AnalysisData }) {
   useEffect(() => {
     if (data.source !== "backend" || !data.years.length || initialSummary || detailed || !selectedRegions.length) return;
     const controller = new AbortController();
-    fetch(`/api/analysis/summary?${summaryKey}`, { signal: controller.signal }).then(async (response) => {
+    fetch(`/backend/web/analysis/summary?${summaryKey}`, { signal: controller.signal }).then(async (response) => {
       if (!response.ok) throw new Error("Ringkasan histori gagal dimuat.");
       const result: AnalysisData["snapshots"][number] = await response.json();
       if (!controller.signal.aborted) setLiveSummary({ key: summaryKey, snapshot: result });

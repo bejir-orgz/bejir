@@ -16,7 +16,7 @@ export function BoundaryLayer({ map, regionIds, onStatus }: {
     let cleanup: (() => void) | undefined;
     async function draw() {
       const rows = await Promise.all(ids.map(async (id) => {
-        const response = await fetch(`/api/geography/boundary?region=${encodeURIComponent(id)}`, { signal: controller.signal });
+        const response = await fetch(`/backend/web/geography/boundary?region=${encodeURIComponent(id)}`, { signal: controller.signal });
         if (!response.ok) throw new Error("Batas wilayah gagal dimuat.");
         return response.json() as Promise<{ name: string; geom: GeoJsonObject | null }>;
       }));
