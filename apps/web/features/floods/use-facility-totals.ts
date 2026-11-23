@@ -12,7 +12,7 @@ export function useFacilityTotals(ids: number[], from: string, to: string, enabl
   useEffect(() => {
     if (!enabled) return;
     const controller = new AbortController();
-    fetch(`/api/flood/facilities?${key}`, { signal: controller.signal }).then(async (response) => {
+    fetch(`/backend/web/flood/facilities?${key}`, { signal: controller.signal }).then(async (response) => {
       if (!response.ok) throw new Error("Jumlah fasilitas belum dapat dimuat.");
       const counts: FacilityTotals = await response.json();
       if (!controller.signal.aborted) setResult({ key, counts });

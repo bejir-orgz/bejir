@@ -9,7 +9,7 @@ export function useRainfallView(initial: RainfallView, key: string) {
     if (result.key === key) return;
     const controller = new AbortController();
     const timer = setTimeout(() => {
-      fetch("/api/rainfall", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: key, signal: controller.signal }).then(async (response) => {
+      fetch("/backend/web/rainfall", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: key, signal: controller.signal }).then(async (response) => {
         if (!response.ok) throw new Error("Ringkasan hujan gagal dimuat.");
         const view: RainfallView = await response.json();
         if (view.key !== key) throw new Error("Filter respons hujan tidak sesuai.");
