@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { LandingPage } from "./_components/landing-page";
 
-export const metadata: Metadata = { title: "Beranda" };
+export const metadata: Metadata = { title: { absolute: "SIBAJAWA — Sistem Informasi Banjir Jawa Barat" }, description: "Jelajahi riwayat banjir dan kondisi geografis Jawa Barat melalui SIBAJAWA." };
 
 export default function Landing() {
   return <LandingPage />;

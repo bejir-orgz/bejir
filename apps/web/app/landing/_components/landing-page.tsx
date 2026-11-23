@@ -2,7 +2,7 @@ import Link from "next/link";
 import { HeroLandscape } from "./hero-landscape";
 import { IconArrowDown, IconArrowUpRight, IconChartBar, IconCloudRain, IconLayersIntersect, IconMap2, IconMapPin, IconRoute, IconShieldCheck } from "@tabler/icons-react";
 import { SiteHeader } from "@/components/layout/site-header";
-import { Brand } from "@/components/shared/brand";
+import { SibajwaBrand } from "@/components/shared/sibajwa-brand";
 import { Button } from "@/components/ui/button";
 import { AnimatedNumber, LandingNavbar, LandingMotion, MotionArtwork, MotionDataBar, MotionProgress, MotionReveal } from "./landing-motion";
 import { floodRankingSource, topFloodRegions } from "./flood-data";
@@ -110,8 +110,8 @@ export function LandingPage() {
         </div>
 
         <section id="tentang" className={`${styles.section} ${styles.about}`}>
-          <MotionReveal><span className={styles.sectionLabel}><span className={styles.sectionIndex} aria-hidden="true">02</span>Tentang Bejir</span><h2>Informasi terhubung.<br /><span>Pemahaman lebih utuh.</span></h2></MotionReveal>
-          <MotionReveal delay={0.08}><p>Banjir tidak berdiri sendiri. Curah hujan, bentang alam, sungai, dan aktivitas di suatu wilayah saling berkaitan.</p><p>Bejir menyatukan informasi tersebut melalui peta interaktif untuk mendukung pemantauan dan mitigasi banjir di Jawa Barat. Agar data tidak sekadar terlihat, tetapi juga bisa dipahami.</p><Link href="/map" className={styles.textLink}>Kenali wilayahmu <IconArrowUpRight size={18} aria-hidden="true" /></Link></MotionReveal>
+          <MotionReveal><span className={styles.sectionLabel}><span className={styles.sectionIndex} aria-hidden="true">02</span>Tentang SIBAJAWA</span><h2>Informasi terhubung.<br /><span>Pemahaman lebih utuh.</span></h2></MotionReveal>
+          <MotionReveal delay={0.08}><p>Banjir tidak berdiri sendiri. Curah hujan, bentang alam, sungai, dan aktivitas di suatu wilayah saling berkaitan.</p><p>SIBAJAWA menyatukan informasi tersebut melalui peta interaktif untuk mendukung pemantauan dan mitigasi banjir di Jawa Barat. Agar data tidak sekadar terlihat, tetapi juga bisa dipahami.</p><Link href="/map" className={styles.textLink}>Kenali wilayahmu <IconArrowUpRight size={18} aria-hidden="true" /></Link></MotionReveal>
         </section>
 
         <section id="fitur" className={`${styles.section} ${styles.features}`}>
@@ -127,7 +127,7 @@ export function LandingPage() {
 
         <section className={styles.ctaSection}><Landscape /><MotionReveal className={styles.ctaCard}><span className={styles.sectionLabel}><span className={styles.sectionIndex} aria-hidden="true">05</span>Perspektif baru untuk Jawa Barat</span><h2>Lebih kenal wilayah.<br /><span>Lebih siap melangkah.</span></h2><p>Perjalanan memahami banjir dimulai dari satu lokasi.</p><Button asChild size="lg"><Link href="/map">Buka WebGIS <IconArrowUpRight aria-hidden="true" /></Link></Button></MotionReveal></section>
       </main>
-      <footer className={styles.footer}><Brand /><p>WebGIS Banjir Jawa Barat</p><a href="#main-content">Kembali ke atas ↑</a></footer>
+      <footer className={styles.footer}><SibajwaBrand /><p>Sistem Informasi Banjir Jawa Barat</p><a href="#main-content">Kembali ke atas ↑</a></footer>
     </div></LandingMotion>
   );
 }
