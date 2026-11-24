@@ -22,8 +22,16 @@ class DistrictRainfallMonthly(Base):
 
     month: Mapped[int] = mapped_column(Integer, nullable=False)
 
-    # Pixels counted under the rainfall mask; not the hazard-layer n_piksel.
+    # Total pixels of the district (statistik_kecamatan.csv), not the CHIRPS
+    # rain-mask count.
     n_piksel: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+    # Pixels with a valid CHIRPS value. 0 for districts without coverage;
+    # used only to weight rainfall aggregation.
+    n_piksel_hujan: Mapped[int | None] = mapped_column(
+        Integer,
+        nullable=True,
+    )
 
     # NULL marks a district without CHIRPS coverage (e.g. 7 districts in
     # Bekasi). It must never be coerced to 0 by the API.

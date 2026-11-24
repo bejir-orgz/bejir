@@ -1,5 +1,7 @@
 
 import json
+import math
+from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, literal, select
@@ -41,6 +43,35 @@ def paginate_query(statement, limit: int, offset: int):
     Apply pagination to SQLAlchemy statement.
     """
     return statement.limit(limit).offset(offset)
+
+
+def parse_bbox(value: str) -> tuple[float, float, float, float]:
+    """
+    Parse a comma-separated minx,miny,maxx,maxy bounding box in EPSG:4326.
+    """
+    try:
+        parts = [part.strip() for part in value.split(",")]
+        if len(parts) != 4:
+            raise ValueError
+        minx, miny, maxx, maxy = (float(part) for part in parts)
+    except (TypeError, ValueError):
+        raise HTTPException(
+            status_code=422,
+            detail="bbox harus berupa minx,miny,maxx,maxy dalam EPSG:4326.",
+        )
+
+    if not all(math.isfinite(number) for number in (minx, miny, maxx, maxy)):
+        raise HTTPException(
+            status_code=422,
+            detail="bbox harus berisi angka berhingga.",
+        )
+    if not (-180 <= minx < maxx <= 180 and -90 <= miny < maxy <= 90):
+        raise HTTPException(
+            status_code=422,
+            detail="bbox di luar EPSG:4326 atau nilai min tidak lebih kecil dari maks.",
+        )
+
+    return minx, miny, maxx, maxy
 
 
 # =========================================================
@@ -292,4 +323,87 @@ def get_village(
         "name": row.name,
         "district_id": row.district_id,
         "geom": geometry_to_geojson(row.geom),
+    }
+
+
+# =========================================================
+# BBOX BOUNDARIES
+# =========================================================
+
+@router.get("/boundaries")
+def get_boundaries(
+    level: Literal["district", "village"] = Query(default="district"),
+    bbox: str = Query(
+        description="minx,miny,maxx,maxy dalam EPSG:4326",
+    ),
+    simplify_m: int = Query(default=100, ge=0, le=2000),
+    limit: int = Query(default=2000, ge=1, le=5000),
+    db: Session = Depends(get_db),
+):
+    """
+    Serve simplified administrative geometry for a viewport.
+
+    This avoids shipping the full district or village boundary set to the
+    browser. Geometry is generalized after projection to EPSG:3857 so the
+    tolerance is expressed in metres, then returned as EPSG:4326 GeoJSON.
+    """
+    minx, miny, maxx, maxy = parse_bbox(bbox)
+    envelope = func.ST_MakeEnvelope(minx, miny, maxx, maxy, 4326)
+
+    if level == "district":
+        model = District
+        parent_column = District.regency_id
+        parent_key = "regency_id"
+    else:
+        model = Village
+        parent_column = Village.district_id
+        parent_key = "district_id"
+
+    geometry = model.geom
+    if simplify_m > 0:
+        geometry = func.ST_Transform(
+            func.ST_SimplifyPreserveTopology(
+                func.ST_Transform(model.geom, 3857),
+                simplify_m,
+            ),
+            4326,
+        )
+
+    statement = (
+        select(
+            model.id,
+            model.code,
+            model.name,
+            parent_column,
+            func.ST_AsGeoJSON(geometry, 6).label("geojson"),
+        )
+        .where(func.ST_Intersects(model.geom, envelope))
+        .order_by(model.name, model.id)
+        .limit(limit + 1)
+    )
+
+    rows = db.execute(statement).all()
+    truncated = len(rows) > limit
+    rows = rows[:limit]
+
+    return {
+        "type": "FeatureCollection",
+        "level": level,
+        "bbox": [minx, miny, maxx, maxy],
+        "simplify_m": simplify_m,
+        "truncated": truncated,
+        "features": [
+            {
+                "type": "Feature",
+                "id": row.id,
+                "properties": {
+                    "id": row.id,
+                    "code": row.code,
+                    "name": row.name,
+                    parent_key: row[3],
+                },
+                "geometry": geometry_to_geojson(row.geojson),
+            }
+            for row in rows
+        ],
     }

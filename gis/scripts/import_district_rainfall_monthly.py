@@ -13,6 +13,10 @@ Mendukung dua format CSV:
 Nilai kosong, "nan", "none", atau "null" menjadi SQL NULL, BUKAN 0. Itu wajib
 untuk 7 kecamatan Bekasi yang tidak punya cakupan CHIRPS.
 
+Kolom n_piksel_hujan pada CSV adalah jumlah piksel di bawah mask hujan, BUKAN
+total piksel kecamatan. Importer menyimpannya ke n_piksel_hujan dan mengisi
+n_piksel dari core.district_hazard_statistics (statistik_kecamatan.csv).
+
 Contoh pemakaian:
 
   python gis/scripts/import_district_rainfall_monthly.py \
@@ -88,6 +92,23 @@ def load_district_ids(cursor) -> dict[str, int]:
             )
         mapping[code] = district_id
     return mapping
+
+
+def load_district_pixels(cursor) -> dict[str, int | None]:
+    """Total district pixels, never the CHIRPS rain-mask count."""
+    cursor.execute(
+        """
+        SELECT btrim(district.code), statistics.n_piksel
+        FROM core.districts AS district
+        LEFT JOIN core.district_hazard_statistics AS statistics
+            ON statistics.district_id = district.id
+        WHERE district.code IS NOT NULL
+        """
+    )
+    return {
+        code: n_piksel
+        for code, n_piksel in cursor.fetchall()
+    }
 
 
 def read_rows(path: str, year: int | None) -> tuple[list[tuple], int, int]:
@@ -182,6 +203,7 @@ def main() -> int:
     with psycopg.connect(normalize_dsn(args.dsn)) as connection:
         with connection.cursor() as cursor:
             district_ids = load_district_ids(cursor)
+            district_pixels = load_district_pixels(cursor)
 
         unmatched = sorted({row[0] for row in rows} - district_ids.keys())
         if unmatched and not args.skip_unmatched:
@@ -197,10 +219,11 @@ def main() -> int:
                 district_ids[code],
                 row_year,
                 month,
-                n_piksel,
+                district_pixels[code],
+                n_piksel_hujan,
                 hujan,
             )
-            for code, row_year, month, n_piksel, hujan in rows
+            for code, row_year, month, n_piksel_hujan, hujan in rows
             if code in district_ids
         ]
 
@@ -212,8 +235,9 @@ def main() -> int:
             cursor.executemany(
                 """
                 INSERT INTO core.district_rainfall_monthly
-                    (district_id, year, month, n_piksel, hujan_mm)
-                VALUES (%s, %s, %s, %s, %s)
+                    (district_id, year, month, n_piksel, n_piksel_hujan,
+                     hujan_mm)
+                VALUES (%s, %s, %s, %s, %s, %s)
                 ON CONFLICT DO NOTHING
                 """,
                 prepared,

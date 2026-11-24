@@ -23,7 +23,7 @@ def db():
         for sql in [
             "CREATE TABLE core.regency (id INTEGER PRIMARY KEY, code TEXT, name TEXT, province_code TEXT, geom TEXT)",
             "CREATE TABLE core.districts (id INTEGER PRIMARY KEY, code TEXT, name TEXT, regency_id INTEGER, geom TEXT)",
-            "CREATE TABLE core.district_rainfall_monthly (id INTEGER PRIMARY KEY, district_id INTEGER, year INTEGER, month INTEGER, n_piksel INTEGER, hujan_mm FLOAT)",
+            "CREATE TABLE core.district_rainfall_monthly (id INTEGER PRIMARY KEY, district_id INTEGER, year INTEGER, month INTEGER, n_piksel INTEGER, n_piksel_hujan INTEGER, hujan_mm FLOAT)",
             "CREATE TABLE core.district_rainfall_classification (id INTEGER PRIMARY KEY, district_id INTEGER, n_piksel INTEGER, mean_hujan_mm FLOAT, kelas_hujan INTEGER, label_hujan TEXT)",
             "CREATE TABLE core.regency_rainfall_classification (id INTEGER PRIMARY KEY, regency_id INTEGER, n_kec INTEGER, n_kec_berdata INTEGER, mean_hujan_mm FLOAT, min_kec_mm FLOAT, maks_kec_mm FLOAT, kelas_hujan INTEGER, label_hujan TEXT)",
         ]:
@@ -35,22 +35,22 @@ def db():
             "INSERT INTO core.districts VALUES (545, '32.01.01', 'Cibinong', 4, 'geom'), (546, '32.01.02', 'Gunungputri', 4, 'geom'), (700, '32.16.03', 'Sukawangi', 14, 'geom')"
         )
         climatology = ",".join(
-            f"({index}, 545, NULL, {month}, 52234, {300 + month * 10}.0)"
+            f"({index}, 545, NULL, {month}, 52234, 50000, {300 + month * 10}.0)"
             for index, month in enumerate(range(1, 13), start=1)
         )
         gunungputri = ",".join(
-            f"({300 + month}, 546, NULL, {month}, 67751, {200 + month * 10}.0)"
+            f"({300 + month}, 546, NULL, {month}, 67751, 67751, {200 + month * 10}.0)"
             for month in range(1, 13)
         )
         bekasi = ",".join(
-            f"({100 + month}, 700, NULL, {month}, 0, NULL)"
+            f"({100 + month}, 700, NULL, {month}, 77000, 0, NULL)"
             for month in range(1, 13)
         )
         connection.exec_driver_sql(
             "INSERT INTO core.district_rainfall_monthly "
-            "(id, district_id, year, month, n_piksel, hujan_mm) VALUES "
+            "(id, district_id, year, month, n_piksel, n_piksel_hujan, hujan_mm) VALUES "
             + climatology + "," + gunungputri + "," + bekasi
-            + ",(900, 545, 2015, 1, 51000, 111.1)"
+            + ",(900, 545, 2015, 1, 52234, 51000, 111.1)"
         )
         connection.exec_driver_sql(
             "INSERT INTO core.district_rainfall_classification "
@@ -80,6 +80,7 @@ def test_rainfall_monthly_rows_preserve_missing_values(db):
         "kelas_hujan", "label_hujan",
     }
     cibinong = [row for row in rows if row.district_id == 545]
+    assert all(row.n_piksel == 52234 for row in cibinong)
     assert all(row.kelas_hujan == 5 for row in cibinong)
     assert all(row.label_hujan == "Sangat Tinggi" for row in cibinong)
     bekasi = [row for row in rows if row.district_id == 700]
@@ -87,7 +88,7 @@ def test_rainfall_monthly_rows_preserve_missing_values(db):
     assert all(row.hujan_mm is None for row in bekasi)
     assert all(row.kelas_hujan is None for row in bekasi)
     assert all(row.label_hujan is None for row in bekasi)
-    assert all(row.n_piksel == 0 for row in bekasi)
+    assert all(row.n_piksel == 77000 for row in bekasi)
     assert bekasi[0].year is None
 
 
@@ -201,7 +202,7 @@ def test_regency_rainfall_monthly_weights_by_pixels(db):
     assert (january.year, january.month, january.period) == (None, 1, None)
     assert (january.n_kec, january.n_kec_berdata) == (2, 2)
     assert january.hujan_mm == pytest.approx(
-        (310 * 52234 + 210 * 67751) / (52234 + 67751)
+        (310 * 50000 + 210 * 67751) / (50000 + 67751)
     )
     assert (january.min_mm, january.maks_mm) == (210.0, 310.0)
 
@@ -226,7 +227,7 @@ def test_regency_rainfall_monthly_endpoint(db):
             assert payload[0]["period"] is None
             assert payload[0]["n_kec"] == 2
             assert payload[0]["hujan_mm"] == pytest.approx(
-                (320 * 52234 + 220 * 67751) / (52234 + 67751)
+                (320 * 50000 + 220 * 67751) / (50000 + 67751)
             )
 
             assert client.get(

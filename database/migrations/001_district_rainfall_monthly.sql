@@ -11,7 +11,12 @@ CREATE TABLE IF NOT EXISTS core.district_rainfall_monthly (
     district_id integer NOT NULL REFERENCES core.districts(id),
     year        integer,
     month       integer NOT NULL CHECK (month BETWEEN 1 AND 12),
-    n_piksel    integer CHECK (n_piksel >= 0),
+    -- Total pixels of the district (statistik_kecamatan.csv). Never the
+    -- CHIRPS rain-mask count.
+    n_piksel       integer CHECK (n_piksel >= 0),
+    -- Pixels with a valid CHIRPS value; 0 for districts without coverage.
+    -- Used only to weight rainfall aggregation.
+    n_piksel_hujan integer CHECK (n_piksel_hujan >= 0),
     hujan_mm    double precision CHECK (hujan_mm >= 0)
 );
 

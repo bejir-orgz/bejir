@@ -24,8 +24,11 @@ class RegencyRainfallMonthlyRepository:
             .scalar_subquery()
         )
 
-        weight = DistrictRainfallMonthly.hujan_mm * DistrictRainfallMonthly.n_piksel
-        total_weight = func.sum(DistrictRainfallMonthly.n_piksel)
+        weight = (
+            DistrictRainfallMonthly.hujan_mm
+            * DistrictRainfallMonthly.n_piksel_hujan
+        )
+        total_weight = func.sum(DistrictRainfallMonthly.n_piksel_hujan)
 
         statement = (
             select(
