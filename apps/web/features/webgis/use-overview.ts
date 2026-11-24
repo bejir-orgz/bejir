@@ -9,11 +9,14 @@ export function useOverview(initial: WorkspaceData["overview"], filters: Workspa
   const period = getOverviewDateRange(filters.date, filters.dateTo || "");
   const query = new URLSearchParams();
   for (const id of filters.regionIds) query.append("region", id);
-  query.set("from", period.from);
-  query.set("to", period.to);
+  // Sending the default period would hide the fact that nobody chose one, and the
+  // server could not fall back to the newest year this scope actually recorded.
+  if (filters.date) {
+    query.set("from", period.from);
+    query.set("to", period.to);
+  }
   const key = query.toString();
   const supported = filters.regionIds.every((id) => /^\d+$/.test(id));
-  const facilities = useFacilityTotals(supported ? filters.regionIds.map(Number) : [], period.from, period.to, enabled && supported);
   useEffect(() => {
     if (!enabled) return;
     const controller = new AbortController();
@@ -27,6 +30,8 @@ export function useOverview(initial: WorkspaceData["overview"], filters: Workspa
     return () => controller.abort();
   }, [key, initial, enabled]);
   const overview = result?.key === key ? result.overview : initial;
+  // Facilities follow the period the summary actually covers, not the one we guessed.
+  const facilities = useFacilityTotals(supported ? filters.regionIds.map(Number) : [], overview.period.from, overview.period.to, enabled && supported);
   if (!facilities) return overview;
   if (facilities.error) return { ...overview, summary: overview.summary + " " + facilities.error };
   return facilities.counts ? { ...overview, facilities: overview.facilities.map((facility) => ({ ...facility, count: facilities.counts![facility.id] })) } : overview;

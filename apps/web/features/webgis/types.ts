@@ -56,6 +56,8 @@ export interface WorkspaceData {
     landCover: string[];
     elevation: string;
     rivers: string;
+    /** The period the summary covers, which may differ from the requested one. */
+    period: { from: string; to: string };
   };
 }
 

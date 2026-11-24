@@ -44,25 +44,74 @@ test("initial Overview compares current and previous years without changing regi
   const original = globalThis.fetch;
   const { getOverviewDateRange } = await import("./timeline.ts");
   const period = getOverviewDateRange("", "");
-  let statistics = 0;
+  let statistics = 0, probes = 0;
   globalThis.fetch = async (input) => {
     const url = new URL(input);
     if (!url.pathname.endsWith("/statistics")) return new Response(null, { status: 503 });
+    assert.equal(url.searchParams.has("regency_id"), false);
+    // One undated probe reads by_year to find the newest recorded year; the rest are windowed.
+    if (!url.searchParams.has("start_date")) {
+      probes++;
+      return Response.json({ summary: { total_events: 0 }, impacts: { affected_displaced: 0, houses_flooded: 0 }, by_year: [], by_regency: [] });
+    }
     statistics++;
     assert.ok([`${period.from}T00:00:00`, `${Number(period.from.slice(0, 4)) - 1}-01-01T00:00:00`].includes(url.searchParams.get("start_date")));
     assert.ok([`${period.to}T23:59:59.999999`, `${Number(period.to.slice(0, 4)) - 1}-12-31T23:59:59.999999`].includes(url.searchParams.get("end_date")));
-    assert.equal(url.searchParams.has("regency_id"), false);
     return Response.json({ summary: { total_events: 0 }, impacts: { affected_displaced: 0, houses_flooded: 0 }, by_year: [], by_regency: [] });
   };
   try {
     const overview = await getWorkspaceOverview([], "", "");
+    assert.equal(probes, 1);
     assert.equal(statistics, 2);
     assert.equal(overview.metrics[1].value, "0 unit");
+    // An empty by_year leaves the current calendar year in place.
+    assert.ok(!overview.summary.includes("tahun terakhir yang tercatat"));
     // The period is spelled out for readers; the stored ISO strings must not leak into the sentence.
     const readable = (iso) => new Intl.DateTimeFormat("id-ID", { dateStyle: "long" }).format(new Date(`${iso}T00:00:00`));
     assert.ok(overview.summary.includes(`${readable(period.from)} s.d. ${readable(period.to)}`));
     assert.ok(!overview.summary.includes(period.from));
     assert.ok(!overview.summary.includes("seluruh periode"));
+  } finally { globalThis.fetch = original; }
+});
+
+test("a region with nothing this year falls back to its newest recorded year", async () => {
+  const original = globalThis.fetch;
+  const { getOverviewDateRange } = await import("./timeline.ts");
+  const currentYear = Number(getOverviewDateRange("", "").from.slice(0, 4));
+  const recorded = currentYear - 1;
+  const windows = [];
+  globalThis.fetch = async (input) => {
+    const url = new URL(input);
+    if (!url.pathname.endsWith("/statistics")) return new Response(null, { status: 503 });
+    const start = url.searchParams.get("start_date");
+    assert.equal(url.searchParams.get("regency_id"), "11");
+    // The scope recorded events up to last year and nothing in the current one.
+    if (!start) return Response.json({ summary: { total_events: 7 }, impacts: { affected_displaced: 0, houses_flooded: 0 }, by_year: [{ year: recorded - 1, total_events: 3 }, { year: recorded, total_events: 7 }], by_regency: [] });
+    windows.push(start.slice(0, 4));
+    return Response.json({ summary: { total_events: start.startsWith(String(recorded)) ? 7 : 3 }, impacts: { affected_displaced: 0, houses_flooded: 0 }, by_year: [], by_regency: [] });
+  };
+  try {
+    const overview = await getWorkspaceOverview(["11"], "", "");
+    assert.deepEqual(windows.sort(), [String(recorded - 1), String(recorded)]);
+    assert.equal(overview.metrics[0].value, "7");
+    assert.ok(overview.summary.includes(`Tahun ${currentYear} belum memiliki catatan`));
+  } finally { globalThis.fetch = original; }
+});
+
+test("an explicit date filter is never replaced by the newest recorded year", async () => {
+  const original = globalThis.fetch;
+  const starts = [];
+  globalThis.fetch = async (input) => {
+    const url = new URL(input);
+    if (!url.pathname.endsWith("/statistics")) return new Response(null, { status: 503 });
+    starts.push(url.searchParams.get("start_date"));
+    return Response.json({ summary: { total_events: 2 }, impacts: { affected_displaced: 0, houses_flooded: 0 }, by_year: [{ year: 2019, total_events: 9 }], by_regency: [] });
+  };
+  try {
+    const overview = await getWorkspaceOverview(["11"], "2023-03-01", "2023-03-31");
+    assert.ok(starts.every((start) => start !== null), "the probe must be skipped when the reader chose a period");
+    assert.ok(starts.includes("2023-03-01T00:00:00"));
+    assert.ok(!overview.summary.includes("tahun terakhir yang tercatat"));
   } finally { globalThis.fetch = original; }
 });
 
