@@ -1,6 +1,7 @@
 "use client";
 
 import { percentageChangeColor } from "@/lib/year-over-year";
+import { AnimatedMetricValue } from "@/components/shared/animated-metric-value";
 
 import { useEffect, useMemo, useState } from "react";
 import { useRegionSelection, useRegionalFilters } from "@/features/regions/region-selection";
@@ -54,8 +55,8 @@ export function HistoryPage({ data }: { data: FloodHistoryData }) {
       <section className="history-summary grid grid-cols-[389fr_795fr] gap-4 [&_h2]:text-[16px] [&_h2]:leading-[24px] [&_h2]:font-medium max-[900.01px]:grid-cols-[300px_minmax(0,1fr)] max-[700.01px]:grid-cols-[minmax(0,1fr)]" aria-label={`Ringkasan tahunan Jawa Barat ${summaryYear}`}>
         <CasualtyChart snapshot={snapshot} />
         <div className="history-summary-right grid gap-4 min-w-0"><div className="history-metrics grid grid-cols-[1fr_1fr] gap-4 max-[900.01px]:gap-2 max-[700.01px]:gap-2">
-          <Card className="history-metric h-27 p-4 [&_h2]:text-[14px] [&_h2]:leading-[20px] [&_h2]:font-normal [&_strong]:block [&_strong]:text-[24px] [&_strong]:leading-[32px] [&_strong]:font-medium [&_>_span]:block [&_>_span]:text-[12px] [&_>_span]:leading-[16px] [&_>_span]:mt-1 max-[900.01px]:p-3"><h2>Total Kejadian Banjir</h2><strong>{snapshot.events}</strong><span className={percentageChangeColor(snapshot.eventChange)}>{snapshot.eventChange}</span></Card>
-          <Card className="history-metric h-27 p-4 [&_h2]:text-[14px] [&_h2]:leading-[20px] [&_h2]:font-normal [&_strong]:block [&_strong]:text-[24px] [&_strong]:leading-[32px] [&_strong]:font-medium [&_>_span]:block [&_>_span]:text-[12px] [&_>_span]:leading-[16px] [&_>_span]:mt-1 max-[900.01px]:p-3"><h2>Total Rumah Terpendam</h2><strong>{snapshot.housesFlooded}</strong><span className={percentageChangeColor(snapshot.housesFloodedNote)}>{snapshot.housesFloodedNote}</span></Card>
+          <Card className="history-metric h-27 p-4 [&_h2]:text-[14px] [&_h2]:leading-[20px] [&_h2]:font-normal [&_strong]:block [&_strong]:text-[24px] [&_strong]:leading-[32px] [&_strong]:font-medium [&_>_span]:block [&_>_span]:text-[12px] [&_>_span]:leading-[16px] [&_>_span]:mt-1 max-[900.01px]:p-3"><h2>Total Kejadian Banjir</h2><strong><AnimatedMetricValue value={snapshot.events} /></strong><span className={percentageChangeColor(snapshot.eventChange)}>{snapshot.eventChange}</span></Card>
+          <Card className="history-metric h-27 p-4 [&_h2]:text-[14px] [&_h2]:leading-[20px] [&_h2]:font-normal [&_strong]:block [&_strong]:text-[24px] [&_strong]:leading-[32px] [&_strong]:font-medium [&_>_span]:block [&_>_span]:text-[12px] [&_>_span]:leading-[16px] [&_>_span]:mt-1 max-[900.01px]:p-3"><h2>Total Rumah Terpendam</h2><strong><AnimatedMetricValue value={snapshot.housesFlooded} /></strong><span className={percentageChangeColor(snapshot.housesFloodedNote)}>{snapshot.housesFloodedNote}</span></Card>
         </div><TimelineChart snapshot={snapshot} /></div>
       </section>
       <div className="history-divider h-4 my-4 flex items-center [&::after]:content-[''] [&::after]:h-0.5 [&::after]:bg-neutral-300 [&::after]:w-full" aria-hidden="true" />

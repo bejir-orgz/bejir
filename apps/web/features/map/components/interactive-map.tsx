@@ -75,7 +75,11 @@ export function InteractiveMap({ children, dataStatus }: {
           <Button variant="ghost" size="icon-sm" aria-label="Perbesar peta" disabled={zoom >= westJavaBasemap.maxZoom} onClick={() => instance.current?.zoomIn()}><IconPlus className="size-6" aria-hidden="true" /></Button>
           <Button variant="ghost" size="icon-sm" aria-label="Perkecil peta" disabled={zoom <= westJavaBasemap.minZoom} onClick={() => instance.current?.zoomOut()}><IconMinus className="size-6" aria-hidden="true" /></Button>
         </div>
-        <Button variant="ghost" size="icon-sm" className="gis-reset-map" aria-label="Kembali ke Jawa Barat" title="Kembali ke Jawa Barat, tanpa akses lokasi perangkat" onClick={() => instance.current?.fitBounds(westJavaBasemap.bounds, { padding: [24, 24] })}><IconCurrentLocation className="size-6" aria-hidden="true" /></Button>
+        <Button variant="ghost" size="icon-sm" className="gis-reset-map" aria-label="Kembali ke Jawa Barat" title="Kembali ke Jawa Barat, tanpa akses lokasi perangkat" onClick={() => {
+          const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+          if (reduced) instance.current?.fitBounds(westJavaBasemap.bounds, { padding: [24, 24], animate: false });
+          else instance.current?.flyToBounds(westJavaBasemap.bounds, { padding: [24, 24], duration: 0.65 });
+        }}><IconCurrentLocation className="size-6" aria-hidden="true" /></Button>
       </div>
       <p className="gis-map-disclaimer absolute z-1 left-2 bottom-6 max-w-[calc(100%_-_64px)] p-[4px_8px] rounded-sm text-[10px] leading-[16px] bg-[#fffffff2] text-[#525252] pointer-events-none">Jawa Barat · Peta dasar OSM · Data backend</p>
     </section>

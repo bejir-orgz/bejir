@@ -28,9 +28,13 @@ export function BoundaryLayer({ map, regionIds, onStatus }: {
         if (!row.geom) continue;
         const content = document.createElement("span");
         content.textContent = row.name;
-        L.geoJSON(row.geom, { style: { color: "#2563eb", weight: 2, fillOpacity: 0 } }).bindTooltip(content).addTo(layer);
+        L.geoJSON(row.geom, { style: { color: "#1d4ed8", weight: 2.5, fillColor: "#3b82f6", fillOpacity: 0.08 } }).bindTooltip(content).addTo(layer);
       }
-      if (layer.getBounds().isValid()) map.fitBounds(layer.getBounds(), { padding: [24, 24] });
+      if (layer.getBounds().isValid()) {
+        const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        if (reduced) map.fitBounds(layer.getBounds(), { padding: [32, 32], animate: false });
+        else map.flyToBounds(layer.getBounds(), { padding: [32, 32], duration: 0.65 });
+      }
       onStatus(undefined);
     }
     void draw().catch(() => {

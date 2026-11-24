@@ -63,7 +63,7 @@ export function ThematicLayers({ map, layerIds, regionIds, onStatus }: {
         const range: [number, number] = [Math.min(...values), Math.max(...values)];
         L.geoJSON(scoped, {
           pane: "thematic",
-          style: (feature) => ({ renderer, color: "#737373", weight: 0.5, fillColor: color(id, feature!.properties as ThematicProperties, range), fillOpacity: 0.8 }),
+          style: (feature) => ({ renderer, color: "#525252", weight: 0.6, fillColor: color(id, feature!.properties as ThematicProperties, range), fillOpacity: 0.78 }),
           onEachFeature(feature, layer) {
             const row = feature.properties as ThematicProperties;
             const value = id === "susceptibility" ? classLabels[(row.kelas_dominan_v2 ?? 0) - 1] ?? "—"
@@ -72,7 +72,15 @@ export function ThematicLayers({ map, layerIds, regionIds, onStatus }: {
                   : row.mean_hujan_mm == null ? "—" : row.mean_hujan_mm.toLocaleString("id-ID", { maximumFractionDigits: 1 }) + " mm";
             const text = document.createElement("span");
             text.textContent = `Kecamatan ${row.district_name || row.district_id} · ${labels[id]}: ${value}. Periode spasial belum tersedia.`;
-            layer.bindTooltip(text);
+            layer.bindTooltip(text, { sticky: true });
+            if (layer instanceof L.Path) {
+              layer.on("mouseover", () => {
+                layer.setStyle({ color: "#172554", weight: 2, fillOpacity: 0.92 });
+              });
+              layer.on("mouseout", () => {
+                layer.setStyle({ color: "#525252", weight: 0.6, fillOpacity: 0.78 });
+              });
+            }
           },
         }).addTo(layers);
       }

@@ -22,6 +22,8 @@ import { OverviewPanel } from "./overview-panel";
 import { OptionsSidebar } from "./options-sidebar";
 import { LegendSidebar } from "./legend-sidebar";
 import { TimelineSidebar } from "./timeline-sidebar";
+import { MapQuickBar } from "./map-quick-bar";
+import { HydroSimulationPanel } from "./hydro-simulation-panel";
 import { initialPanelState, panelReducer, type LeftPanel } from "../panel-state";
 
 const BejirAssistant = dynamic(() => import("@/features/assistant/components/assistant").then((module) => module.BejirAssistant));
@@ -47,6 +49,7 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
   const [localFilters, setFilters] = useState(data.initialFilters);
   const [sidebarWidth, setSidebarWidth] = useState(264);
   const [aiOpened, setAiOpened] = useState(false);
+  const [simulationOpen, setSimulationOpen] = useState(false);
   const filters = { ...localFilters, regionIds: mapRegionIds };
   useEffect(() => {
     if (data.initialFilters.regionIds.length) setMapRegionIds(data.initialFilters.regionIds);
@@ -91,14 +94,35 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
         dispatch({ type: "show-overview" });
       }} />
       <main id="gis-main" style={{ "--sidebar-width": `min(${sidebarWidth}px, 480px, calc(100vw - 48px))` } as CSSProperties} className="gis-layout [--regions-width:var(--sidebar-width)] [--overview-width:456px] relative flex-1 min-h-0 isolate [&[data-left-open=false]]:[--regions-width:0px] [&[data-left-open=true]_.gis-left-toolbar_.gis-panel-toggle[aria-expanded=false]]:[opacity:0] [&[data-left-open=true]_.gis-left-toolbar_.gis-panel-toggle[aria-expanded=false]]:pointer-events-none [&[data-overview-open=true]_.gis-overview-trigger]:[transform:translateX(-100%)] [&[data-overview-open=true]_.gis-map-controls]:right-[calc(var(--overview-width)_+_16px)] min-[1000px]:[&[data-overview-open=true]_.gis-map_.leaflet-bottom.leaflet-right]:right-[var(--overview-width)]! min-[1000px]:max-[1199.01px]:[--overview-width:380px] max-[999.01px]:[--regions-width:0px] max-[999.01px]:[--overview-width:min(456px,calc(100%_-_56px))] max-[999.01px]:[&[data-left-open=true]_.gis-overview-toggle]:hidden max-[999.01px]:[&[data-overview-open=true]_.gis-left-toolbar]:hidden" data-left-open={leftOpen} data-overview-open={overviewOpen} onKeyDown={(event) => {
-        if (event.key === "Escape" && !event.defaultPrevented && (leftOpen || overviewOpen)) {
+        if (event.key === "Escape" && !event.defaultPrevented && (simulationOpen || leftOpen || overviewOpen)) {
           event.preventDefault();
+          if (simulationOpen) {
+            setSimulationOpen(false);
+            return;
+          }
           dispatch({ type: "close-all" });
           lastTrigger.current?.focus();
         }
       }}>
         <h1 className="sr-only">Map Interaktif Jawa Barat</h1>
         <InteractiveMap dataStatus={regionStatus ?? routeStatus ?? riverStatus ?? thematicStatus ?? evacuation.dataStatus}>{(map) => <><RiverLayer map={map} enabled={filters.layerIds.includes("rivers")} regionIds={filters.regionIds} onStatus={setRiverStatus} /><ThematicLayers map={map} layerIds={filters.layerIds} regionIds={filters.regionIds} onStatus={setThematicStatus} /><EvacuationLayer map={map} sites={evacuation.sites} enabled={evacuationEnabled} /><BoundaryLayer map={map} regionIds={filters.regionIds} onStatus={setRegionStatus} /><EvacuationRouting map={map} enabled={evacuationEnabled} onStatus={setRouteStatus} /></>}</InteractiveMap>
+        {!leftOpen && (!narrow || !overviewOpen) && (
+          <MapQuickBar
+            layers={data.layers}
+            selectedLayerIds={filters.layerIds}
+            overviewOpen={overviewOpen}
+            simulationOpen={simulationOpen}
+            onToggleSimulation={() => setSimulationOpen((prev) => !prev)}
+            onChange={updateFilters}
+          />
+        )}
+        <HydroSimulationPanel
+          open={simulationOpen}
+          overviewOpen={overviewOpen}
+          onClose={() => setSimulationOpen(false)}
+          elevationLabel={overview.elevation}
+          susceptibilityLabel={overview.susceptibility.label}
+        />
         <RegionSidebar onWidthChange={setSidebarWidth} hidden={panels.left !== "regions"} filters={filters} onChange={updateFilters} />
         <OptionsSidebar mode="layers" hidden={panels.left !== "layers"} data={data} filters={filters} onChange={updateFilters} />
         <TimelineSidebar year={data.year} hidden={panels.left !== "timeline"} filters={filters} onChange={updateFilters} />

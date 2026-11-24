@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useSyncExternalStore, type ReactNode } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { animate, domAnimation, LazyMotion, MotionConfig, useInView, useReducedMotion, useScroll } from "framer-motion";
 import * as m from "framer-motion/m";
+import { IconPlayerPause, IconPlayerPlay } from "@tabler/icons-react";
 
 const formatter = new Intl.NumberFormat("id-ID");
-const revealVariants = { hidden: { opacity: 0, y: 28 }, visible: { opacity: 1, y: 0 } };
 
 function subscribeVisibility(callback: () => void) {
   document.addEventListener("visibilitychange", callback);
@@ -33,20 +33,69 @@ export function LandingMotion({ children }: { children: ReactNode }) {
 }
 
 export function MotionReveal({ children, className, as = "div", delay = 0 }: { children: ReactNode; className?: string; as?: "div" | "article" | "li"; delay?: number }) {
+  const reduced = useReducedMotion();
   const Component = { div: m.div, article: m.article, li: m.li }[as];
-  return <Component className={className} initial={{ opacity: 1, y: 0 }} animate="hidden" whileInView="visible" viewport={{ amount: 0.12 }} variants={revealVariants} transition={{ duration: 0.65, delay, ease: [0.22, 1, 0.36, 1] }} whileHover={as === "article" ? { y: -4 } : undefined} data-framer-reveal>{children}</Component>;
+  if (reduced) {
+    return <Component className={className} data-framer-reveal>{children}</Component>;
+  }
+  return (
+    <Component
+      className={className}
+      initial={{ opacity: 0, transform: "translateY(16px)" }}
+      whileInView={{ opacity: 1, transform: "translateY(0px)" }}
+      viewport={{ once: true, amount: 0.01, margin: "120px 0px 120px 0px" }}
+      transition={{ duration: 0.5, delay, ease: [0.23, 1, 0.32, 1] }}
+      data-framer-reveal
+    >
+      {children}
+    </Component>
+  );
 }
 
-export function MotionArtwork({ children, className }: { children: ReactNode; className?: string }) {
+export function MotionArtwork({ children, className, controlClassName }: { children: ReactNode; className?: string; controlClassName?: string }) {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { amount: 0.05 });
   const pageVisible = useSyncExternalStore(subscribeVisibility, getPageVisible, getServerVisible);
   const reduced = useReducedMotion();
-  return <m.div ref={ref} className={className} data-ambient={inView && pageVisible && !reduced ? "running" : "paused"} data-hero-art aria-hidden="true">{children}</m.div>;
+  const [userPaused, setUserPaused] = useState(false);
+  const running = inView && pageVisible && !reduced && !userPaused;
+
+  return (
+    <>
+      <m.div ref={ref} className={className} data-ambient={running ? "running" : "paused"} data-hero-art aria-hidden="true">
+        {children}
+      </m.div>
+      {!reduced && (
+        <button
+          type="button"
+          className={controlClassName}
+          aria-pressed={userPaused}
+          aria-label={userPaused ? "Putar animasi lanskap" : "Jeda animasi lanskap"}
+          onClick={() => setUserPaused((prev) => !prev)}
+        >
+          {userPaused ? <IconPlayerPlay size={14} aria-hidden="true" /> : <IconPlayerPause size={14} aria-hidden="true" />}
+          <span>{userPaused ? "Putar arus" : "Jeda arus"}</span>
+        </button>
+      )}
+    </>
+  );
 }
 
 export function MotionDataBar() {
-  return <m.span initial={{ scaleX: 1 }} animate={{ scaleX: 0 }} whileInView={{ scaleX: 1 }} viewport={{ amount: 0.5 }} transition={{ duration: 1.25, ease: [0.22, 1, 0.36, 1] }} style={{ originX: 0 }} data-motion-bar />;
+  const reduced = useReducedMotion();
+  if (reduced) {
+    return <span style={{ transform: "scaleX(1)", transformOrigin: "left" }} data-motion-bar />;
+  }
+  return (
+    <m.span
+      initial={{ transform: "scaleX(0)" }}
+      whileInView={{ transform: "scaleX(1)" }}
+      viewport={{ once: true, amount: 0.25 }}
+      transition={{ duration: 0.85, ease: [0.23, 1, 0.32, 1] }}
+      style={{ transformOrigin: "left" }}
+      data-motion-bar
+    />
+  );
 }
 
 export function MotionProgress() {
@@ -57,16 +106,29 @@ export function MotionProgress() {
 
 export function AnimatedNumber({ value, delay = 0 }: { value: number; delay?: number }) {
   const ref = useRef<HTMLSpanElement>(null);
-  const inView = useInView(ref, { amount: 0.55 });
+  const inView = useInView(ref, { once: true, amount: 0.35 });
   const reduced = useReducedMotion();
   useEffect(() => {
-    if (!inView || reduced) return;
     const element = ref.current;
     if (!element) return;
+    if (reduced) {
+      element.textContent = formatter.format(value);
+      return;
+    }
+    if (!inView) return;
     element.textContent = "0";
     element.dataset.counterState = "running";
-    const controls = animate(0, value, { duration: 1.4, delay, ease: "easeOut", onUpdate: (latest) => { element.textContent = formatter.format(Math.round(latest)); }, onComplete: () => { element.textContent = formatter.format(value); element.dataset.counterState = "settled"; } });
-    return () => { controls.stop(); element.textContent = formatter.format(value); };
+    const controls = animate(0, value, {
+      duration: 1.1,
+      delay,
+      ease: [0.23, 1, 0.32, 1],
+      onUpdate: (latest) => { element.textContent = formatter.format(Math.round(latest)); },
+      onComplete: () => { element.textContent = formatter.format(value); element.dataset.counterState = "settled"; },
+    });
+    return () => {
+      controls.stop();
+      element.textContent = formatter.format(value);
+    };
   }, [inView, reduced, value, delay]);
   return <><span className="sr-only">{formatter.format(value)}</span><span ref={ref} aria-hidden="true" data-count={value}>{formatter.format(value)}</span></>;
 }

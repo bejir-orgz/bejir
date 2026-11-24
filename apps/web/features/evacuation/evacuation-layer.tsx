@@ -18,14 +18,25 @@ export function EvacuationLayer({ map, sites, enabled }: {
       for (const site of sites) {
         const content = document.createElement("span");
         content.textContent = `${site.name || "Lokasi tanpa nama"} · ${site.category || "Kategori tidak tersedia"}`;
-        L.circleMarker([site.latitude, site.longitude], {
-          renderer, radius: 5, color: "#2563eb", weight: 1,
-          fillColor: "#ffffff", fillOpacity: 0.9,
-        }).bindTooltip(content).addTo(layer);
+        const marker = L.circleMarker([site.latitude, site.longitude], {
+          renderer,
+          radius: 6.5,
+          color: "#15803d",
+          weight: 2.2,
+          fillColor: "#ffffff",
+          fillOpacity: 0.96,
+        }).bindTooltip(content);
+        marker.on("mouseover", () => {
+          marker.setStyle({ radius: 8.5, fillColor: "#dcfce7", weight: 2.8 });
+        });
+        marker.on("mouseout", () => {
+          marker.setStyle({ radius: 6.5, fillColor: "#ffffff", weight: 2.2 });
+        });
+        marker.addTo(layer);
       }
       cleanup = () => { layer.remove(); renderer.remove(); };
     });
     return () => { cancelled = true; cleanup?.(); };
   }, [map, sites, enabled]);
-  return enabled ? <p className="sr-only" role="status">{sites.length} titik evakuasi dari API. Arahkan penunjuk ke titik untuk melihat nama dan kategori lokasi.</p> : null;
+  return enabled ? <p className="sr-only" role="status">{sites.length} titik evakuasi dari API. Arahkan penunjuk ke titik untuk melihat nama dan kategori lokasi, atau klik peta untuk mencari rute terdekat.</p> : null;
 }
