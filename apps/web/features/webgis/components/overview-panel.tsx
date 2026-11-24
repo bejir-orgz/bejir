@@ -1,3 +1,4 @@
+import { percentageChangeColor } from "@/lib/year-over-year";
 import { landCoverTagStyle } from "@/features/geography/land-cover-colors";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -10,7 +11,7 @@ export function OverviewPanel({ overview }: { overview: WorkspaceData["overview"
   return (
     <div className="gis-overview-content flex flex-col gap-4">
       <div className="gis-metric-grid grid grid-cols-[repeat(2,minmax(0,1fr))] gap-2 max-[639.01px]:grid-cols-[1fr]">
-        {overview.metrics.map((metric) => <Card className="gis-card border-0 [outline:1px_solid_var(--gis-border)] [outline-offset:-1px] p-4 rounded-2xl [&_h2]:text-[16px] [&_h2]:leading-[24px] [&_h2]:font-medium gis-metric-card min-h-27 [&_strong]:block [&_strong]:font-medium [&_strong]:text-[24px] [&_strong]:leading-[32px] [&_>_span]:block [&_>_span]:mt-2 [&_>_span]:text-[12px] [&_>_span]:leading-[16px] min-[1000px]:max-[1199.01px]:[&_strong]:text-[21px] max-[639.01px]:min-h-27" key={metric.id}><p>{metric.label}</p><strong>{metric.value}</strong><span className={metric.trend === "increase" ? "gis-trend-up text-[#f00]" : "gis-trend-down text-[#2bb600]"}>{metric.change}</span></Card>)}
+        {overview.metrics.map((metric) => <Card className="gis-card border-0 [outline:1px_solid_var(--gis-border)] [outline-offset:-1px] p-4 rounded-2xl [&_h2]:text-[16px] [&_h2]:leading-[24px] [&_h2]:font-medium gis-metric-card min-h-27 [&_strong]:block [&_strong]:font-medium [&_strong]:text-[24px] [&_strong]:leading-[32px] [&_>_span]:block [&_>_span]:mt-2 [&_>_span]:text-[12px] [&_>_span]:leading-[16px] min-[1000px]:max-[1199.01px]:[&_strong]:text-[21px] max-[639.01px]:min-h-27" key={metric.id}><p>{metric.label}</p><strong>{metric.value}</strong><span className={percentageChangeColor(metric.change)}>{metric.change}</span></Card>)}
       </div>
       <Card className="gis-card border-0 [outline:1px_solid_var(--gis-border)] [outline-offset:-1px] p-4 rounded-2xl [&_h2]:text-[16px] [&_h2]:leading-[24px] [&_h2]:font-medium gis-summary-card min-h-51 [&_p]:mt-2 max-[999.01px]:min-h-0"><h2>Ringkasan Kondisi</h2><p>{overview.summary}</p></Card>
       <Card className="gis-card border-0 [outline:1px_solid_var(--gis-border)] [outline-offset:-1px] p-4 rounded-2xl [&_h2]:text-[16px] [&_h2]:leading-[24px] [&_h2]:font-medium gis-risk-card min-h-63 [&_ul]:pl-[21px] [&_ul]:mt-2 [&_ul]:list-disc [&_ul]:flex [&_ul]:flex-col [&_ul]:gap-2 max-[999.01px]:min-h-0">

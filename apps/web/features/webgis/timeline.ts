@@ -25,3 +25,10 @@ export function getCurrentTimelineDate(now = new Date()) {
   const parts = new Intl.DateTimeFormat("en", { timeZone: "Asia/Jakarta", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(now);
   return ["year", "month", "day"].map((type) => parts.find((part) => part.type === type)!.value).join("-");
 }
+
+/** An empty Overview date filter means the current calendar year in West Java. */
+export function getOverviewDateRange(from: string, to: string, now = new Date()) {
+  if (from) return { from, to: to || from };
+  const year = getCurrentTimelineDate(now).slice(0, 4);
+  return { from: `${year}-01-01`, to: `${year}-12-31` };
+}

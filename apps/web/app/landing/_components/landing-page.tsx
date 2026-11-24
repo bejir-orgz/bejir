@@ -1,8 +1,8 @@
 import Link from "next/link";
-import Image from "next/image";
+import { HeroLandscape } from "./hero-landscape";
 import { IconArrowDown, IconArrowUpRight, IconChartBar, IconCloudRain, IconLayersIntersect, IconMap2, IconMapPin, IconRoute, IconShieldCheck } from "@tabler/icons-react";
 import { SiteHeader } from "@/components/layout/site-header";
-import { Brand } from "@/components/shared/brand";
+import { SibajwaBrand } from "@/components/shared/sibajwa-brand";
 import { Button } from "@/components/ui/button";
 import { AnimatedNumber, LandingNavbar, LandingMotion, MotionArtwork, MotionDataBar, MotionProgress, MotionReveal } from "./landing-motion";
 import { floodRankingSource, topFloodRegions } from "./flood-data";
@@ -53,16 +53,7 @@ export function LandingPage() {
       <LandingNavbar className={styles.navbar}><SiteHeader /></LandingNavbar>
       <main id="main-content">
         <section className={styles.hero} id="jelajahi">
-          {/* Already compressed to 107 KB; retain panorama resolution for narrow cover crops. */}
-          <MotionArtwork className={styles.heroArt}>
-            <Image src="/images/jabar-river-hero.webp" alt="" fill sizes="100vw" unoptimized preload className={styles.heroImage} />
-            <div className={styles.skyMotion}><i /><i /></div>
-            <svg className={styles.waterMotion} viewBox="0 0 1600 200" preserveAspectRatio="none" aria-hidden="true">
-              <g><path d="M50 40h85m135 4h150m175 5h105m245-4h155m210 6h125" /><path d="M175 85h120m175-4h95m210 6h140m160-5h190" /></g>
-              <g><path d="M100 125h190m165 8h135m160-8h105m190 3h190m180-7h100" /><path d="M290 175h125m210-8h160m220 9h140m180-8h150" /></g>
-              <g><path d="M420 61h120m275 4h80m160-4h100" /><path d="M70 153h110m400-8h100m270 8h100m240-5h110" /></g>
-            </svg>
-          </MotionArtwork>
+          <MotionArtwork className={styles.heroArt}><HeroLandscape /></MotionArtwork>
 
           <div className={styles.heroContent}>
             <h1>Kenali banjir.<br />Pahami <span>wilayahmu.</span></h1>
@@ -79,9 +70,30 @@ export function LandingPage() {
 
         <div className={styles.riverContinuation}>
         <MotionReveal className={styles.regionSummary}>
-          <div className={styles.regionSummaryHeading}><div><p>5 daerah dengan banjir terbanyak · 2024</p><h2>Kenali riwayat wilayahnya.</h2></div><a href={floodRankingSource} target="_blank" rel="noreferrer">BNPB · Tabel L5, hlm. 128–129 <IconArrowUpRight size={13} aria-hidden="true" /></a></div>
-          <ol className={styles.regionList}>{topFloodRegions.map((region, i) => <MotionReveal as="li" key={region.code} delay={i * 0.08}><span className={styles.regionName}><small>0{i + 1}</small>{region.name}</span><strong><AnimatedNumber value={region.count} delay={i * 0.08} /><span>kejadian</span></strong></MotionReveal>)}</ol>
-          <p className={styles.regionNote}>Jumlah kejadian Januari–Desember 2024. Data historis, bukan kondisi saat ini.</p>
+          <div className={styles.regionSummaryHeading}>
+            <h2>5 daerah dengan banjir terbanyak</h2>
+            <p>Jawa Barat · Januari–Desember 2024</p>
+            <a href={floodRankingSource} target="_blank" rel="noreferrer">
+              BNPB · Tabel L5, hlm. 128–129 <IconArrowUpRight size={14} aria-hidden="true" />
+            </a>
+          </div>
+          <ol className={styles.regionList} role="list" aria-label="Peringkat kejadian banjir">
+            {topFloodRegions.map((region, i) => (
+              <MotionReveal as="li" key={region.code} delay={i * 0.08}>
+                <span className={styles.regionRank} aria-hidden="true">{i + 1}</span>
+                <span className={styles.regionName}>{region.name}</span>
+                <strong className={styles.regionCount}>
+                  <AnimatedNumber value={region.count} delay={i * 0.08} />
+                  <small>kejadian</small>
+                </strong>
+                <div className={styles.regionBar} aria-hidden="true">
+                  <div style={{ width: `${region.count / topFloodRegions[0].count * 100}%` }}>
+                    <MotionDataBar />
+                  </div>
+                </div>
+              </MotionReveal>
+            ))}
+          </ol>
         </MotionReveal>
         <section className={styles.coverage} aria-label="Cakupan informasi">
           <p>Kenali banjir dari berbagai sisi</p>
@@ -98,8 +110,8 @@ export function LandingPage() {
         </div>
 
         <section id="tentang" className={`${styles.section} ${styles.about}`}>
-          <MotionReveal><span className={styles.sectionLabel}><span className={styles.sectionIndex} aria-hidden="true">02</span>Tentang Bejir</span><h2>Informasi terhubung.<br /><span>Pemahaman lebih utuh.</span></h2></MotionReveal>
-          <MotionReveal delay={0.08}><p>Banjir tidak berdiri sendiri. Curah hujan, bentang alam, sungai, dan aktivitas di suatu wilayah saling berkaitan.</p><p>Bejir menyatukan informasi tersebut melalui peta interaktif untuk mendukung pemantauan dan mitigasi banjir di Jawa Barat. Agar data tidak sekadar terlihat, tetapi juga bisa dipahami.</p><Link href="/map" className={styles.textLink}>Kenali wilayahmu <IconArrowUpRight size={18} aria-hidden="true" /></Link></MotionReveal>
+          <MotionReveal><span className={styles.sectionLabel}><span className={styles.sectionIndex} aria-hidden="true">02</span>Tentang SIBAJAWA</span><h2>Informasi terhubung.<br /><span>Pemahaman lebih utuh.</span></h2></MotionReveal>
+          <MotionReveal delay={0.08}><p>Banjir tidak berdiri sendiri. Curah hujan, bentang alam, sungai, dan aktivitas di suatu wilayah saling berkaitan.</p><p>SIBAJAWA menyatukan informasi tersebut melalui peta interaktif untuk mendukung pemantauan dan mitigasi banjir di Jawa Barat. Agar data tidak sekadar terlihat, tetapi juga bisa dipahami.</p><Link href="/map" className={styles.textLink}>Kenali wilayahmu <IconArrowUpRight size={18} aria-hidden="true" /></Link></MotionReveal>
         </section>
 
         <section id="fitur" className={`${styles.section} ${styles.features}`}>
@@ -115,7 +127,7 @@ export function LandingPage() {
 
         <section className={styles.ctaSection}><Landscape /><MotionReveal className={styles.ctaCard}><span className={styles.sectionLabel}><span className={styles.sectionIndex} aria-hidden="true">05</span>Perspektif baru untuk Jawa Barat</span><h2>Lebih kenal wilayah.<br /><span>Lebih siap melangkah.</span></h2><p>Perjalanan memahami banjir dimulai dari satu lokasi.</p><Button asChild size="lg"><Link href="/map">Buka WebGIS <IconArrowUpRight aria-hidden="true" /></Link></Button></MotionReveal></section>
       </main>
-      <footer className={styles.footer}><Brand /><p>WebGIS Banjir Jawa Barat</p><a href="#main-content">Kembali ke atas ↑</a></footer>
+      <footer className={styles.footer}><SibajwaBrand /><p>Sistem Informasi Banjir Jawa Barat</p><a href="#main-content">Kembali ke atas ↑</a></footer>
     </div></LandingMotion>
   );
 }

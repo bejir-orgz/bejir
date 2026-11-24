@@ -1,54 +1,53 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { percentageChangeColor } from "@/lib/year-over-year";
+
+import { useState } from "react";
 import { useRegionSelection, useRegionalFilters } from "@/features/regions/region-selection";
 import { WebgisHeader } from "@/components/layout/webgis-header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { YearFilterButton } from "@/components/ui/year-filter-button";
-import { emptyRainfallFilters, filterRainfallRows } from "../filter";
-import { hasDistrictSelection, hasVillageSelection } from "@/features/webgis/region-tree";
-import { rainfallSnapshot } from "../summary";
-import type { RainfallFilters, RainfallPageData } from "../types";
+import { emptyRainfallFilters } from "../filter";
+import { rainfallQuery } from "../query";
+import { useRainfallView } from "../use-rainfall-view";
+import type { RainfallFilters, RainfallView } from "../types";
 import { RainfallChart } from "./rainfall-chart";
 import { RainfallFiltersBar, RainfallRegionFilter } from "./rainfall-filters";
 import { RainfallTable } from "./rainfall-table";
 
 /** Route-provided presentation data keeps this screen independent of future API transport. */
-export function RainfallPage({ data }: { data: RainfallPageData }) {
+export function RainfallPage({ data }: { data: RainfallView }) {
   const [summaryYear, setSummaryYear] = useState(data.years[0] ?? 0);
   const { regionIds: summaryRegionIds, setRegionIds: setSummaryRegionIds } = useRegionSelection();
   const [tableYear, setTableYear] = useState(data.years[0] ?? 0);
   const [filters, setFilters] = useRegionalFilters<RainfallFilters>(emptyRainfallFilters);
-  const rows = useMemo(() => filterRainfallRows(data.rows, tableYear, filters), [data.rows, tableYear, filters]);
-  const snapshot = data.source === "backend"
-    ? rainfallSnapshot(filterRainfallRows(data.rows, summaryYear, { ...emptyRainfallFilters, regionIds: summaryRegionIds }))
-    : data.snapshots[summaryYear] ?? data.snapshots[0];
+  const key = rainfallQuery({ summaryYear, tableYear, summaryRegionIds, filters });
+  const view = useRainfallView(data, key);
+  const { rows, snapshot } = view;
   function changeTableYear(value: number) {
     setTableYear(value);
     setFilters({ ...emptyRainfallFilters, regionIds: summaryRegionIds });
   }
-  const regionNote = hasVillageSelection(summaryRegionIds) ? "Parameter hujan belum tersedia pada tingkat kelurahan/desa." : hasDistrictSelection(summaryRegionIds) ? "Nilai kabupaten/kota diringkas hanya dari kecamatan terpilih." : "";
   const active = tableYear !== (data.years[0] ?? 0) || !!(filters.query || filters.regionIds.length || filters.month || filters.classifications.length);
 
-  return <div className="rainfall-page min-h-[100dvh] bg-[#fff] text-[#171717] [&_[data-slot=card]]:border-0 [&_[data-slot=card]]:[outline:1px_solid_#d4d4d4] [&_[data-slot=card]]:[outline-offset:-1px]"><WebgisHeader mapCanvas dummy={data.source !== "backend"} />
+  return <div className="rainfall-page min-h-[100dvh] bg-[#fff] text-[#171717] [&_[data-slot=card]]:border-0 [&_[data-slot=card]]:[outline:1px_solid_#d4d4d4] [&_[data-slot=card]]:[outline-offset:-1px]"><WebgisHeader mapCanvas />
     <main className="rainfall-content w-[min(1200px,calc(100%_-_32px))] mx-auto py-4">
       <div className="rainfall-heading min-h-10 flex items-center justify-between gap-4 [&_h1]:text-[36px] [&_h1]:leading-[40px] [&_h1]:font-medium max-[700.01px]:items-start max-[700.01px]:flex-wrap max-[700.01px]:[&_h1]:text-[28px] max-[700.01px]:[&_h1]:leading-[36px]"><div className="rainfall-heading-scope flex items-center gap-2"><h1>Curah Hujan</h1><span className="rainfall-heading-divider mx-2 h-10 w-0.5 shrink-0 bg-neutral-300 max-[700.01px]:h-7" aria-hidden="true" /><RainfallRegionFilter iconOnly regions={data.regions} value={summaryRegionIds} onChange={setSummaryRegionIds} /></div>
         <YearFilterButton years={data.years} value={summaryYear} onValueChange={setSummaryYear} label={!data.years.length ? "—" : undefined} />
       </div>
       <div className="rainfall-divider h-4 my-4 flex items-center [&::after]:content-[''] [&::after]:h-0.5 [&::after]:bg-neutral-300 [&::after]:w-full" aria-hidden="true" />
-      <section className="rainfall-summary grid gap-4" aria-label={data.source === "backend" ? "Curah hujan Jawa Barat, seri temporal belum tersedia" : `Ringkasan curah hujan Jawa Barat ${summaryYear}`}>
-        <div className="rainfall-metrics grid grid-cols-[repeat(3,minmax(0,1fr))] gap-4 max-[700.01px]:grid-cols-[minmax(0,1fr)] max-[700.01px]:gap-2">{snapshot.metrics.map((metric) => <Card className="rainfall-metric h-[110px] p-4 [&_h2]:text-[14px] [&_h2]:leading-[20px] [&_h2]:font-normal [&_strong]:block [&_strong]:text-[24px] [&_strong]:leading-[32px] [&_strong]:font-medium [&_strong]:whitespace-nowrap [&_>_span]:block [&_>_span]:text-[#2bb600] [&_>_span]:text-[12px] [&_>_span]:leading-[16px] [&_>_span]:mt-2 [&_>_span[data-trend=decrease]]:text-[#ff0000] max-[900.01px]:p-3 max-[900.01px]:[&_strong]:text-[20px] max-[700.01px]:p-4 max-[700.01px]:[&_strong]:text-[24px]" key={metric.label}><h2>{metric.label}</h2><strong>{metric.value}</strong><span data-trend={metric.trend}>{metric.change}</span></Card>)}</div>
+      <section className="rainfall-summary grid gap-4" aria-label={`Ringkasan curah hujan Jawa Barat${summaryYear ? ` ${summaryYear}` : ", tahun belum tersedia"}`}>
+        <div className="rainfall-metrics grid grid-cols-[repeat(3,minmax(0,1fr))] gap-4 max-[700.01px]:grid-cols-[minmax(0,1fr)] max-[700.01px]:gap-2">{snapshot.metrics.map((metric) => <Card className="rainfall-metric h-[110px] p-4 [&_h2]:text-[14px] [&_h2]:leading-[20px] [&_h2]:font-normal [&_strong]:block [&_strong]:text-[24px] [&_strong]:leading-[32px] [&_strong]:font-medium [&_strong]:whitespace-nowrap [&_>_span]:block [&_>_span]:text-[12px] [&_>_span]:leading-[16px] [&_>_span]:mt-2 max-[900.01px]:p-3 max-[900.01px]:[&_strong]:text-[20px] max-[700.01px]:p-4 max-[700.01px]:[&_strong]:text-[24px]" key={metric.label}><h2>{metric.label}</h2><strong>{metric.value}</strong><span className={percentageChangeColor(metric.change, true)}>{metric.change}</span></Card>)}</div>
         <div className="rainfall-charts grid grid-cols-[795fr_389fr] gap-4 [&_h2]:text-[16px] [&_h2]:leading-[24px] [&_h2]:font-medium [&_h2]:mb-4 max-[1100.01px]:grid-cols-[minmax(0,1fr)_360px] max-[900.01px]:grid-cols-[minmax(0,1fr)]"><RainfallChart distribution={snapshot.distribution} />
-          <Card className="rainfall-legend p-4 h-[310px] min-w-0 flex flex-col [&_ul]:flex [&_ul]:flex-1 [&_ul]:flex-col [&_ul]:justify-between [&_li]:flex [&_li]:items-center [&_li]:gap-4 [&_li]:min-h-6 [&_strong]:text-[14px] [&_strong]:leading-[20px] [&_strong]:font-semibold [&_strong]:whitespace-nowrap [&_li_>_span:last-child]:ml-auto [&_li_>_span:last-child]:text-[12px] [&_li_>_span:last-child]:leading-[16px] [&_li_>_span:last-child]:whitespace-nowrap max-[900.01px]:h-[310px] max-[700.01px]:p-3 max-[700.01px]:[&_li]:gap-2 max-[700.01px]:[&_strong]:text-[13px] max-[700.01px]:[&_li_>_span:last-child]:text-[11px]"><h2>Reklasifikasi Curah Hujan</h2><ul aria-label="Ambang klasifikasi hujan belum tersedia">{data.legend.map((entry) => <li key={entry.label}><span className="rainfall-swatch w-6 h-6 rounded-lg shrink-0" style={{ backgroundColor: entry.color }} aria-hidden="true" /><strong>{entry.label}</strong><span>{entry.range}</span></li>)}</ul></Card>
+          <Card className="rainfall-legend p-4 h-[310px] min-w-0 flex flex-col [&_ul]:flex [&_ul]:flex-1 [&_ul]:flex-col [&_ul]:justify-between [&_li]:flex [&_li]:items-center [&_li]:gap-4 [&_li]:min-h-6 [&_strong]:text-[14px] [&_strong]:leading-[20px] [&_strong]:font-medium [&_strong]:whitespace-nowrap [&_li_>_span:last-child]:ml-auto [&_li_>_span:last-child]:text-[12px] [&_li_>_span:last-child]:leading-[16px] [&_li_>_span:last-child]:whitespace-nowrap max-[900.01px]:h-[310px] max-[700.01px]:p-3 max-[700.01px]:[&_li]:gap-2 max-[700.01px]:[&_strong]:text-[13px] max-[700.01px]:[&_li_>_span:last-child]:text-[11px]"><h2>Reklasifikasi Curah Hujan</h2><ul aria-label="Ambang mean_hujan_mm tahunan dari backend engineer dalam mm per tahun">{data.legend.map((entry) => <li key={entry.label}><span className="rainfall-swatch w-6 h-6 rounded-lg shrink-0" style={{ backgroundColor: entry.color }} aria-hidden="true" /><strong>{entry.label}</strong><span>{entry.range}</span></li>)}</ul></Card>
         </div>
       </section>
       <div className="rainfall-divider h-4 my-4 flex items-center [&::after]:content-[''] [&::after]:h-0.5 [&::after]:bg-neutral-300 [&::after]:w-full" aria-hidden="true" />
-      <Card className="rainfall-table-card p-4 flex flex-col gap-4 min-w-0"><div className="rainfall-table-title flex items-center justify-between min-h-8 [&_h2]:text-[20px] [&_h2]:leading-[28px] [&_h2]:font-medium"><h2>Tabel Curah Hujan</h2>{active && <Button variant="destructive" size="sm" onClick={() => { setFilters(emptyRainfallFilters); setTableYear(data.years[0] ?? 0); }}>Reset filter</Button>}</div>
-        <RainfallFiltersBar filters={filters} regions={data.regions} legend={data.legend} year={tableYear} years={data.years} onYearChange={changeTableYear} onChange={setFilters} />
-        <RainfallTable rows={rows} error={data.error} />
+      <Card className="rainfall-table-card p-4 flex flex-col gap-4 min-w-0"><div className="rainfall-table-title flex items-center justify-between min-h-8 [&_h2]:text-[20px] [&_h2]:leading-[28px] [&_h2]:font-medium"><h2>Tabel Curah Hujan</h2>{active && <Button variant="link" size="sm" className="text-red-500 no-underline hover:text-red-600 hover:no-underline" onClick={() => { setFilters(emptyRainfallFilters); setTableYear(data.years[0] ?? 0); }}>Reset filter</Button>}</div>
+        <RainfallFiltersBar monthlyAvailable={view.monthlyAvailable} filters={filters} regions={data.regions} classificationOptions={view.classificationOptions} year={tableYear} years={data.years} onYearChange={changeTableYear} onChange={setFilters} />
+        <RainfallTable rows={rows} error={view.rows.length ? undefined : view.error} />
       </Card>
-      <p className="rainfall-data-note mt-4 text-[12px] leading-[16px] text-[#737373]" role="status">{regionNote + " " + (data.error || "Data parameter hujan dari Spatial Analysis. Rata-rata wilayah berbobot jumlah piksel memakai kecamatan dengan nilai tersedia. Minimum dan maksimum merupakan nilai rata-rata kecamatan terendah dan tertinggi. Periode pengamatan, seri bulanan/tahunan, dan ambang klasifikasi hujan belum tersedia. — menandakan data tidak tersedia.")}</p>
     </main>
   </div>;
 }

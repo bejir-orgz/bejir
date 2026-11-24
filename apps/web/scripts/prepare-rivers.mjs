@@ -16,8 +16,7 @@ async function read(path) {
     } catch (error) { if (attempt === 2) throw error; }
   }
 }
-const catalog = JSON.parse(await readFile(resolve(directory, "catalog.json"), "utf8"));
-if (catalog.source !== source) throw new Error("Catalog source mismatch");
+const catalog = await read("geography/catalog");
 console.log("Reading original district boundaries for exact river intersections");
 const districts = await read("geography/districts?limit=1000");
 const expected = new Map(catalog.districts.map((row) => [row.id, row.regency_id]));

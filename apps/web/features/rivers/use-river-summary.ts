@@ -9,7 +9,7 @@ export function useRiverSummary(regionIds: string[], enabled = true) {
   useEffect(() => {
     if (!enabled) return;
     const controller = new AbortController();
-    fetch(`/api/rivers/summary?${key}`, { signal: controller.signal }).then(async (response) => {
+    fetch(`/backend/web/rivers/summary?${key}`, { signal: controller.signal }).then(async (response) => {
       if (!response.ok) throw new Error("Jumlah segmen sungai belum dapat dimuat.");
       const data: RiverSummary = await response.json();
       if (!controller.signal.aborted) setResult({ key, data });

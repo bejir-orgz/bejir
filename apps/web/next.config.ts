@@ -3,14 +3,34 @@ import { resolve } from "node:path";
 
 const nextConfig: NextConfig = {
   outputFileTracingRoot: resolve(__dirname, "../.."),
+
   outputFileTracingIncludes: {
-    "/*": ["../../data/processed/web/catalog.json", "../../data/processed/web/boundaries.json", "../../data/processed/web/facilities.json", "../../data/processed/web/rivers.json"],
+    "/*": [
+      "../../data/processed/web/boundaries.json",
+      "../../data/processed/web/rivers.json",
+    ],
   },
+
   outputFileTracingExcludes: {
-    "/*": ["../../data/processed/web/facilities-progress.json", "../../data/processed/web/rivers-preparation/**/*"],
+    "/*": ["../../data/processed/web/rivers-preparation/**/*"],
   },
+
   turbopack: {
     root: resolve(__dirname, "../.."),
+  },
+
+  // Proxy request Next.js ke FastAPI VPS
+  async rewrites() {
+    const origin = (process.env.BEJIR_API_URL || "http://80.43.0.180:8000").replace(/\/+$/, "");
+    return {
+      beforeFiles: [
+        // Keep local aggregation, geometry filtering and AI grounding behind the same public prefix.
+        { source: "/backend/web/:path*", destination: "/api/:path*" },
+        { source: "/backend/api/v1/:path*", destination: "/api/backend/api/v1/:path*" },
+      ],
+      afterFiles: [],
+      fallback: [{ source: "/backend/:path*", destination: `${origin}/:path*` }],
+    };
   },
 };
 

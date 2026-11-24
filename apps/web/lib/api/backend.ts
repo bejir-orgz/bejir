@@ -1,3 +1,4 @@
+// Server-side requests need an absolute URL; browser requests use /backend through next.config.ts.
 export function fetchBackend(path: string, init: RequestInit = {}): Promise<Response> {
   const origin = (process.env.BEJIR_API_URL || "http://80.43.0.180:8000").replace(/\/+$/, "");
   return fetch(`${origin}${path}`, {

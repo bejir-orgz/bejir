@@ -1,6 +1,6 @@
 .gis-header { display: flex; height: 64px; border-bottom: 1px solid var(--border); align-items: center; position: relative; z-index: 10; background: white; }
 .gis-brand { flex: 0 0 calc(25% + 22px); display: flex; align-items: center; gap: 11px; padding-left: 32px; }
-.gis-brand-placeholder { width: 40px; height: 40px; flex-shrink: 0; background: #d9d9d9; border-radius: 8px; }
+.gis-brand-logo { width: 40px; height: 40px; flex-shrink: 0; }
 .gis-brand strong { display: block; font-size: 16px; line-height: 24px; font-weight: 500; }
 .gis-brand small { display: block; font-size: 12px; line-height: 16px; }
 .gis-header nav { display: flex; align-items: center; gap: 16px; flex-shrink: 0; overflow-x: auto; scrollbar-width: none; }
@@ -8,7 +8,6 @@
 .gis-header .gis-nav-active { color: #fafafa; background: var(--primary); font-weight: 500; padding-inline: 24px; }
 .gis-header-actions { display: flex; align-items: center; justify-content: flex-end; flex: 1; min-width: 0; gap: 16px; padding: 0 32px 0 16px; }
 .gis-header .gis-home-link { height: 40px; padding: 8px 24px; border-radius: 16px; border: 1px solid var(--primary); background: white; color: var(--primary); flex-shrink: 0; }
-.gis-dummy-label { align-self: center; margin: 0 16px 0 auto; padding: 4px 8px; border: 1px solid #dbeafe; border-radius: 8px; font-size: 10px; line-height: 16px; white-space: nowrap; color: #155dfc; background: #eff6ff; }
 .gis-header a:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
 .gis-navbar-search { position: relative; display: flex; align-items: center; gap: 8px; flex: 0 1 231px; min-width: 150px; padding: 8px 16px; height: 40px; border: 1px solid #a1a1a1; border-radius: 16px; transition: border-color 150ms; }
 .gis-navbar-search > img { flex-shrink: 0; }
@@ -39,7 +38,7 @@
   .gis-navbar-search { min-width: 0; padding-inline: 8px; }
   .gis-navbar-search input { font-size: 12px; }
   .gis-brand { gap: 8px; padding-left: 12px; }
-  .gis-brand-placeholder { width: 32px; height: 32px; }
+  .gis-brand-logo { width: 32px; height: 32px; }
   .gis-brand strong { font-size: 14px; }
   .gis-brand small { font-size: 10px; }
   .gis-header .gis-nav-link { padding: 8px; font-size: 12px; }

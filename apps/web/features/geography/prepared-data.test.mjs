@@ -16,10 +16,10 @@ test("prepared geography avoids raw polygon requests and rejects overlapping or 
   const catalog = { ...metadata, regencies: [{ id: 14, name: "Kota Bogor" }], districts: [{ id: 545, name: "Tanah Sareal", regency_id: 14 }] };
   const geometry = { type: "Polygon", coordinates: [[[106, -7], [106.1, -7], [106.1, -6.9], [106, -7]]] };
   const feature = { type: "Feature", id: 545, geometry, properties: { id: 545, name: "Tanah Sareal", regency_id: 14 } };
-  await writeFile(join(directory, "catalog.json"), JSON.stringify(catalog));
   await writeFile(join(directory, "boundaries.json"), JSON.stringify({ ...metadata, crs: "EPSG:4326", districts: { type: "FeatureCollection", features: [feature] } }));
   let calls = 0;
   globalThis.fetch = async (url) => {
+    if (url.endsWith("/geography/catalog")) return Response.json(catalog);
     calls++;
     assert.match(url, /spatial-analysis\/district-hazards$/);
     return Response.json([{ district_id: 545, mean_elevasi_m: 178.5, kelas_dominan_v2: 5 }]);
@@ -31,13 +31,13 @@ test("prepared geography avoids raw polygon requests and rejects overlapping or 
     assert.equal(calls, 1);
     assert.deepEqual(data.features[0].geometry, geometry);
     assert.equal(data.features[0].properties.kelas_dominan_v2, 5);
-    globalThis.fetch = async () => Response.json([{ district_id: 545 }, { district_id: 545 }]);
+    globalThis.fetch = async (url) => Response.json(url.endsWith("/geography/catalog") ? catalog : [{ district_id: 545 }, { district_id: 545 }]);
     await assert.rejects(getThematicCollection(), /Cakupan/);
-    await writeFile(join(directory, "catalog.json"), JSON.stringify({ ...catalog, source: "http://another-api.invalid" }));
-    await assert.rejects(readPrepared("catalog"), /Sumber data olahan tidak cocok/);
+    await writeFile(join(directory, "boundaries.json"), JSON.stringify({ ...catalog, source: "http://another-api.invalid" }));
+    await assert.rejects(readPrepared("boundaries"), /Sumber data olahan tidak cocok/);
   } finally {
     globalThis.fetch = original;
     if (previous === undefined) delete process.env.BEJIR_PREPARED_DATA_DIR; else process.env.BEJIR_PREPARED_DATA_DIR = previous;
-    await unlink(join(directory, "catalog.json")); await unlink(join(directory, "boundaries.json")); await rmdir(directory);
+    await unlink(join(directory, "boundaries.json")); await rmdir(directory);
   }
 });

@@ -64,6 +64,14 @@ build/
 *.swp
 *.swo
 
+# Local agent skills and installation metadata
+.agents/
+.skills/
+skills/
+SKILL.md
+skills-lock.json
+.taste-skill/
+
 # ==========================================
 # OPERATING SYSTEM
 # ==========================================

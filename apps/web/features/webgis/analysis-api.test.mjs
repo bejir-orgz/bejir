@@ -55,6 +55,7 @@ test("failed upstream requests never produce a successful empty dataset", async 
     const result = await getAnalysisData();
     assert.deepEqual(result.rows, []);
     assert.match(result.error, /gagal dimuat/);
+    assert.deepEqual(emptyAnalysisData().snapshots[0].facilities.find((row) => row.id === "bridges"), { id: "bridges", label: "Jembatan", count: null });
     assert.equal(emptyAnalysisData("Gagal").error, "Gagal");
     assert.deepEqual(emptyAnalysisData("Gagal").rows, []);
   } finally {
