@@ -100,8 +100,10 @@ export async function getFloodHistory(requestedYear?: number): Promise<FloodHist
   const names = new Map(statistics.by_regency.map((entry) => [entry.regency_id, regionName(entry.regency_name)]));
   const rows: FloodHistoryRow[] = [];
   // Bound concurrency because the live list contract exposes impacts only on event detail.
-  for (let index = 0; index < events.length; index += 6) {
-    const batch = await Promise.all(events.slice(index, index + 6).map(async (event) => {
+  // Round trips, not backend throughput, set the wall time: a 2021 request is 305 of them.
+  // Twelve at a time halves the rounds, and the backend served 24 with no failures.
+  for (let index = 0; index < events.length; index += 12) {
+    const batch = await Promise.all(events.slice(index, index + 12).map(async (event) => {
       const detail = await getFloodDetail(event.id);
       const sum = (field: "fatalities" | "missing" | "houses_flooded") => {
         const values = detail.impacts.map((impact) => impact[field]);
