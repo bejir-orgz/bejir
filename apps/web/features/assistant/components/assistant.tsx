@@ -55,6 +55,9 @@ export function BejirAssistant({ defaultLayerIds }: { defaultLayerIds: readonly 
   return (
     <div className="gis-ai-assistant flex flex-1 flex-col min-w-0 min-h-0">
       <div className="gis-ai-conversation pr-1 flex-1 text-[12px] leading-[16px] wrap-anywhere [&:focus-visible]:[outline:2px_solid_var(--gis-blue)] [&:focus-visible]:[outline-offset:-2px] [&:focus-visible]:rounded-lg" tabIndex={0} role="region" aria-label="Percakapan Aji">
+        {!exchanges.length && <p className="gis-ai-empty mt-4 text-[#737373]">{sourceLayerIds.length
+          ? "Tanya Aji soal riwayat banjir, kerawanan wilayah, atau titik evakuasi di Jawa Barat. Jawaban disusun dari sumber yang dipilih di bawah."
+          : "Pilih dulu minimal satu sumber lewat tombol di kiri bawah. Aji hanya menjawab dari data yang kamu pilih, jadi tombol kirim masih nonaktif."}</p>}
         <div className="gis-ai-exchanges" aria-live="polite" aria-relevant="additions">
           {exchanges.map((exchange, index) => (
             <div className="gis-ai-exchange mt-4 scroll-mb-36 scroll-mt-20" key={exchange.id} ref={index === exchanges.length - 1 ? latestExchange : undefined}>
