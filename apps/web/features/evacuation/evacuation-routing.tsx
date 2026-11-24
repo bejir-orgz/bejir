@@ -62,5 +62,5 @@ export function EvacuationRouting({ map, enabled, onStatus }: {
       onStatus(undefined);
     };
   }, [map, enabled, onStatus]);
-  return enabled ? <p className="sr-only">Klik peta untuk menghitung rute berkendara ke titik evakuasi terdekat yang dapat dijangkau.</p> : null;
+  return enabled ? <p className="gis-route-hint absolute z-1 left-1/2 top-4 -translate-x-1/2 max-w-[calc(100%_-_32px)] p-[6px_12px] rounded-lg bg-[#fffffff2] text-[12px] leading-[16px] text-[#525252] pointer-events-none text-center">Klik di peta untuk rute berkendara ke titik evakuasi terdekat.</p> : null;
 }
