@@ -58,7 +58,10 @@ test("initial Overview compares current and previous years without changing regi
     const overview = await getWorkspaceOverview([], "", "");
     assert.equal(statistics, 2);
     assert.equal(overview.metrics[1].value, "0 unit");
-    assert.ok(overview.summary.includes(`${period.from} s.d. ${period.to}`));
+    // The period is spelled out for readers; the stored ISO strings must not leak into the sentence.
+    const readable = (iso) => new Intl.DateTimeFormat("id-ID", { dateStyle: "long" }).format(new Date(`${iso}T00:00:00`));
+    assert.ok(overview.summary.includes(`${readable(period.from)} s.d. ${readable(period.to)}`));
+    assert.ok(!overview.summary.includes(period.from));
     assert.ok(!overview.summary.includes("seluruh periode"));
   } finally { globalThis.fetch = original; }
 });

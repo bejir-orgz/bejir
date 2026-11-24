@@ -6,6 +6,11 @@ import type { WorkspaceData } from "./types";
 import { getOverviewDateRange } from "./timeline";
 import { classLabels, dominantClass, selectedHazards, weightedMean, nullableSum } from "../geography/spatial-data";
 
+/** Summary text is read by people, so the stored ISO period is spelled out. */
+const periodFormatter = new Intl.DateTimeFormat("id-ID", { dateStyle: "long" });
+// parseISO yields local midnight, so formatting without an explicit zone keeps the same day.
+const readableDate = (iso: string) => periodFormatter.format(parseISO(iso));
+
 export function emptyOverview(message = "Memuat data backend…"): WorkspaceData["overview"] {
   return {
     metrics: [
@@ -34,7 +39,7 @@ export async function getWorkspaceOverview(regionIds: string[], from: string, to
   const overview = emptyOverview();
   const spatial = selectedHazards(regionIds);
   const supported = regionIds.every((id) => /^\d+$/.test(id));
-  const scope = `${period.from} s.d. ${period.to}`;
+  const scope = `${readableDate(period.from)} s.d. ${readableDate(period.to)}`;
   const ids = [...new Set(regionIds)];
   const readStatistics = (range: { from: string; to: string }) => supported ? Promise.all((ids.length ? ids : [""]).map((id) => {
     const query = new URLSearchParams();

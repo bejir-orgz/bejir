@@ -3,6 +3,16 @@ import type { AdministrativeCatalog } from "../../lib/api/schemas";
 
 export type Catalog = AdministrativeCatalog;
 
+/** Catalog names drop the administrative prefix; every list and table shows it and sorts by it. */
+export function regencyLabel(name: string): string {
+  return /^(Kota|Kabupaten)\s/i.test(name) ? name : `Kabupaten ${name}`;
+}
+
+/** Backend order follows regency id, which interleaves the Kabupaten and Kota blocks. */
+export function byRegionName<T extends { name: string }>(a: T, b: T): number {
+  return a.name.localeCompare(b.name, "id-ID");
+}
+
 export async function getCatalog(): Promise<Catalog> {
   const response = await fetchBackend("/api/v1/geography/catalog", { next: { revalidate: 3600 }, signal: AbortSignal.timeout(15_000) });
   if (!response.ok) throw new Error("Metadata wilayah gagal dimuat.");

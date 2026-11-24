@@ -2,6 +2,7 @@ import { yearOverYear } from "../../lib/year-over-year";
 import type { AnalysisData, AnalysisRow } from "./analysis-types";
 import { classLabels, dominantClass, getHazardParameters, getSpatialDistricts, nullableSum, susceptibilityDistribution, weightedMean, type DistrictParameters } from "../geography/spatial-data";
 import { getFloodStatistics, type FloodStatistics } from "../floods/api";
+import { regencyLabel } from "../geography/catalog";
 
 export function emptyAnalysisData(error?: string): AnalysisData {
   const classes: AnalysisData["classes"] = [
@@ -41,7 +42,7 @@ export async function getAnalysisData(): Promise<AnalysisData> {
     const classification = dominantClass(records);
     return {
       id: String(regency.id), year: null, districts: records,
-      region: /^(Kota|Kabupaten)\s/i.test(regency.name) ? regency.name : `Kabupaten ${regency.name}`,
+      region: regencyLabel(regency.name),
       population: nullableSum(records.map((row) => row.population)),
       areaKm2: nullableSum(records.map((row) => row.luas_km2)),
       susceptibility: classification === null ? null : classLabels[classification - 1],
@@ -108,7 +109,7 @@ export async function getAnalysisSummary(year: number, regencyIds: number[], dis
       Object.assign(snapshot.metrics[2], yearOverYear(nullableSum(affected), priorAffected));
     }
     snapshot.frequency = current.value.flatMap((group) => group.by_regency).map((row) => ({
-      id: String(row.regency_id), region: row.regency_name === null ? "—" : /^(Kota|Kabupaten)\s/i.test(row.regency_name) ? row.regency_name : `Kabupaten ${row.regency_name}`, events: row.total_events,
+      id: String(row.regency_id), region: row.regency_name === null ? "—" : regencyLabel(row.regency_name), events: row.total_events,
     })).sort((a, b) => b.events - a.events).slice(0, 10);
   }
   if (history.status === "fulfilled") {

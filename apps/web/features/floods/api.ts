@@ -2,6 +2,7 @@ import type { FloodImpactsResponse } from "../../lib/api/schemas";
 import type { FloodHistoryData, FloodHistoryRow } from "./types";
 import { unavailableSnapshot } from "./history-summary";
 import { fetchBackend } from "../../lib/api/backend";
+import { regencyLabel } from "../geography/catalog";
 
 export interface FloodEvent {
   id: number;
@@ -51,7 +52,7 @@ async function readFlood<T>(path: string): Promise<T> {
   return response.json();
 }
 
-const regionName = (name: string | null) => name === null ? "—" : /^(Kota|Kabupaten)\s/i.test(name) ? name : `Kabupaten ${name}`;
+const regionName = (name: string | null) => name === null ? "—" : regencyLabel(name);
 
 export async function listFloodEvents(query: string): Promise<FloodEvent[]> {
   const events: FloodEvent[] = [];

@@ -1,5 +1,5 @@
 import { fetchBackend } from "@/lib/api/backend";
-import { getCatalog } from "@/features/geography/catalog";
+import { byRegionName, getCatalog, regencyLabel } from "@/features/geography/catalog";
 import { unstable_cache } from "next/cache";
 import { getRegionSearchTree } from "@/features/geography/search";
 import { filterRegionTree } from "@/features/webgis/region-tree";
@@ -42,8 +42,8 @@ export async function GET(request: Request) {
     return Response.json(rows.map(({ id, name }) => {
       if (!Number.isSafeInteger(id) || id < 1 || typeof name !== "string" || seen.has(id)) throw new Error("Invalid geography row");
       seen.add(id);
-      return { id: parent ? `${parent}/${id}` : String(id), name: parent || /^(Kota|Kabupaten)\s/i.test(name) ? name : `Kabupaten ${name}` };
-    }));
+      return { id: parent ? `${parent}/${id}` : String(id), name: parent ? name : regencyLabel(name) };
+    }).sort(byRegionName));
   } catch (error) {
     console.error("geography.metadata", error instanceof Error ? error.message : "unavailable");
     return Response.json({ error: "Daerah gagal dimuat." }, { status: 503 });

@@ -1,5 +1,5 @@
 import { fetchBackend } from "../../lib/api/backend";
-import { getCatalog } from "./catalog";
+import { byRegionName, getCatalog, regencyLabel } from "./catalog";
 import type { RegionNode } from "../webgis/types";
 
 /** Search names at every level without loading map geometries or expanding 627 branches. */
@@ -7,9 +7,9 @@ export async function getRegionSearchTree(): Promise<RegionNode[]> {
   const catalog = await getCatalog();
   const roots = catalog.regencies.map((row) => ({
     id: String(row.id),
-    name: /^(Kota|Kabupaten)\s/i.test(row.name) ? row.name : `Kabupaten ${row.name}`,
+    name: regencyLabel(row.name),
     children: [] as RegionNode[],
-  }));
+  })).sort(byRegionName);
   const regencies = new Map(roots.map((row) => [Number(row.id), row]));
   const districts = new Map<number, RegionNode>();
   for (const row of catalog.districts) {
