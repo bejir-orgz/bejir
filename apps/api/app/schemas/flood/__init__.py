@@ -3,6 +3,7 @@ from app.schemas.flood.flood_event_type import FloodEventTypeResponse
 from app.schemas.flood.flood_event import (
     FloodEventResponse,
     FloodEventDetailResponse,
+    FloodEventListItemResponse,
     FloodEventListResponse,
     FloodEventFilter,
 )
@@ -27,6 +28,7 @@ __all__ = [
     "FloodEventTypeResponse",
     "FloodEventResponse",
     "FloodEventDetailResponse",
+    "FloodEventListItemResponse",
     "FloodEventListResponse",
     "FloodEventFilter",
     "FloodEventImpactResponse",

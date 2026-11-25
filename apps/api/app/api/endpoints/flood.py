@@ -6,7 +6,11 @@ from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.models.flood import FloodEvent
-from app.schemas.flood import FloodEventFilter, FloodImpactsResponse
+from app.schemas.flood import (
+    FloodEventFilter,
+    FloodEventListResponse,
+    FloodImpactsResponse,
+)
 from app.schemas.flood.facilities import FacilityTotals
 from app.services.flood import (
     FloodEventImpactService,
@@ -84,7 +88,7 @@ def get_event_type(event_type_id: int, db: Session = Depends(get_db)):
     return event_type
 
 
-@router.get("/events")
+@router.get("/events", response_model=FloodEventListResponse)
 def get_events(
     regency_id: int | None = Query(default=None),
     event_type_id: int | None = Query(default=None),

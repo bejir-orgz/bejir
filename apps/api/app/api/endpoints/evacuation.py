@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 @router.get("/sites")
 def get_sites(
     district_id: int | None = Query(default=None, gt=0),
-    limit: int = Query(default=20, ge=1, le=100),
+    limit: int = Query(default=20, ge=1, le=1000),
     offset: int = Query(default=0, ge=0),
     db: Session = Depends(get_db),
 ):

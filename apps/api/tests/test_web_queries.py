@@ -25,17 +25,26 @@ def db():
         for sql in [
             "CREATE TABLE core.regency (id INTEGER PRIMARY KEY, code TEXT, name TEXT, province_code TEXT, geom TEXT)",
             "CREATE TABLE core.districts (id INTEGER PRIMARY KEY, code TEXT, name TEXT, regency_id INTEGER, geom TEXT)",
-            "CREATE TABLE core.flood_events (id INTEGER PRIMARY KEY, regency_id INTEGER, event_type_id INTEGER, event_datetime DATETIME)",
+            "CREATE TABLE core.flood_event_types (id INTEGER PRIMARY KEY, code INTEGER, name TEXT)",
+            "CREATE TABLE core.flood_events (id INTEGER PRIMARY KEY, regency_id INTEGER, event_type_id INTEGER, event_datetime DATETIME, event_id TEXT, regency_code TEXT, event_type_code INTEGER, event_count INTEGER)",
             "CREATE TABLE core.flood_event_impacts (id INTEGER PRIMARY KEY, flood_event_id INTEGER, fatalities INTEGER, missing INTEGER, injured INTEGER, affected_displaced INTEGER, houses_heavily_damaged INTEGER, houses_moderately_damaged INTEGER, houses_slightly_damaged INTEGER, houses_flooded INTEGER, schools_damaged INTEGER, religious_facilities_damaged INTEGER, health_facilities_damaged INTEGER, offices_damaged INTEGER, bridges_damaged INTEGER)",
         ]:
             connection.exec_driver_sql(sql)
         connection.exec_driver_sql("INSERT INTO core.regency VALUES (14, '1', 'Kota Bogor', '32', 'large geometry'), (4, '2', 'Bogor', '32', 'large geometry')")
         connection.exec_driver_sql("INSERT INTO core.districts VALUES (545, '1', 'Tanah Sareal', 14, 'large geometry')")
-        connection.exec_driver_sql("INSERT INTO core.flood_events VALUES (1,14,1,'2010-05-01 12:00:00.000000'), (2,14,1,'2010-06-01 12:00:00.000000'), (3,4,1,'2025-01-01 12:00:00.000000'), (4,4,1,'2026-01-01 12:00:00.000000')")
+        connection.exec_driver_sql("INSERT INTO core.flood_event_types VALUES (1, 1, 'Banjir')")
+        connection.exec_driver_sql(
+            "INSERT INTO core.flood_events (id, regency_id, event_type_id, event_datetime) VALUES "
+            "(1,14,1,'2010-05-01 12:00:00.000000'), (2,14,1,'2010-06-01 12:00:00.000000'), "
+            "(3,4,1,'2025-01-01 12:00:00.000000'), (4,4,1,'2026-01-01 12:00:00.000000')"
+        )
         connection.exec_driver_sql(
             "INSERT INTO core.flood_event_impacts "
             "(id, flood_event_id, schools_damaged, health_facilities_damaged, religious_facilities_damaged) "
             "VALUES (1,1,2,0,1), (2,1,1,0,0), (3,2,0,NULL,2), (4,3,10,5,8)"
+        )
+        connection.exec_driver_sql(
+            "UPDATE core.flood_event_impacts SET fatalities = 7, missing = 2, houses_flooded = 15 WHERE id = 4"
         )
         connection.commit()
         queries = []
@@ -149,3 +158,26 @@ def test_flood_event_response_includes_event_type():
         "code": 1,
         "name": "Banjir",
     }
+
+
+def test_event_list_items_include_impact_summary(db):
+    app.dependency_overrides[get_db] = lambda: db
+    try:
+        with TestClient(app) as client:
+            response = client.get("/api/v1/flood/events")
+            assert response.status_code == 200
+            items = response.json()["items"]
+            assert len(items) == 4
+            for item in items:
+                assert {"houses_flooded", "fatalities", "missing"} <= item.keys()
+            by_id = {item["id"]: item for item in items}
+            assert (by_id[3]["houses_flooded"], by_id[3]["fatalities"], by_id[3]["missing"]) == (15, 7, 2)
+            assert by_id[4]["houses_flooded"] is None
+
+            detail = client.get("/api/v1/flood/events/3")
+            assert detail.status_code == 200
+            body = detail.json()
+            assert body["impacts"][0]["fatalities"] == 7
+            assert "houses_flooded" not in body
+    finally:
+        app.dependency_overrides.clear()

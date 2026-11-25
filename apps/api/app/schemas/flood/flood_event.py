@@ -23,12 +23,18 @@ class FloodEventResponse(BaseModel):
     event_count: bool | None = None
 
 
+class FloodEventListItemResponse(FloodEventResponse):
+    houses_flooded: int | None = None
+    fatalities: int | None = None
+    missing: int | None = None
+
+
 class FloodEventDetailResponse(FloodEventResponse):
     impacts: list[FloodEventImpactResponse] = []
 
 
 class FloodEventListResponse(BaseModel):
-    items: list[FloodEventResponse]
+    items: list[FloodEventListItemResponse]
     total: int
     limit: int
     offset: int

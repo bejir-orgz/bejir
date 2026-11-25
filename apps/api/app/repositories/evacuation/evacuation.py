@@ -207,7 +207,7 @@ class EvacuationRepository:
             ORDER BY distance LIMIT 1
         """), {"lon": longitude, "lat": latitude, "tolerance": snap_tolerance_m}).mappings().first()
         if snap is None:
-            raise ValueError("Origin is outside the configured road snapping distance")
+            raise ValueError("Titik awal berada di luar jarak snap jalan yang dikonfigurasi")
 
         if evacuation_site_id is not None:
             requested = db.execute(text("""
@@ -329,7 +329,7 @@ class EvacuationRepository:
                                 CAST(:to_nodes AS bigint[])) WITH ORDINALITY
                          AS t(edge_id, from_node, to_node, sequence)
                 ), pieces AS (
-                    SELECT t.sequence, e.road_id, e.distance_m,
+                    SELECT t.sequence, r.old_id AS road_id, e.distance_m,
                            CASE WHEN t.from_node = e.source
                                 THEN ST_LineSubstring(r.geom, e.fraction_start, e.fraction_end)
                                 ELSE ST_Reverse(ST_LineSubstring(r.geom, e.fraction_start, e.fraction_end))

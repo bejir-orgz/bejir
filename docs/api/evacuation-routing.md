@@ -34,6 +34,34 @@ To route only to one connected site, provide `evacuation_site_id`:
 
 The origin snapping tolerance is configured with `ROUTING_ORIGIN_SNAP_TOLERANCE_M` (default 500 m). Candidate destinations are prefiltered to at most `ROUTING_MAX_CANDIDATE_SITES` (default 500) using straight-line distance from origin to snapped site point; final ranking is always by network travel time. Increase the candidate limit where broader network searches are required.
 
+### Road network preparation
+
+The staging graph is loaded from the full OSM road set in `core.roads` by
+`gis/scripts/import_roads.py`. The source geometries are not split at
+intersections, so the script first nodes the routable network: each edge is
+split at coordinates shared with another edge. `pgr_createTopology` alone only
+joins line endpoints and would leave the province fragmented into hundreds of
+thousands of tiny components.
+
+The script:
+
+1. Builds `core.road_segments` (all 859,716 OSM ways, expanded to 859,862
+   LineStrings) and serves the full network from `GET /api/v1/evacuation/roads`.
+2. Builds `routing.road_segments_staging` from routable classes, projected to
+   EPSG:32748, with minute `cost`/`reverse_cost`.
+3. Splits staging edges at shared vertices. Each noded edge keeps `old_id`, the
+   original `core.road_segments.id`.
+4. Runs `pgr_createTopology` and indexes the staging graph.
+5. Rebuilds `routing.evacuation_sites_staging` and
+   `routing.evacuation_site_edges` with a 100 m snap.
+
+Because `old_id` is preserved, route history and the route response still report
+the original `core.road_segments.id` even though routing runs on split edges.
+Run the script during maintenance: it replaces the staging graph and clears
+route history, and its `TRUNCATE` blocks readers for the duration of the run.
+Points outside West Java (for example DKI Jakarta) and points farther than the
+snap tolerance from a road still return `400`.
+
 ### Database prerequisite
 
 The database server must have pgRouting 3.8 available. The development Compose service uses `pgrouting/pgrouting:17-3.5-3.8`, matching PostgreSQL 17 and PostGIS 3.5. In an existing database, install the extension once (as a database owner) after the server image includes pgRouting:

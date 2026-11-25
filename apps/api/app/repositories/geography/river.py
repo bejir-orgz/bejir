@@ -1,3 +1,5 @@
+import json
+
 from sqlalchemy import Select, func, select
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.elements import ColumnElement
@@ -45,9 +47,24 @@ class RiverRepository:
         name: str | None = None,
         river_type: str | None = None,
         layer_code: str | None = None,
+        bbox: tuple[float, float, float, float] | None = None,
+        simplify_m: int | None = None,
         limit: int = 100,
         offset: int = 0,
     ) -> tuple[list[dict], int]:
+        geometry = River.geom
+        if simplify_m:
+            # Rivers already live in EPSG:3857, so the tolerance is metres.
+            geometry = func.ST_SimplifyPreserveTopology(River.geom, simplify_m)
+
+        transformed = func.ST_Transform(geometry, 4326)
+        # Viewport responses round to 6 decimals (~0.11 m) to keep payloads small.
+        geojson = (
+            func.ST_AsGeoJSON(transformed, 6)
+            if bbox is not None
+            else func.ST_AsGeoJSON(transformed)
+        )
+
         statement: Select = select(
             River.id,
             River.fid,
@@ -56,11 +73,20 @@ class RiverRepository:
             River.river_type,
             River.layer_code,
             River.shape_length,
-            func.ST_AsGeoJSON(
-                func.ST_Transform(River.geom, 4326)
-            ).label("geom"),
+            geojson.label("geom"),
         )
 
+        if bbox is not None:
+            minx, miny, maxx, maxy = bbox
+            statement = statement.where(
+                func.ST_Intersects(
+                    River.geom,
+                    func.ST_Transform(
+                        func.ST_MakeEnvelope(minx, miny, maxx, maxy, 4326),
+                        3857,
+                    ),
+                )
+            )
         if name is not None:
             statement = statement.where(River.name.ilike(f"%{name}%"))
         if river_type is not None:
@@ -76,8 +102,6 @@ class RiverRepository:
         rows = db.execute(
             statement.order_by(River.id).limit(limit).offset(offset)
         ).all()
-
-        import json
 
         items = [
             {

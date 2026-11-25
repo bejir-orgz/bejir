@@ -2,7 +2,7 @@
 from datetime import datetime
 
 from sqlalchemy import Select, case, func, or_, select
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.models.flood import (
     FloodEvent,
@@ -122,7 +122,10 @@ class FloodEventRepository:
         # Pagination and eager loading
         statement = (
             statement
-            .options(joinedload(FloodEvent.event_type))
+            .options(
+                joinedload(FloodEvent.event_type),
+                selectinload(FloodEvent.impacts),
+            )
             .order_by(FloodEvent.event_datetime.desc().nullslast(), FloodEvent.id.desc())
             .limit(limit)
             .offset(offset)

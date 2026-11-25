@@ -115,7 +115,7 @@ class EvacuationService:
             or not -180 <= origin_longitude <= 180
             or not -90 <= origin_latitude <= 90
         ):
-            raise InvalidRouteRequestError("Origin coordinates must be valid EPSG:4326 longitude/latitude values")
+            raise InvalidRouteRequestError("Koordinat titik awal harus berupa nilai longitude/latitude EPSG:4326 yang valid")
         route_request = EvacuationRepository.create_route_request(
             db,
             longitude=origin_longitude,

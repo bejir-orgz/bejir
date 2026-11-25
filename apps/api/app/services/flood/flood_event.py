@@ -9,9 +9,9 @@ from app.schemas.flood import (
     FloodEventEventTypeCount,
     FloodEventFilter,
     FloodEventImpactTotals,
+    FloodEventListItemResponse,
     FloodEventListResponse,
     FloodEventRegencyCount,
-    FloodEventResponse,
     FloodEventStatisticsResponse,
     FloodEventStatisticsSummary,
     FloodEventYearCount,
@@ -48,11 +48,20 @@ class FloodEventService:
             offset=filters.offset,
         )
 
+        items_out = []
+        for item in items:
+            summary = FloodEventListItemResponse.model_validate(item)
+            impact = item.impacts[0] if item.impacts else None
+            if impact is not None:
+                summary = summary.model_copy(update={
+                    "houses_flooded": impact.houses_flooded,
+                    "fatalities": impact.fatalities,
+                    "missing": impact.missing,
+                })
+            items_out.append(summary)
+
         return FloodEventListResponse(
-            items=[
-                FloodEventResponse.model_validate(item)
-                for item in items
-            ],
+            items=items_out,
             total=total,
             limit=filters.limit,
             offset=filters.offset,
