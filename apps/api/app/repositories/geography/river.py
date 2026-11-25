@@ -1,12 +1,38 @@
 import json
 
-from sqlalchemy import Select, and_, func, select
-from sqlalchemy.orm import Session
+from sqlalchemy import Select, func, select
+from sqlalchemy.orm import Session, aliased
 from sqlalchemy.sql.elements import ColumnElement
 
 from app.models.geography.district import District
 from app.models.geography.regency import Regency
 from app.models.geography.river import River
+
+# A region boundary is split into small tiles for filtering. Testing the whole
+# boundary in one ST_Intersects is exact but very slow for large regencies
+# (10k+ vertices): the GIST bbox admits too many rivers and each exact test
+# walks the full polygon. Tiles keep both the candidate set and the exact test
+# small while preserving the original boundary geometry.
+_BOUNDARY_TILE_VERTICES = 256
+
+
+def _intersecting_river_ids(model, boundary_id: int) -> Select:
+    tiles = (
+        select(
+            func.ST_Subdivide(
+                func.ST_Transform(model.geom, 3857),
+                _BOUNDARY_TILE_VERTICES,
+            ).label("tile")
+        )
+        .where(model.id == boundary_id)
+        .subquery()
+    )
+    river = aliased(River)
+    return (
+        select(river.id)
+        .join(tiles, func.ST_Intersects(river.geom, tiles.c.tile))
+        .distinct()
+    )
 
 
 class RiverRepository:
@@ -89,29 +115,15 @@ class RiverRepository:
                     ),
                 )
             )
-        # Region filters match the real boundary (not its bounding box). The
-        # selected boundary row is unique, so the join cannot duplicate rivers.
+        # Region filters match the real boundary (not its bounding box), applied
+        # as a tiled semi-join so each river is returned once.
         if regency_id is not None:
-            statement = statement.join(
-                Regency,
-                and_(
-                    Regency.id == regency_id,
-                    func.ST_Intersects(
-                        River.geom,
-                        func.ST_Transform(Regency.geom, 3857),
-                    ),
-                ),
+            statement = statement.where(
+                River.id.in_(_intersecting_river_ids(Regency, regency_id))
             )
         if district_id is not None:
-            statement = statement.join(
-                District,
-                and_(
-                    District.id == district_id,
-                    func.ST_Intersects(
-                        River.geom,
-                        func.ST_Transform(District.geom, 3857),
-                    ),
-                ),
+            statement = statement.where(
+                River.id.in_(_intersecting_river_ids(District, district_id))
             )
         if name is not None:
             statement = statement.where(River.name.ilike(f"%{name}%"))

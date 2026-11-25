@@ -31,6 +31,7 @@ def river_db():
             return int(bool(set(str(geometry).split(",")) & set(str(other).split(","))))
 
         raw.create_function("ST_Intersects", 2, st_intersects)
+        raw.create_function("ST_Subdivide", 2, lambda geometry, maxvertices: geometry)
         raw.create_function("ST_SimplifyPreserveTopology", 2, lambda geometry, tolerance: geometry)
         # SQLAlchemy compiles func.ST_AsGeoJSON as AsGeoJSON on SQLite.
         raw.create_function("AsGeoJSON", -1, lambda *args: GEOJSON)
@@ -152,6 +153,7 @@ def test_river_regency_and_district_filters_use_real_boundary(river_db):
 
             statements = " ".join(river_db.info["queries"])
             assert "ST_Intersects" in statements
+            assert "ST_Subdivide" in statements
             assert "core.regency" in statements
             assert "core.districts" in statements
     finally:
