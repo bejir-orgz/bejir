@@ -36,9 +36,9 @@ export function RiverLayer({ map, enabled, regionIds, onStatus }: { map: Leaflet
         // The API filters rivers by viewport only, so say so rather than imply the region filter applied.
         const scopeNote = data.region_unsupported ? " Layer sungai mengikuti area peta yang terlihat, belum filter wilayah." : "";
         onStatus(data.village_unsupported || data.region_unsupported || data.truncated
-          // A truncated page comes back in id order, so the slice is not spread evenly: say so
-          // rather than let the gaps read as "no rivers here".
-          ? { message: (data.truncated ? `Menampilkan ${data.returned.toLocaleString("id-ID")} dari ${data.total_matching.toLocaleString("id-ID")} segmen — sebagian saja dan belum merata. Perbesar peta untuk melihat seluruh sungai di satu area.` : `Menampilkan ${data.returned.toLocaleString("id-ID")} segmen pada area peta.`) + scopeNote }
+          // A truncated page now arrives longest-first, so the view is the major rivers
+          // rather than an arbitrary slice.
+          ? { message: (data.truncated ? `Menampilkan ${data.returned.toLocaleString("id-ID")} sungai terpanjang dari ${data.total_matching.toLocaleString("id-ID")} segmen pada area peta. Perbesar peta untuk melihat anak sungai.` : `Menampilkan ${data.returned.toLocaleString("id-ID")} segmen pada area peta.`) + scopeNote }
           : undefined);
       } catch (error) {
         if (!closed && !active.signal.aborted) { remove?.(); remove = undefined; onStatus({ message: error instanceof Error ? error.message : "Layer sungai gagal.", retry: () => { void load(); } }); }
