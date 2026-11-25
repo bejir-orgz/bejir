@@ -1,11 +1,26 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.api.params import parse_bbox
 from app.db.session import get_db
+from app.schemas.geography.river import RiverRegencySummary
 from app.services.geography import RiverService
 
 router = APIRouter()
+
+
+@router.get("/summary", response_model=list[RiverRegencySummary])
+def get_river_summary(db: Session = Depends(get_db)):
+    """
+    Jumlah segmen sungai per kabupaten/kota, tanpa geometri.
+
+    Satu baris untuk setiap kabupaten/kota. Angka memakai irisan batas asli
+    (bukan bounding box) dan konsisten dengan `total` pada
+    `GET /rivers?regency_id=`.
+    """
+    return RiverService.get_regency_summary(db)
 
 
 @router.get("")
@@ -19,11 +34,12 @@ def get_rivers(
         description="Hanya sungai yang beririsan dengan batas kabupaten/kota "
         "ini (bukan bounding box).",
     ),
-    district_id: int | None = Query(
-        default=None,
-        gt=0,
+    district_id: list[Annotated[int, Query(gt=0)]] = Query(
+        default=[],
+        max_length=100,
         description="Hanya sungai yang beririsan dengan batas kecamatan ini "
-        "(bukan bounding box).",
+        "(bukan bounding box). Dapat diulang untuk banyak kecamatan, "
+        "maksimum 100.",
     ),
     bbox: str | None = Query(
         default=None,
@@ -53,9 +69,10 @@ def get_rivers(
     atau `simplify_m=0`) hasilnya selalu `MultiLineString`.
 
     Filter `regency_id`/`district_id` memakai irisan geometri batas asli, bukan
-    bounding box, sehingga sungai di luar wilayah tidak ikut terhitung. Hasil
-    diurutkan `shape_length` menurun (lalu `id`) agar halaman yang terpotong
-    menampilkan sungai terbesar lebih dulu.
+    bounding box, sehingga sungai di luar wilayah tidak ikut terhitung.
+    `district_id` dapat diulang (maksimum 100) dan hasilnya adalah gabungan
+    semua kecamatan yang dipilih. Hasil diurutkan `shape_length` menurun (lalu
+    `id`) agar halaman yang terpotong menampilkan sungai terbesar lebih dulu.
     """
     return RiverService.list_rivers(
         db,
@@ -63,7 +80,7 @@ def get_rivers(
         river_type=river_type,
         layer_code=layer_code,
         regency_id=regency_id,
-        district_id=district_id,
+        district_ids=district_id,
         bbox=parse_bbox(bbox) if bbox is not None else None,
         simplify_m=simplify_m,
         limit=limit,
