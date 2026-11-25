@@ -1,16 +1,51 @@
-import { readPrepared } from "../geography/prepared-data";
-import type { PreparedRivers } from "./types";
-import { summarizeRivers } from "./data";
+import { fetchBackend } from "../../lib/api/backend";
+import { riverScope } from "./filter";
+import type { RiverSummary } from "./types";
 
-let cache: { key: string; expires: number; promise: Promise<PreparedRivers> } | undefined;
-export function getRivers(): Promise<PreparedRivers> {
-  const key = `${process.env.BEJIR_API_URL || "http://80.43.0.180:8000"}|${process.env.BEJIR_PREPARED_DATA_DIR || process.cwd()}`;
-  if (cache?.key === key && cache.expires > Date.now()) return cache.promise;
-  const promise = readPrepared<PreparedRivers>("rivers").then((data) => {
-    if (data.source_crs !== "EPSG:4326" || data.total !== data.features?.length || new Set(data.features.map((row) => row.id)).size !== data.total || data.features.some((row) => row.geometry?.type !== "MultiLineString" || row.bbox?.length !== 4 || !Array.isArray(row.properties?.district_paths))) throw new Error("Data sungai olahan tidak valid.");
-    return data;
-  }).catch((error) => { cache = undefined; throw error; });
-  cache = { key, expires: Date.now() + 60_000, promise };
-  return promise;
+interface RegencyTotal {
+  regency_id: number;
+  regency_name: string | null;
+  total: number;
 }
-export async function getRiverSummary(regionIds: string[]) { return summarizeRivers(await getRivers(), regionIds); }
+
+/** Per-regency counts are identical for everyone and only change when rivers are re-imported. */
+async function regencyTotals(): Promise<Record<string, number>> {
+  const response = await fetchBackend("/api/v1/rivers/summary", { next: { revalidate: 3600 } });
+  if (!response.ok) throw new Error(`Rivers summary HTTP ${response.status}`);
+  const rows: RegencyTotal[] = await response.json();
+  if (!Array.isArray(rows) || !rows.length) throw new Error("Ringkasan sungai tidak valid.");
+  const totals: Record<string, number> = {};
+  for (const row of rows) {
+    if (
+      !Number.isSafeInteger(row.regency_id) ||
+      row.regency_id < 1 ||
+      !Number.isSafeInteger(row.total) ||
+      row.total < 0
+    ) {
+      throw new Error("Baris ringkasan sungai tidak valid.");
+    }
+    totals[String(row.regency_id)] = row.total;
+  }
+  return totals;
+}
+
+/** Distinct rivers touching the selection; summing regency totals would double-count shared ones. */
+async function scopedTotal(query: string): Promise<number | null> {
+  const response = await fetchBackend(`/api/v1/rivers?limit=1${query ? `&${query}` : ""}`, {
+    next: { revalidate: 3600 },
+  });
+  if (!response.ok) throw new Error(`Rivers count HTTP ${response.status}`);
+  const page: { total?: number } = await response.json();
+  return typeof page.total === "number" && Number.isSafeInteger(page.total) ? page.total : null;
+}
+
+export async function getRiverSummary(regionIds: string[]): Promise<RiverSummary> {
+  const scope = await riverScope(regionIds);
+  // Village scope, and selections wider than the API's 100 district ids, have no scoped count.
+  if (scope.kind === "village" || scope.kind === "too-wide") {
+    return { total: null, by_regency: await regencyTotals() };
+  }
+  if (scope.kind === "empty") return { total: 0, by_regency: await regencyTotals() };
+  const [by_regency, total] = await Promise.all([regencyTotals(), scopedTotal(scope.query)]);
+  return { total, by_regency };
+}

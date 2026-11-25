@@ -154,9 +154,6 @@ export async function getWorkspaceOverview(regionIds: string[], from: string, to
     overview.susceptibility.notes.push(`${records.filter((row) => row.mean_hujan_mm == null).length} kecamatan memiliki parameter hujan kosong.`);
   }
   overview.susceptibility.notes.push("Jumlah sungai menghitung rekaman segmen API yang berpotongan dengan wilayah, bukan sungai bernama unik. Segmen lintas kecamatan dihitung satu kali dalam cakupan pilihan.");
-  if (riversResult.status === "fulfilled") {
-    overview.susceptibility.notes.push(`Data sungai disiapkan ${new Date(riversResult.value.prepared_at).toLocaleDateString("id-ID", { timeZone: "Asia/Jakarta" })}.`);
-  }
   if (riversResult.status === "rejected") overview.errors?.push("Ringkasan sungai gagal dimuat.");
   return overview;
 }

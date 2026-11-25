@@ -4,22 +4,33 @@ import "../../lib/api/test-setup.mjs";
 const { getEvacuationSites } = await import("./api.ts");
 
 const site = (id) => ({
-  id, district_id: 545, name: id === 1 ? "<img src=x>" : null,
-  category: null, latitude: -6.6, longitude: 106.8,
+  id,
+  district_id: 545,
+  name: id === 1 ? "<img src=x>" : null,
+  category: null,
+  latitude: -6.6,
+  longitude: 106.8,
 });
 
 test("all site pages are fetched in order, including the final partial page", async () => {
   const originalFetch = globalThis.fetch;
-  const items = Array.from({ length: 735 }, (_, index) => site(index + 1));
+  const items = Array.from({ length: 2350 }, (_, index) => site(index + 1));
   const offsets = [];
+  let pageSize;
+  // Honour the requested limit so this keeps checking paging if the page size changes again.
   globalThis.fetch = async (input) => {
-    const offset = Number(new URL(input).searchParams.get("offset"));
+    const query = new URL(input).searchParams;
+    const offset = Number(query.get("offset"));
+    pageSize = Number(query.get("limit"));
     offsets.push(offset);
-    return Response.json({ items: items.slice(offset, offset + 100), total: items.length });
+    return Response.json({ items: items.slice(offset, offset + pageSize), total: items.length });
   };
   try {
     assert.deepEqual(await getEvacuationSites(), items);
-    assert.deepEqual(offsets, [0, 100, 200, 300, 400, 500, 600, 700]);
+    const expected = Array.from({ length: Math.ceil(items.length / pageSize) }, (_, page) => page * pageSize);
+    assert.deepEqual(offsets, expected);
+    // 14k sites at 100 per page meant 144 round trips; keep the page size worth having.
+    assert.ok(pageSize >= 1000, `page size ${pageSize} is below the limit the API allows`);
   } finally {
     globalThis.fetch = originalFetch;
   }

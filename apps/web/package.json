@@ -6,9 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "prepare:data": "node --env-file-if-exists=.env.local scripts/prepare-web-data.mjs all",
-    "lint": "eslint",
-    "prepare:rivers": "node --env-file-if-exists=.env.local scripts/prepare-rivers.mjs"
+    "lint": "eslint"
   },
   "dependencies": {
     "@tabler/icons-react": "^3.49.0",

@@ -9,7 +9,7 @@ import type {
   MapMouseEvent,
   Popup,
 } from "maplibre-gl";
-import type { Feature, FeatureCollection, Geometry, MultiPolygon, Polygon } from "geojson";
+import type { Feature, FeatureCollection, Geometry, MultiLineString, MultiPolygon, Polygon } from "geojson";
 import {
   IconBuildingSkyscraper,
   IconCompass,
@@ -35,6 +35,8 @@ import { isRegionSelected } from "@/features/webgis/region-tree";
 import { landCoverColor } from "@/features/geography/land-cover-colors";
 import { classColors, classLabels } from "@/features/geography/aggregation";
 import type { EvacuationSite } from "@/features/evacuation/types";
+import { riverViewportStatusMessage, type RiverViewportStatus } from "@/features/rivers/data";
+import type { RiverProperties } from "@/features/rivers/types";
 import { requestBackend } from "@/lib/api/client";
 import type { RouteRequest, RouteResponse } from "@/lib/api/schemas";
 import { useRegionSelection } from "@/features/regions/region-selection";
@@ -758,17 +760,33 @@ export function MapLibreWorkspaceMap({
       const active = new AbortController();
       controller = active;
       const b = map.getBounds();
-      const bbox = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()].map((n) => n.toFixed(6)).join(",");
+      const bbox = [
+        Math.max(-180, b.getWest()),
+        Math.max(-90, b.getSouth()),
+        Math.min(180, b.getEast()),
+        Math.min(90, b.getNorth()),
+      ]
+        .map((n) => n.toFixed(6))
+        .join(",");
       const query = new URLSearchParams({ bbox });
       for (const id of scope.split(",").filter(Boolean)) query.append("region", id);
       onRiverStatus({ message: "Memuat jaringan sungai..." });
       fetch(`/backend/web/rivers/layers?${query}`, { signal: active.signal })
         .then(async (res) => {
           if (!res.ok) throw new Error("Jaringan sungai belum dapat dimuat.");
-          const json: FeatureCollection = await res.json();
+          const json: FeatureCollection<MultiLineString, RiverProperties> & RiverViewportStatus = await res.json();
           if (!closed && !active.signal.aborted) {
-            source.setData(json);
-            onRiverStatus(undefined);
+            source.setData({
+              type: "FeatureCollection",
+              features: json.features.map((feature) => ({
+                ...feature,
+                properties: {
+                  ...feature.properties,
+                  tooltip: `${feature.properties.name || "Sungai tanpa nama"} · ${feature.properties.river_type || "Jenis belum tersedia"}`,
+                },
+              })),
+            });
+            onRiverStatus(riverViewportStatusMessage(json));
           }
         })
         .catch((err) => {
@@ -1208,6 +1226,7 @@ export function MapLibreWorkspaceMap({
       if (!popup) return;
       const queryLayers: string[] = [];
       if (evacuationEnabled && map.getLayer(MAPLIBRE_IDS.evacSitesLayer)) queryLayers.push(MAPLIBRE_IDS.evacSitesLayer);
+      if (riversEnabled && map.getLayer(MAPLIBRE_IDS.riversLineLayer)) queryLayers.push(MAPLIBRE_IDS.riversLineLayer);
       if (activeThematicIds.length > 0 && map.getLayer(MAPLIBRE_IDS.thematicFillLayer)) {
         queryLayers.push(MAPLIBRE_IDS.thematicFillLayer);
       }
@@ -1243,6 +1262,7 @@ export function MapLibreWorkspaceMap({
     simulationOpen,
     thematicCollection,
     evacuationEnabled,
+    riversEnabled,
     activeThematicIds,
     onSelectSimTarget,
     onRouteStatus,

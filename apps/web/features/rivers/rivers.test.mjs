@@ -1,47 +1,111 @@
 import "../../lib/api/test-setup.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
-const { prepareRiver, createDistrictIndex } = await import("./preparation.ts");
-const { summarizeRivers, riverViewport, parseRiverBounds, parseRiverRegions } = await import("./data.ts");
-const polygon = (west, east) => ({ type: "Polygon", coordinates: [[[west,0],[east,0],[east,1],[west,1],[west,0]]] });
-const index = createDistrictIndex([{ id: 1, regency_id: 17, geom: polygon(0,1) }, { id: 2, regency_id: 17, geom: polygon(1,2) }, { id: 3, regency_id: 18, geom: polygon(2,3) }]);
-const feature = (id, line) => prepareRiver({ id, name: " ", river_type: "Sungai Satu Garis", geom: { type: "MultiLineString", coordinates: [line] } }, index);
-const features = [feature(1, [[0.5,0.5,3],[1.5,0.5,4]]), feature(2, [[2.5,0.2],[2.5,0.8]])];
-const data = { total: 2, prepared_at: "2026-11-15T00:00:00Z", features };
+const { parseRiverBounds, parseRiverRegions, riverViewportStatusMessage } = await import("./data.ts");
+const { riverScope } = await import("./filter.ts");
+const { getRiverSummary } = await import("./api.ts");
 
-test("raw line intersection assigns both districts; display strips Z and keeps count distinct", () => {
-  assert.deepEqual(features[0].properties.district_paths, ["17/1", "17/2"]);
-  assert.equal(features[0].geometry.coordinates[0][0].length, 2);
-  assert.equal(features[0].properties.name, null);
-  assert.equal(summarizeRivers(data, ["17/1", "17/2"]).total, 1);
-  assert.deepEqual(summarizeRivers(data, ["17"]).by_regency, {17: 1});
-  assert.equal(summarizeRivers(data, ["17", "!17/1"]).total, 1);
-  assert.equal(summarizeRivers(data, ["17/1/99"]).total, null);
-  assert.equal(summarizeRivers(data, []).total, 2);
+// Two regencies: 17 has districts 1 and 2, 18 has district 3.
+const catalog = {
+  regencies: [
+    { id: 17, name: "Kota Bogor" },
+    { id: 18, name: "Bogor" },
+  ],
+  districts: [
+    { id: 1, name: "A", regency_id: 17 },
+    { id: 2, name: "B", regency_id: 17 },
+    { id: 3, name: "C", regency_id: 18 },
+  ],
+};
+const withCatalog = (handler) => async (input) => {
+  const url = new URL(input);
+  if (url.pathname.endsWith("/geography/catalog")) return Response.json(catalog);
+  return handler(url);
+};
+
+test("a selection resolves to the district ids the API accepts, exclusions included", async () => {
+  const original = globalThis.fetch;
+  globalThis.fetch = withCatalog(() => new Response(null, { status: 503 }));
+  try {
+    assert.deepEqual(await riverScope([]), { kind: "all", query: "" });
+    assert.equal((await riverScope(["17"])).query, "district_id=1&district_id=2");
+    assert.equal((await riverScope(["17/2"])).query, "district_id=2");
+    // An excluded child must drop out of the resolved list, not just out of the label.
+    assert.equal((await riverScope(["17", "!17/1"])).query, "district_id=2");
+    assert.equal((await riverScope(["17", "18"])).query, "district_id=1&district_id=2&district_id=3");
+    assert.equal((await riverScope(["17/1/99"])).kind, "village");
+    assert.equal((await riverScope(["!17", "!18"])).kind, "empty");
+  } finally {
+    globalThis.fetch = original;
+  }
 });
 
-test("viewport limits rendering with explicit coverage and never changes full summary", () => {
-  const view = riverViewport(data, [], [0,0,3,1], 1);
-  assert.equal(view.features.length, 1);
-  assert.equal(view.total_matching, 2);
-  assert.equal(view.truncated, true);
-  assert.equal(summarizeRivers(data, []).total, 2);
-  assert.equal(riverViewport(data, [], [2,0,3,1]).returned, 1);
+test("summary keeps per-regency totals and counts a selection without double counting", async () => {
+  const original = globalThis.fetch;
+  const counted = [];
+  globalThis.fetch = withCatalog((url) => {
+    if (url.pathname.endsWith("/rivers/summary")) {
+      return Response.json([
+        { regency_id: 17, regency_name: "Kota Bogor", total: 40 },
+        { regency_id: 18, regency_name: "Bogor", total: 25 },
+      ]);
+    }
+    counted.push(url.searchParams.getAll("district_id").join(","));
+    // Fewer than 40 + 25: a river crossing both regencies is one river.
+    return Response.json({ items: [], total: 60 });
+  });
+  try {
+    const all = await getRiverSummary([]);
+    assert.deepEqual(all.by_regency, { 17: 40, 18: 25 });
+    assert.equal(all.total, 60);
+    const scoped = await getRiverSummary(["17"]);
+    assert.equal(scoped.total, 60);
+    assert.deepEqual(scoped.by_regency, { 17: 40, 18: 25 });
+    assert.deepEqual(counted.at(-1), "1,2");
+    // Village scope has no count, but the table still needs its per-regency column.
+    const village = await getRiverSummary(["17/1/99"]);
+    assert.equal(village.total, null);
+    assert.deepEqual(village.by_regency, { 17: 40, 18: 25 });
+  } finally {
+    globalThis.fetch = original;
+  }
+});
+
+test("a malformed summary row is rejected rather than shown as a count", async () => {
+  const original = globalThis.fetch;
+  try {
+    globalThis.fetch = withCatalog((url) =>
+      url.pathname.endsWith("/rivers/summary")
+        ? Response.json([{ regency_id: 17, total: -4 }])
+        : Response.json({ items: [], total: 0 }),
+    );
+    await assert.rejects(getRiverSummary([]), /ringkasan sungai/i);
+    globalThis.fetch = withCatalog((url) =>
+      url.pathname.endsWith("/rivers/summary")
+        ? Response.json([])
+        : Response.json({ items: [], total: 0 }),
+    );
+    await assert.rejects(getRiverSummary([]), /Ringkasan sungai tidak valid/);
+  } finally {
+    globalThis.fetch = original;
+  }
+});
+
+test("map filter inputs and status messages are validated cleanly", () => {
   assert.throws(() => parseRiverBounds("1,2,0,3"));
   assert.throws(() => parseRiverBounds("0,0,NaN,3"));
   assert.throws(() => parseRiverRegions(new URLSearchParams("region=17;DROP")));
   assert.deepEqual(parseRiverRegions(new URLSearchParams("region=17&region=17")), ["17"]);
-  assert.throws(() => feature(3, [[190,0],[191,1]]));
-});
-
-test("intersection respects holes and boundary touches, and tiny segments survive display rounding", () => {
-  const holes = createDistrictIndex([{ id: 9, regency_id: 17, geom: { type: "Polygon", coordinates: [
-    [[0,0],[3,0],[3,3],[0,3],[0,0]], [[1,1],[1,2],[2,2],[2,1],[1,1]],
-  ] } }]);
-  const prepare = (line) => prepareRiver({ id: 9, name: null, river_type: null, geom: { type: "MultiLineString", coordinates: [line] } }, holes);
-  assert.deepEqual(prepare([[1.2,1.2],[1.8,1.8]]).properties.district_paths, []);
-  assert.deepEqual(prepare([[0.5,1.5],[2.5,1.5]]).properties.district_paths, ["17/9"]);
-  assert.deepEqual(prepare([[-1,0],[0,0]]).properties.district_paths, ["17/9"]);
-  const tiny = prepare([[0.25,0.25],[0.25000001,0.25]]).geometry.coordinates[0];
-  assert.notDeepEqual(tiny[0], tiny[1]);
+  assert.match(
+    riverViewportStatusMessage({ returned: 0, total_matching: 0, truncated: false, scope_unsupported: "village" })?.message ?? "",
+    /kelurahan\/desa/,
+  );
+  assert.match(
+    riverViewportStatusMessage({ returned: 1000, total_matching: 5000, truncated: true, scope_unsupported: null })?.message ?? "",
+    /sungai terpanjang/,
+  );
+  assert.equal(
+    riverViewportStatusMessage({ returned: 120, total_matching: 120, truncated: false, scope_unsupported: null }),
+    undefined,
+  );
 });
