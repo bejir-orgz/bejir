@@ -484,6 +484,7 @@ export function MapLibreWorkspaceMap({
             },
           });
 
+          instance.resize();
           const bounds: LngLatBoundsLike = [
             [westJavaBasemap.bounds[0][1], westJavaBasemap.bounds[0][0]],
             [westJavaBasemap.bounds[1][1], westJavaBasemap.bounds[1][0]],
@@ -1267,7 +1268,8 @@ export function MapLibreWorkspaceMap({
     >
       <div
         ref={containerRef}
-        className="gis-maplibre-map absolute inset-0 z-0 [font-family:inherit]"
+        style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
+        className="gis-maplibre-map absolute! inset-0! z-0! h-full! w-full! [font-family:inherit]!"
         aria-label="Kanvas peta 3D Jawa Barat. Seret untuk menggeser, klik kanan dan seret untuk memiringkan sudut pandang 3D."
       />
 
@@ -1287,7 +1289,9 @@ export function MapLibreWorkspaceMap({
 
       {/* Map Style & 3D Layer Switcher (Bottom Left above Disclaimer) */}
       <div
-        className="gis-3d-switcher absolute z-2 left-[calc(var(--regions-width,0px)_+_12px)] bottom-9 flex flex-wrap items-center gap-1.5 [transition:left_var(--gis-slide-duration)_var(--gis-slide-easing)] motion-reduce:[transition:none] max-[999.01px]:hidden"
+        className={`gis-3d-switcher absolute z-2 left-[calc(var(--regions-width,0px)_+_12px)] bottom-9 flex gap-1.5 [transition:left_var(--gis-slide-duration)_var(--gis-slide-easing)] motion-reduce:[transition:none] ${
+          simulationOpen ? "flex-col items-start max-[1279.01px]:hidden" : "flex-wrap items-center max-[999.01px]:hidden"
+        }`}
         role="group"
         aria-label="Gaya peta 3D dan tampilan kontur"
       >
@@ -1325,33 +1329,35 @@ export function MapLibreWorkspaceMap({
           </button>
         </div>
 
-        <button
-          type="button"
-          aria-pressed={showContours}
-          onClick={() => setShowContours((prev) => !prev)}
-          className={`inline-flex cursor-pointer items-center gap-1 rounded-xl border px-2 py-1.5 text-[11px] font-semibold transition-colors ${
-            showContours
-              ? "border-amber-400 bg-amber-50/95 text-amber-950"
-              : "border-neutral-300 bg-white/95 text-neutral-600 hover:bg-neutral-100"
-          }`}
-        >
-          <IconLayersSubtract className="size-3.5" aria-hidden="true" />
-          <span>Kontur</span>
-        </button>
+        <div className="inline-flex items-center gap-1.5">
+          <button
+            type="button"
+            aria-pressed={showContours}
+            onClick={() => setShowContours((prev) => !prev)}
+            className={`inline-flex cursor-pointer items-center gap-1 rounded-xl border px-2 py-1.5 text-[11px] font-semibold transition-colors ${
+              showContours
+                ? "border-amber-400 bg-amber-50/95 text-amber-950"
+                : "border-neutral-300 bg-white/95 text-neutral-600 hover:bg-neutral-100"
+            }`}
+          >
+            <IconLayersSubtract className="size-3.5" aria-hidden="true" />
+            <span>Kontur</span>
+          </button>
 
-        <button
-          type="button"
-          aria-pressed={showBuildings3d}
-          onClick={() => setShowBuildings3d((prev) => !prev)}
-          className={`inline-flex cursor-pointer items-center gap-1 rounded-xl border px-2 py-1.5 text-[11px] font-semibold transition-colors ${
-            showBuildings3d
-              ? "border-blue-400 bg-blue-50/95 text-blue-900"
-              : "border-neutral-300 bg-white/95 text-neutral-600 hover:bg-neutral-100"
-          }`}
-        >
-          <IconBuildingSkyscraper className="size-3.5" aria-hidden="true" />
-          <span>Gedung 3D</span>
-        </button>
+          <button
+            type="button"
+            aria-pressed={showBuildings3d}
+            onClick={() => setShowBuildings3d((prev) => !prev)}
+            className={`inline-flex cursor-pointer items-center gap-1 rounded-xl border px-2 py-1.5 text-[11px] font-semibold transition-colors ${
+              showBuildings3d
+                ? "border-blue-400 bg-blue-50/95 text-blue-900"
+                : "border-neutral-300 bg-white/95 text-neutral-600 hover:bg-neutral-100"
+            }`}
+          >
+            <IconBuildingSkyscraper className="size-3.5" aria-hidden="true" />
+            <span>Gedung 3D</span>
+          </button>
+        </div>
       </div>
 
       {/* Camera & 3D Tilt Controls */}
@@ -1453,7 +1459,7 @@ export function MapLibreWorkspaceMap({
         </Button>
       </div>
 
-      <p className="gis-map-disclaimer pointer-events-none absolute z-1 left-2 bottom-2 max-w-[calc(100%_-_96px)] rounded-sm bg-white/92 px-2 py-0.5 text-[10px] leading-4 text-[#525252]">
+      <p className="gis-map-disclaimer pointer-events-none absolute z-1 left-2 bottom-2 max-w-[calc(100%_-_96px)] rounded-sm bg-white/92 px-2 py-0.5 text-[10px] leading-4 text-[#525252] max-[639.01px]:hidden">
         Jawa Barat · 3D Kontur OpenFreeMap + Terrarium DEM · Data backend
       </p>
     </section>
