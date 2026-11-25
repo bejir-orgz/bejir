@@ -27,6 +27,14 @@ function upstreamFailure(path: string, status: number): string | undefined {
   return status >= 500 ? "Layanan backend belum tersedia." : undefined;
 }
 
+/**
+ * Someone waiting on a map click gives up long before the default minute. A route search
+ * that runs past twenty seconds is unusable whatever the cause, so fail it fast and say so.
+ */
+function deadline(path: string, signal: AbortSignal): AbortSignal {
+  return path === "/api/v1/evacuation/routes" ? AbortSignal.any([signal, AbortSignal.timeout(20_000)]) : signal;
+}
+
 export async function proxyBackend(request: Request, path: string): Promise<Response> {
   const template = Object.keys(paths).find((entry) => {
     const pattern = entry.replace(/[.*+?^$()|[\]\\]/g, "\\$&").replace(/\{[^}]+\}/g, "[^/]+");
@@ -60,7 +68,8 @@ export async function proxyBackend(request: Request, path: string): Promise<Resp
       method: request.method,
       headers: { Accept: "application/json", ...(body === undefined ? {} : { "Content-Type": "application/json" }) },
       body: body === undefined ? undefined : JSON.stringify(body),
-      cache: "no-store", signal: request.signal,
+      signal: deadline(path, request.signal),
+      cache: "no-store",
     });
     const replacement = upstreamFailure(path, upstream.status);
     if (replacement) return Response.json({ detail: replacement }, { status: upstream.status });
@@ -71,6 +80,7 @@ export async function proxyBackend(request: Request, path: string): Promise<Resp
     }
     return Response.json(result, { status: upstream.status });
   } catch {
-    return Response.json({ detail: "Koneksi backend gagal." }, { status: 502 });
+    // A routing deadline lands here, and "connection failed" would misdescribe it.
+    return Response.json({ detail: upstreamFailure(path, 503) ?? "Koneksi backend gagal." }, { status: 502 });
   }
 }
