@@ -1,11 +1,7 @@
 "use client";
 
 import {
-  IconAlertTriangle,
   IconBuildingSkyscraper,
-  IconClick,
-  IconCloudRain,
-  IconLayersIntersect,
   IconPlayerPause,
   IconPlayerPlay,
   IconRefresh,
@@ -23,20 +19,20 @@ import type {
 } from "@/features/simulation/terrain-pack";
 
 const floodPresets = [
-  { label: "Ringan (+1,5 m)", value: 1.5 },
-  { label: "Sedang (+3,5 m)", value: 3.5 },
-  { label: "Ekstrem (+7,0 m)", value: 7.0 },
+  { label: "Ringan", value: 1.5 },
+  { label: "Sedang", value: 3.5 },
+  { label: "Ekstrem", value: 7.0 },
 ];
 
 const slopeThresholds = [
-  { label: "Sensitif (14°)", value: 14 },
-  { label: "Normal (18°)", value: 18 },
-  { label: "Kuat (24°)", value: 24 },
+  { label: "Sensitif", value: 14 },
+  { label: "Normal", value: 18 },
+  { label: "Kuat", value: 24 },
 ];
 
 const quickRegionTemplates = [
-  { label: "Kab. Bandung (Cekungan)", match: "kabupaten bandung" },
-  { label: "Kab. Bogor (Perbukitan)", match: "kabupaten bogor" },
+  { label: "Kab. Bandung", match: "kabupaten bandung" },
+  { label: "Kab. Bogor", match: "kabupaten bogor" },
 ];
 
 export function HydroSimulationPanel({
@@ -91,13 +87,13 @@ export function HydroSimulationPanel({
     })
     .filter((item): item is { label: string; regencyId: number; districtId: null } => item !== null);
 
-  const affectedAreaText = stats
-    ? `${stats.affectedAreaKm2.toLocaleString("id-ID", { maximumFractionDigits: 1 })} km² (${stats.affectedPct.toLocaleString("id-ID", { maximumFractionDigits: 1 })}%)`
-    : "0 km²";
-
-  const affectedBuildingsText = stats
-    ? `~${stats.affectedBuildings.toLocaleString("id-ID")} unit`
-    : "0 unit";
+  const affectedAreaKm2 = stats
+    ? stats.affectedAreaKm2.toLocaleString("id-ID", { maximumFractionDigits: 1 })
+    : "0";
+  const affectedPct = stats
+    ? stats.affectedPct.toLocaleString("id-ID", { maximumFractionDigits: 1 })
+    : "0";
+  const affectedBuildings = stats ? stats.affectedBuildings.toLocaleString("id-ID") : "0";
 
   return (
     <section
@@ -105,71 +101,60 @@ export function HydroSimulationPanel({
       role="dialog"
       aria-modal="false"
       aria-labelledby="gis-sim-title"
-      className={`gis-sim-panel absolute bottom-3 left-3 right-3 z-4 mx-auto max-h-[54dvh] overflow-y-auto w-[min(648px,calc(100vw-24px))] rounded-2xl border border-neutral-300 bg-white/97 p-3.5 text-neutral-900 backdrop-blur-[2px] transition-[opacity,transform,right] duration-200 ease-[var(--ease-out-strong)] starting:scale-96 starting:opacity-0 max-[999.01px]:bottom-2.5 max-[999.01px]:p-2.5 ${
+      className={`gis-sim-panel absolute bottom-4 left-3 right-3 z-4 mx-auto max-h-[54dvh] overflow-y-auto w-[min(580px,calc(100vw-24px))] rounded-2xl border border-neutral-300 bg-white p-4 text-neutral-900 transition-[opacity,transform,right] duration-200 ease-[var(--ease-out-strong)] starting:scale-97 starting:opacity-0 max-[999.01px]:bottom-3 max-[999.01px]:p-3.5 ${
         overviewOpen
           ? "min-[1000px]:left-16 min-[1000px]:right-[calc(var(--overview-width)+58px)]"
           : "min-[1000px]:left-16 min-[1000px]:right-16"
       }`}
     >
-      {/* Header & Mandatory Disclaimer */}
-      <div className="flex flex-wrap items-start justify-between gap-2 border-b border-neutral-200 pb-2.5">
+      {/* Header: Noun title + quiet educational scope + uniform utility controls */}
+      <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <span className="inline-flex items-center gap-1.5 rounded-md border border-amber-300 bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-900">
-            <IconAlertTriangle className="size-3.5 shrink-0" aria-hidden="true" />
-            SIMULASI EDUKATIF · BUKAN KONDISI BENCANA AKTUAL
-          </span>
-          <h2 id="gis-sim-title" className="mt-1 text-sm leading-5 font-semibold text-neutral-900">
-            Simulasi Kontur 3D Berbasis DEM, Lereng &amp; Bangunan
+          <h2 id="gis-sim-title" className="text-[15px] leading-5 font-semibold text-neutral-900">
+            Simulasi Peta
           </h2>
+          <p className="mt-0.5 text-xs leading-4 text-neutral-600">
+            Model edukatif berbasis DEM dan lereng, bukan kondisi bencana aktual.
+          </p>
         </div>
 
-        <div className="flex shrink-0 flex-wrap items-center gap-1">
-          {canZoom3d && selectedRegion && stats?.focusCenter && (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="h-7 border-blue-300 bg-blue-50 px-2 text-xs text-blue-800 hover:bg-blue-100 hover:text-blue-950"
-              onClick={() => {
-                if (stats.focusCenter) onZoomClose3d(stats.focusCenter);
-              }}
-            >
-              <IconBuildingSkyscraper className="size-3.5" aria-hidden="true" />
-              <span>Lihat Dekat 3D</span>
-            </Button>
-          )}
+        <div className="flex shrink-0 items-center gap-1">
           {!reduced && selectedRegion && (
             <Button
               type="button"
-              variant="outline"
-              size="sm"
-              className="h-7 px-2 text-xs"
+              variant="ghost"
+              size="icon-sm"
+              className="h-7 w-7 rounded-lg text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
               aria-pressed={paused}
-              aria-label={paused ? "Putar animasi peta" : "Jeda animasi peta"}
+              aria-label={paused ? "Putar animasi simulasi" : "Jeda animasi simulasi"}
+              title={paused ? "Putar animasi" : "Jeda animasi"}
               onClick={onTogglePause}
             >
-              {paused ? <IconPlayerPlay className="size-3.5" aria-hidden="true" /> : <IconPlayerPause className="size-3.5" aria-hidden="true" />}
-              <span>{paused ? "Putar" : "Jeda"}</span>
+              {paused ? (
+                <IconPlayerPlay className="size-4" aria-hidden="true" />
+              ) : (
+                <IconPlayerPause className="size-4" aria-hidden="true" />
+              )}
             </Button>
           )}
           {selectedRegion && (
             <Button
               type="button"
-              variant="outline"
-              size="sm"
-              className="h-7 px-2 text-xs"
+              variant="ghost"
+              size="icon-sm"
+              className="h-7 w-7 rounded-lg text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
               aria-label="Reset daerah simulasi"
+              title="Reset wilayah"
               onClick={onResetRegion}
             >
-              <IconRefresh className="size-3.5" aria-hidden="true" />
-              <span>Reset</span>
+              <IconRefresh className="size-4" aria-hidden="true" />
             </Button>
           )}
           <Button
             type="button"
             variant="ghost"
             size="icon-sm"
-            className="h-7 w-7"
+            className="h-7 w-7 rounded-lg text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
             aria-label="Tutup panel simulasi peta"
             onClick={onClose}
           >
@@ -178,50 +163,62 @@ export function HydroSimulationPanel({
         </div>
       </div>
 
-      {/* Mode Tabs + Scope Switcher */}
-      <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-1 min-w-[230px] gap-1.5" role="tablist" aria-label="Pilih skenario simulasi peta">
+      {/* Mode & Scope: compact natural-width segmented controls on one row */}
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-b border-neutral-200 pb-3">
+        <div
+          className="inline-flex items-center rounded-lg bg-neutral-100 p-0.5"
+          role="tablist"
+          aria-label="Pilih skenario simulasi"
+        >
           <button
             type="button"
             role="tab"
             aria-selected={mode === "flood"}
-            className={`flex-1 cursor-pointer rounded-xl border px-2.5 py-1.5 text-xs font-semibold transition-colors ${
+            className={`inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-md px-3 text-xs font-medium transition-colors ${
               mode === "flood"
-                ? "border-blue-600 bg-blue-600 text-white"
-                : "border-neutral-200 bg-neutral-50 text-neutral-700 hover:bg-blue-50"
+                ? "bg-white text-neutral-900 shadow-2xs"
+                : "text-neutral-600 hover:text-neutral-900"
             }`}
             onClick={() => onModeChange("flood")}
           >
-            <span className="inline-flex items-center justify-center gap-1.5">
-              <IconCloudRain className="size-3.5" aria-hidden="true" />
-              Banjir (DEM)
-            </span>
+            <span
+              aria-hidden="true"
+              className={`size-1.5 rounded-full ${mode === "flood" ? "bg-[var(--gis-blue)]" : "bg-neutral-400"}`}
+            />
+            Banjir (DEM)
           </button>
           <button
             type="button"
             role="tab"
             aria-selected={mode === "landslide"}
-            className={`flex-1 cursor-pointer rounded-xl border px-2.5 py-1.5 text-xs font-semibold transition-colors ${
+            className={`inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-md px-3 text-xs font-medium transition-colors ${
               mode === "landslide"
-                ? "border-orange-600 bg-orange-600 text-white"
-                : "border-neutral-200 bg-neutral-50 text-neutral-700 hover:bg-orange-50"
+                ? "bg-white text-neutral-900 shadow-2xs"
+                : "text-neutral-600 hover:text-neutral-900"
             }`}
             onClick={() => onModeChange("landslide")}
           >
-            <span className="inline-flex items-center justify-center gap-1.5">
-              <IconLayersIntersect className="size-3.5" aria-hidden="true" />
-              Longsor (Lereng)
-            </span>
+            <span
+              aria-hidden="true"
+              className={`size-1.5 rounded-full ${mode === "landslide" ? "bg-[#ea580c]" : "bg-neutral-400"}`}
+            />
+            Longsor (Lereng)
           </button>
         </div>
 
-        <div className="inline-flex items-center rounded-xl border border-neutral-200 bg-neutral-50 p-0.5" role="group" aria-label="Cakupan klik wilayah">
+        <div
+          className="inline-flex items-center rounded-lg bg-neutral-100 p-0.5"
+          role="group"
+          aria-label="Cakupan wilayah"
+        >
           <button
             type="button"
             aria-pressed={scope === "district"}
             onClick={() => onScopeChange("district")}
-            className={`cursor-pointer rounded-lg px-2.5 py-1 text-[11px] font-semibold transition-colors ${
-              scope === "district" ? "bg-white text-neutral-900 shadow-xs" : "text-neutral-600 hover:text-neutral-900"
+            className={`h-7 cursor-pointer rounded-md px-2.5 text-xs font-medium transition-colors ${
+              scope === "district"
+                ? "bg-white text-neutral-900 shadow-2xs"
+                : "text-neutral-600 hover:text-neutral-900"
             }`}
           >
             Kecamatan
@@ -230,8 +227,10 @@ export function HydroSimulationPanel({
             type="button"
             aria-pressed={scope === "regency"}
             onClick={() => onScopeChange("regency")}
-            className={`cursor-pointer rounded-lg px-2.5 py-1 text-[11px] font-semibold transition-colors ${
-              scope === "regency" ? "bg-white text-neutral-900 shadow-xs" : "text-neutral-600 hover:text-neutral-900"
+            className={`h-7 cursor-pointer rounded-md px-2.5 text-xs font-medium transition-colors ${
+              scope === "regency"
+                ? "bg-white text-neutral-900 shadow-2xs"
+                : "text-neutral-600 hover:text-neutral-900"
             }`}
           >
             Kabupaten
@@ -239,18 +238,15 @@ export function HydroSimulationPanel({
         </div>
       </div>
 
-      {/* Selected Region Summary or Click Guidance */}
+      {/* Body: Quiet empty prompt OR hairline-divided metrics + single parameter control */}
       {!selectedRegion ? (
-        <div className="mt-2.5 flex flex-col gap-2 rounded-xl border border-dashed border-blue-300 bg-blue-50/60 p-3 text-xs text-blue-950">
-          <div className="flex items-start gap-2">
-            <IconClick className="mt-0.5 size-4 shrink-0 text-blue-600" aria-hidden="true" />
-            <p className="leading-4">
-              <strong>Klik daerah mana pun di peta</strong> untuk menjalankan simulasi langsung pada kontur ketinggian DEM, kemiringan lereng, dan sebaran bangunan 3D wilayah tersebut.
-            </p>
-          </div>
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2.5">
+          <p className="text-xs leading-5 text-neutral-700">
+            Klik wilayah mana pun pada peta untuk memulai simulasi.
+          </p>
           {quickRegionExamples.length > 0 && (
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-[11px] font-medium text-blue-800">Atau coba cepat:</span>
+              <span className="text-xs text-neutral-600">Contoh:</span>
               {quickRegionExamples.map((ex) => (
                 <button
                   key={ex.regencyId}
@@ -259,7 +255,7 @@ export function HydroSimulationPanel({
                     onScopeChange("regency");
                     onPickExample(ex.regencyId, ex.districtId);
                   }}
-                  className="cursor-pointer rounded-lg border border-blue-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-blue-800 transition-colors hover:bg-blue-100"
+                  className="h-7 cursor-pointer rounded-lg border border-neutral-200 bg-neutral-50 px-2.5 text-xs font-medium text-neutral-800 transition-colors hover:bg-neutral-100"
                 >
                   {ex.label}
                 </button>
@@ -268,76 +264,104 @@ export function HydroSimulationPanel({
           )}
         </div>
       ) : (
-        <div className="mt-2.5 flex flex-col gap-2.5">
-          {/* Active Region + 4 Live Terrain & Building Stats */}
-          <div className="grid grid-cols-2 gap-2 rounded-xl border border-neutral-200 bg-neutral-50/90 p-2 sm:grid-cols-[minmax(0,1.25fr)_repeat(4,minmax(0,0.75fr))] sm:p-2.5">
-            <div className="col-span-2 min-w-0 sm:col-span-1">
-              <p className="truncate text-xs font-semibold text-neutral-900">{selectedRegion.title}</p>
-              <p className="truncate text-[11px] text-neutral-600">
+        <div className="mt-3 flex flex-col gap-3">
+          {/* Active region identity + single Focus 3D action */}
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-neutral-900">{selectedRegion.title}</p>
+              <p className="truncate text-xs text-neutral-600">
                 {selectedRegion.subtitle}
-                {selectedRegion.pointSample
-                  ? ` · ${selectedRegion.pointSample.demM.toFixed(0)} m dpl`
-                  : ""}
+                {selectedRegion.pointSample ? ` · ${selectedRegion.pointSample.demM.toFixed(0)} mdpl` : ""}
               </p>
             </div>
-            <div>
-              <span className="block text-[10px] font-medium text-neutral-500">Elevasi DEM</span>
-              <strong className="text-xs font-semibold text-neutral-900 tabular-nums">
-                {Math.round(selectedRegion.raster.minDemM)} s.d. {Math.round(selectedRegion.raster.maxDemM)} m
-              </strong>
-            </div>
-            <div>
-              <span className="block text-[10px] font-medium text-neutral-500">Lereng Maks</span>
-              <strong className="text-xs font-semibold text-neutral-900 tabular-nums">
-                {selectedRegion.raster.maxSlopeDeg.toFixed(1)}°
-              </strong>
-            </div>
-            <div>
-              <span className="block text-[10px] font-medium text-neutral-500">
-                {mode === "flood" ? "Estimasi Genangan" : "Zona Rawan Lereng"}
-              </span>
-              <strong
-                className={`text-xs font-semibold tabular-nums ${
-                  mode === "flood" ? "text-blue-700" : "text-orange-700"
-                }`}
+            {canZoom3d && stats?.focusCenter && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-7 shrink-0 gap-1.5 rounded-lg border-neutral-300 bg-white px-2.5 text-xs font-medium text-neutral-800 hover:bg-neutral-100"
+                onClick={() => {
+                  if (stats.focusCenter) onZoomClose3d(stats.focusCenter);
+                }}
               >
-                {affectedAreaText}
-              </strong>
+                <IconBuildingSkyscraper className="size-3.5 text-neutral-600" aria-hidden="true" />
+                <span>Lihat Dekat 3D</span>
+              </Button>
+            )}
+          </div>
+
+          {/* One flat container split by 1px hairlines (3 balanced columns, >=12px labels, tabular figures) */}
+          <div className="grid grid-cols-3 divide-x divide-neutral-200 border-y border-neutral-200 py-2.5 max-[520px]:grid-cols-1 max-[520px]:divide-x-0 max-[520px]:divide-y">
+            <div className="pr-3 max-[520px]:pb-2 max-[520px]:pr-0">
+              <span className="block text-xs text-neutral-600">
+                {mode === "flood" ? "Estimasi genangan" : "Zona rawan lereng"}
+              </span>
+              <div className="mt-0.5 flex items-baseline gap-1.5 tabular-nums">
+                <strong
+                  className={`text-[15px] font-semibold ${
+                    mode === "flood" ? "text-[var(--accent-foreground)]" : "text-[#c2410c]"
+                  }`}
+                >
+                  {affectedAreaKm2} km²
+                </strong>
+                <span className="text-xs text-neutral-600">({affectedPct}%)</span>
+              </div>
             </div>
-            <div>
-              <span className="block text-[10px] font-medium text-neutral-500">Bangunan Terpapar</span>
-              <strong className="text-xs font-semibold text-neutral-900 tabular-nums">
-                {affectedBuildingsText}
-              </strong>
+
+            <div className="px-3 max-[520px]:px-0 max-[520px]:py-2">
+              <span className="block text-xs text-neutral-600">Bangunan terpapar</span>
+              <div className="mt-0.5 flex items-baseline gap-1 tabular-nums">
+                <strong className="text-[15px] font-semibold text-neutral-900">~{affectedBuildings}</strong>
+                <span className="text-xs text-neutral-600">unit</span>
+              </div>
+            </div>
+
+            <div className="pl-3 max-[520px]:pl-0 max-[520px]:pt-2">
+              <span className="block text-xs text-neutral-600">Elevasi &amp; lereng maks</span>
+              <div className="mt-0.5 flex items-baseline gap-1.5 tabular-nums">
+                <strong className="text-[15px] font-semibold text-neutral-900">
+                  {Math.round(selectedRegion.raster.minDemM).toLocaleString("id-ID")} s.d.{" "}
+                  {Math.round(selectedRegion.raster.maxDemM).toLocaleString("id-ID")} m
+                </strong>
+                <span className="text-xs text-neutral-600">
+                  {selectedRegion.raster.maxSlopeDeg.toLocaleString("id-ID", {
+                    minimumFractionDigits: 1,
+                    maximumFractionDigits: 1,
+                  })}°
+                </span>
+              </div>
             </div>
           </div>
 
-          {/* Scenario Controls */}
+          {/* Scenario Slider + Quiet Presets + Data Legend */}
           {mode === "flood" ? (
             <div className="flex flex-col gap-2">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <label htmlFor="gis-sim-water" className="text-xs font-semibold text-neutral-800">
-                  Kenaikan Muka Air Luapan:{" "}
-                  <span className="text-blue-700 tabular-nums">
+                <label htmlFor="gis-sim-water" className="text-xs font-medium text-neutral-800">
+                  Kenaikan muka air:{" "}
+                  <strong className="font-semibold text-neutral-900 tabular-nums">
                     +{params.waterRiseM.toLocaleString("id-ID", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} m
-                  </span>
+                  </strong>
                 </label>
-                <div className="flex flex-wrap gap-1">
-                  {floodPresets.map((preset) => (
-                    <button
-                      key={preset.value}
-                      type="button"
-                      aria-pressed={Math.abs(params.waterRiseM - preset.value) < 0.05}
-                      onClick={() => onParamsChange({ waterRiseM: preset.value })}
-                      className={`cursor-pointer rounded-lg border px-2 py-0.5 text-[11px] font-medium transition-colors ${
-                        Math.abs(params.waterRiseM - preset.value) < 0.05
-                          ? "border-blue-600 bg-blue-50 text-blue-800"
-                          : "border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-100"
-                      }`}
-                    >
-                      {preset.label}
-                    </button>
-                  ))}
+                <div className="inline-flex items-center gap-1">
+                  {floodPresets.map((preset) => {
+                    const active = Math.abs(params.waterRiseM - preset.value) < 0.05;
+                    return (
+                      <button
+                        key={preset.value}
+                        type="button"
+                        aria-pressed={active}
+                        onClick={() => onParamsChange({ waterRiseM: preset.value })}
+                        className={`h-6 cursor-pointer rounded-md px-2 text-xs font-medium transition-colors ${
+                          active
+                            ? "bg-neutral-900 text-white"
+                            : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200/80"
+                        }`}
+                      >
+                        {preset.label}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
               <input
@@ -349,49 +373,51 @@ export function HydroSimulationPanel({
                 step={0.5}
                 value={params.waterRiseM}
                 onChange={(event) => onParamsChange({ waterRiseM: Number(event.target.value) })}
-                className="h-2 w-full cursor-pointer accent-blue-600"
+                className="h-1.5 w-full cursor-pointer accent-[var(--gis-blue)]"
               />
-              <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-neutral-600">
-                <div className="flex flex-wrap items-center gap-3">
-                  <span className="inline-flex items-center gap-1">
-                    <span className="size-2.5 rounded-xs bg-[#38BDF8]" aria-hidden="true" />
-                    Dangkal (&lt;0,5 m)
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <span className="size-2.5 rounded-xs bg-[#2563EB]" aria-hidden="true" />
-                    Sedang (0,5 s.d. 2 m)
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <span className="size-2.5 rounded-xs bg-[#1E3A8A]" aria-hidden="true" />
-                    Dalam (&gt;2 m)
-                  </span>
-                </div>
-                <span className="text-[10px] text-neutral-500">Klik kanan + seret peta untuk memutar sudut 3D</span>
+              <div className="flex flex-wrap items-center gap-4 text-xs text-neutral-600">
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="size-2.5 rounded-xs bg-[#38BDF8]" aria-hidden="true" />
+                  Dangkal (&lt;0,5 m)
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="size-2.5 rounded-xs bg-[#2563EB]" aria-hidden="true" />
+                  Sedang (0,5 s.d. 2 m)
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="size-2.5 rounded-xs bg-[#1E3A8A]" aria-hidden="true" />
+                  Dalam (&gt;2 m)
+                </span>
               </div>
             </div>
           ) : (
             <div className="flex flex-col gap-2">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <label htmlFor="gis-sim-rain" className="text-xs font-semibold text-neutral-800">
-                  Hujan Pemicu Kejenuhan Tanah:{" "}
-                  <span className="text-orange-700 tabular-nums">{params.triggerRainMmDay} mm/hari</span>
+                <label htmlFor="gis-sim-rain" className="text-xs font-medium text-neutral-800">
+                  Hujan pemicu:{" "}
+                  <strong className="font-semibold text-neutral-900 tabular-nums">
+                    {params.triggerRainMmDay} mm/hari
+                  </strong>
                 </label>
-                <div className="flex flex-wrap gap-1">
-                  {slopeThresholds.map((opt) => (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      aria-pressed={params.criticalSlopeDeg === opt.value}
-                      onClick={() => onParamsChange({ criticalSlopeDeg: opt.value })}
-                      className={`cursor-pointer rounded-lg border px-2 py-0.5 text-[11px] font-medium transition-colors ${
-                        params.criticalSlopeDeg === opt.value
-                          ? "border-orange-600 bg-orange-50 text-orange-800"
-                          : "border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-100"
-                      }`}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
+                <div className="inline-flex items-center gap-1">
+                  {slopeThresholds.map((opt) => {
+                    const active = params.criticalSlopeDeg === opt.value;
+                    return (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        aria-pressed={active}
+                        onClick={() => onParamsChange({ criticalSlopeDeg: opt.value })}
+                        className={`h-6 cursor-pointer rounded-md px-2 text-xs font-medium transition-colors ${
+                          active
+                            ? "bg-neutral-900 text-white"
+                            : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200/80"
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
               <input
@@ -403,24 +429,21 @@ export function HydroSimulationPanel({
                 step={10}
                 value={params.triggerRainMmDay}
                 onChange={(event) => onParamsChange({ triggerRainMmDay: Number(event.target.value) })}
-                className="h-2 w-full cursor-pointer accent-orange-600"
+                className="h-1.5 w-full cursor-pointer accent-[#ea580c]"
               />
-              <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-neutral-600">
-                <div className="flex flex-wrap items-center gap-3">
-                  <span className="inline-flex items-center gap-1">
-                    <span className="size-2.5 rounded-xs bg-[#FFD000]" aria-hidden="true" />
-                    Waspada
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <span className="size-2.5 rounded-xs bg-[#FF6A00]" aria-hidden="true" />
-                    Siaga
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <span className="size-2.5 rounded-xs bg-[#FF0000]" aria-hidden="true" />
-                    Kritis + arah turun lereng
-                  </span>
-                </div>
-                <span className="text-[10px] text-neutral-500">Parameter: Slope + Hujan + Tutupan Lahan + DEM</span>
+              <div className="flex flex-wrap items-center gap-4 text-xs text-neutral-600">
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="size-2.5 rounded-xs bg-[#FFD000]" aria-hidden="true" />
+                  Waspada
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="size-2.5 rounded-xs bg-[#FF6A00]" aria-hidden="true" />
+                  Siaga
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="size-2.5 rounded-xs bg-[#FF0000]" aria-hidden="true" />
+                  Kritis
+                </span>
               </div>
             </div>
           )}

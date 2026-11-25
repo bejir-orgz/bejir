@@ -11,15 +11,10 @@ import type {
 } from "maplibre-gl";
 import type { Feature, FeatureCollection, Geometry, MultiLineString, MultiPolygon, Polygon } from "geojson";
 import {
-  IconBuildingSkyscraper,
   IconCompass,
   IconCurrentLocation,
-  IconLayersSubtract,
   IconMinus,
-  IconMountain,
   IconPlus,
-  IconSatellite,
-  IconWorld,
 } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { westJavaBasemap } from "../basemap";
@@ -1295,72 +1290,78 @@ export function MapLibreWorkspaceMap({
 
       {dataStatus || !mapReady ? (
         <div
-          className="gis-map-status absolute z-1 left-[calc(var(--regions-width,0px)_+_16px)] right-16 bottom-16 flex items-center flex-wrap gap-2 rounded-lg bg-white/95 p-2 text-[12px] text-neutral-800 shadow-xs [transition:left_var(--gis-slide-duration)_var(--gis-slide-easing),right_var(--gis-slide-duration)_var(--gis-slide-easing)] motion-reduce:[transition:none]"
+          className="gis-map-status absolute z-1 left-[calc(var(--regions-width,0px)_+_16px)] right-16 bottom-16 flex items-center flex-wrap gap-2 rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-neutral-800 [transition:left_var(--gis-slide-duration)_var(--gis-slide-easing),right_var(--gis-slide-duration)_var(--gis-slide-easing)] motion-reduce:[transition:none]"
           role="status"
         >
-          {dataStatus?.message ?? "Memuat peta 3D kontur & bangunan Jawa Barat..."}
+          {dataStatus?.message ?? "Memuat peta 3D Jawa Barat..."}
           {dataStatus?.retry ? (
-            <Button size="sm" variant="outline" onClick={dataStatus.retry}>
+            <Button size="sm" variant="outline" className="h-7 rounded-lg text-xs" onClick={dataStatus.retry}>
               Coba lagi
             </Button>
           ) : null}
         </div>
       ) : null}
 
-      {/* Map Style & 3D Layer Switcher (Bottom Left above Disclaimer) */}
+      {/* Unified Map View & 3D Overlay Switcher (Bottom Left) */}
       <div
-        className={`gis-3d-switcher absolute z-2 left-[calc(var(--regions-width,0px)_+_12px)] bottom-9 flex gap-1.5 [transition:left_var(--gis-slide-duration)_var(--gis-slide-easing)] motion-reduce:[transition:none] ${
-          simulationOpen ? "flex-col items-start max-[1279.01px]:hidden" : "flex-wrap items-center max-[999.01px]:hidden"
+        className={`gis-3d-switcher absolute z-2 left-[calc(var(--regions-width,0px)_+_16px)] bottom-4 inline-flex items-center rounded-xl border border-neutral-200 bg-white p-1 [transition:left_var(--gis-slide-duration)_var(--gis-slide-easing)] motion-reduce:[transition:none] ${
+          simulationOpen ? "max-[1279.01px]:hidden" : "max-[639.01px]:hidden"
         }`}
         role="group"
-        aria-label="Gaya peta 3D dan tampilan kontur"
+        aria-label="Mode tampilan peta dan lapisan 3D"
       >
-        <div className="inline-flex items-center rounded-xl border border-neutral-300 bg-white/95 p-0.5 text-xs">
+        <div className="inline-flex items-center gap-0.5">
           <button
             type="button"
             aria-pressed={engineMode === "3d-natural"}
             onClick={() => onEngineModeChange("3d-natural")}
-            className={`inline-flex cursor-pointer items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-semibold transition-colors ${
-              engineMode === "3d-natural" ? "bg-blue-600 text-white" : "text-neutral-700 hover:bg-neutral-100"
+            className={`h-7 cursor-pointer rounded-lg px-2.5 text-xs font-medium transition-colors ${
+              engineMode === "3d-natural"
+                ? "bg-[var(--gis-blue)] text-white"
+                : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
             }`}
           >
-            <IconMountain className="size-3.5" aria-hidden="true" />
-            <span>3D Kontur</span>
+            3D
           </button>
           <button
             type="button"
             aria-pressed={engineMode === "3d-satellite"}
             onClick={() => onEngineModeChange("3d-satellite")}
-            className={`inline-flex cursor-pointer items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-semibold transition-colors ${
-              engineMode === "3d-satellite" ? "bg-blue-600 text-white" : "text-neutral-700 hover:bg-neutral-100"
+            className={`h-7 cursor-pointer rounded-lg px-2.5 text-xs font-medium transition-colors ${
+              engineMode === "3d-satellite"
+                ? "bg-[var(--gis-blue)] text-white"
+                : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
             }`}
           >
-            <IconSatellite className="size-3.5" aria-hidden="true" />
-            <span>Satelit 3D</span>
+            Satelit
           </button>
           <button
             type="button"
             aria-pressed={false}
             onClick={() => onEngineModeChange("2d-classic")}
-            className="inline-flex cursor-pointer items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-semibold text-neutral-700 transition-colors hover:bg-neutral-100"
+            className="h-7 cursor-pointer rounded-lg px-2.5 text-xs font-medium text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900"
           >
-            <IconWorld className="size-3.5" aria-hidden="true" />
-            <span>2D Klasik</span>
+            2D
           </button>
         </div>
 
-        <div className="inline-flex items-center gap-1.5">
+        <span className="mx-1.5 h-4 w-px bg-neutral-200" aria-hidden="true" />
+
+        <div className="inline-flex items-center gap-0.5">
           <button
             type="button"
             aria-pressed={showContours}
             onClick={() => setShowContours((prev) => !prev)}
-            className={`inline-flex cursor-pointer items-center gap-1 rounded-xl border px-2 py-1.5 text-[11px] font-semibold transition-colors ${
+            className={`inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-lg px-2.5 text-xs font-medium transition-colors ${
               showContours
-                ? "border-amber-400 bg-amber-50/95 text-amber-950"
-                : "border-neutral-300 bg-white/95 text-neutral-600 hover:bg-neutral-100"
+                ? "bg-neutral-100 text-neutral-900"
+                : "text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900"
             }`}
           >
-            <IconLayersSubtract className="size-3.5" aria-hidden="true" />
+            <span
+              aria-hidden="true"
+              className={`size-1.5 rounded-full ${showContours ? "bg-[var(--gis-blue)]" : "bg-neutral-300"}`}
+            />
             <span>Kontur</span>
           </button>
 
@@ -1368,14 +1369,17 @@ export function MapLibreWorkspaceMap({
             type="button"
             aria-pressed={showBuildings3d}
             onClick={() => setShowBuildings3d((prev) => !prev)}
-            className={`inline-flex cursor-pointer items-center gap-1 rounded-xl border px-2 py-1.5 text-[11px] font-semibold transition-colors ${
+            className={`inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-lg px-2.5 text-xs font-medium transition-colors ${
               showBuildings3d
-                ? "border-blue-400 bg-blue-50/95 text-blue-900"
-                : "border-neutral-300 bg-white/95 text-neutral-600 hover:bg-neutral-100"
+                ? "bg-neutral-100 text-neutral-900"
+                : "text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900"
             }`}
           >
-            <IconBuildingSkyscraper className="size-3.5" aria-hidden="true" />
-            <span>Gedung 3D</span>
+            <span
+              aria-hidden="true"
+              className={`size-1.5 rounded-full ${showBuildings3d ? "bg-[var(--gis-blue)]" : "bg-neutral-300"}`}
+            />
+            <span>Bangunan</span>
           </button>
         </div>
       </div>
@@ -1392,10 +1396,10 @@ export function MapLibreWorkspaceMap({
           aria-pressed={isTilted}
           aria-label={isTilted ? "Ubah sudut pandang menjadi tegak 2D" : "Miringkan kamera ke sudut pandang 3D"}
           title={isTilted ? "Sudut tegak (0°)" : "Sudut 3D (55°)"}
-          className={`h-9 w-9 rounded-lg border text-[11px] font-bold ${
+          className={`h-9 w-9 rounded-xl border text-xs font-semibold transition-colors ${
             isTilted
-              ? "border-blue-600 bg-blue-600 text-white hover:bg-blue-700 hover:text-white"
-              : "border-neutral-200 bg-white text-blue-600 hover:bg-blue-50"
+              ? "border-neutral-200 bg-white text-[var(--gis-blue)] hover:bg-neutral-50"
+              : "border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900"
           }`}
           onClick={() => {
             const map = mapRef.current;
@@ -1414,7 +1418,7 @@ export function MapLibreWorkspaceMap({
             size="icon-sm"
             aria-label="Reset arah kompas ke utara"
             title="Reset arah ke utara"
-            className="h-9 w-9 rounded-lg border border-neutral-200 bg-white text-neutral-800 hover:bg-neutral-100"
+            className="h-9 w-9 rounded-xl border border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50"
             onClick={() => {
               const map = mapRef.current;
               if (!map) return;
@@ -1430,7 +1434,7 @@ export function MapLibreWorkspaceMap({
           </Button>
         )}
 
-        <div className="gis-zoom-controls flex flex-col gap-1.5 rounded-lg border border-neutral-200 bg-white p-1.5">
+        <div className="gis-zoom-controls flex flex-col gap-1.5 rounded-xl border border-neutral-200 bg-white p-1.5">
           <Button
             type="button"
             variant="ghost"
@@ -1459,7 +1463,7 @@ export function MapLibreWorkspaceMap({
           type="button"
           variant="ghost"
           size="icon-sm"
-          className="gis-reset-map h-9 w-9 rounded-lg border border-neutral-200 bg-white p-1.5 hover:bg-blue-50"
+          className="gis-reset-map h-9 w-9 rounded-xl border border-neutral-200 bg-white p-1.5 hover:bg-neutral-50"
           aria-label="Kembali ke Jawa Barat"
           title="Kembali ke Jawa Barat"
           onClick={() => {
@@ -1478,10 +1482,6 @@ export function MapLibreWorkspaceMap({
           <IconCurrentLocation className="size-5" aria-hidden="true" />
         </Button>
       </div>
-
-      <p className="gis-map-disclaimer pointer-events-none absolute z-1 left-2 bottom-2 max-w-[calc(100%_-_96px)] rounded-sm bg-white/92 px-2 py-0.5 text-[10px] leading-4 text-[#525252] max-[639.01px]:hidden">
-        Jawa Barat · 3D Kontur OpenFreeMap + Terrarium DEM · Data backend
-      </p>
     </section>
   );
 }
