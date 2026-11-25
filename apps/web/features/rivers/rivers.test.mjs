@@ -2,7 +2,7 @@ import "../../lib/api/test-setup.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 const { prepareRiver, createDistrictIndex } = await import("./preparation.ts");
-const { summarizeRivers, riverViewport, parseRiverBounds, parseRiverRegions } = await import("./data.ts");
+const { summarizeRivers, parseRiverBounds, parseRiverRegions } = await import("./data.ts");
 const polygon = (west, east) => ({ type: "Polygon", coordinates: [[[west,0],[east,0],[east,1],[west,1],[west,0]]] });
 const index = createDistrictIndex([{ id: 1, regency_id: 17, geom: polygon(0,1) }, { id: 2, regency_id: 17, geom: polygon(1,2) }, { id: 3, regency_id: 18, geom: polygon(2,3) }]);
 const feature = (id, line) => prepareRiver({ id, name: " ", river_type: "Sungai Satu Garis", geom: { type: "MultiLineString", coordinates: [line] } }, index);
@@ -20,13 +20,7 @@ test("raw line intersection assigns both districts; display strips Z and keeps c
   assert.equal(summarizeRivers(data, []).total, 2);
 });
 
-test("viewport limits rendering with explicit coverage and never changes full summary", () => {
-  const view = riverViewport(data, [], [0,0,3,1], 1);
-  assert.equal(view.features.length, 1);
-  assert.equal(view.total_matching, 2);
-  assert.equal(view.truncated, true);
-  assert.equal(summarizeRivers(data, []).total, 2);
-  assert.equal(riverViewport(data, [], [2,0,3,1]).returned, 1);
+test("map filter inputs are validated before they reach the viewport API", () => {
   assert.throws(() => parseRiverBounds("1,2,0,3"));
   assert.throws(() => parseRiverBounds("0,0,NaN,3"));
   assert.throws(() => parseRiverRegions(new URLSearchParams("region=17;DROP")));

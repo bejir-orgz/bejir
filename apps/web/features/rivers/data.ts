@@ -15,13 +15,6 @@ export function summarizeRivers(data: PreparedRivers, regionIds: string[]): Rive
   }
   return { total: rows.length, by_regency, prepared_at: data.prepared_at };
 }
-export function riverViewport(data: PreparedRivers, regionIds: string[], bounds: number[], limit = 4000) {
-  const [west, south, east, north] = bounds;
-  const rows = scopeRivers(data, regionIds).filter((row) => row.bbox[0] <= east && row.bbox[2] >= west && row.bbox[1] <= north && row.bbox[3] >= south);
-  const extent = (row: RiverFeature) => Math.hypot(row.bbox[2] - row.bbox[0], row.bbox[3] - row.bbox[1]);
-  const features = rows.length > limit ? [...rows].sort((a, b) => extent(b) - extent(a) || a.id - b.id).slice(0, limit) : rows;
-  return { type: "FeatureCollection" as const, features, total_matching: rows.length, returned: features.length, truncated: rows.length > limit, prepared_at: data.prepared_at, village_unsupported: regionIds.some((id) => id.replace(/^!/, "").split("/").length === 3) };
-}
 export function parseRiverRegions(query: URLSearchParams): string[] {
   const ids = query.getAll("region");
   if (ids.length > 1000 || ids.some((id) => !/^!?[1-9]\d*(?:\/[1-9]\d*){0,2}$/.test(id))) throw new Error("Wilayah tidak valid.");

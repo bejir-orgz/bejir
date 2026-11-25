@@ -22,7 +22,7 @@ export function RiverLayer({ map, enabled, regionIds, onStatus }: { map: Leaflet
       try {
         const response = await fetch(`/backend/web/rivers/layers?${query}`, { signal: active.signal });
         if (!response.ok) throw new Error("Jaringan sungai belum dapat dimuat.");
-        const data: FeatureCollection<MultiLineString, RiverProperties> & { returned: number; total_matching: number; truncated: boolean; village_unsupported: boolean } = await response.json();
+        const data: FeatureCollection<MultiLineString, RiverProperties> & { returned: number; total_matching: number; truncated: boolean; village_unsupported: boolean; region_unsupported: boolean } = await response.json();
         const L = await import("leaflet");
         if (closed || active.signal.aborted) return;
         remove?.();
@@ -33,7 +33,13 @@ export function RiverLayer({ map, enabled, regionIds, onStatus }: { map: Leaflet
           line.bindTooltip(text);
         } }).addTo(map);
         remove = () => { layer.remove(); renderer.remove(); };
-        onStatus(data.village_unsupported ? { message: "Filter sungai tingkat kelurahan/desa belum tersedia." } : data.truncated ? { message: `Menampilkan ${data.returned.toLocaleString("id-ID")} dari ${data.total_matching.toLocaleString("id-ID")} segmen pada area peta. Perbesar peta untuk detail. Statistik menghitung seluruh segmen wilayah terpilih.` } : undefined);
+        // The API filters rivers by viewport only, so say so rather than imply the region filter applied.
+        const scopeNote = data.region_unsupported ? " Layer sungai mengikuti area peta yang terlihat, belum filter wilayah." : "";
+        onStatus(data.village_unsupported || data.region_unsupported || data.truncated
+          // A truncated page comes back in id order, so the slice is not spread evenly: say so
+          // rather than let the gaps read as "no rivers here".
+          ? { message: (data.truncated ? `Menampilkan ${data.returned.toLocaleString("id-ID")} dari ${data.total_matching.toLocaleString("id-ID")} segmen — sebagian saja dan belum merata. Perbesar peta untuk melihat seluruh sungai di satu area.` : `Menampilkan ${data.returned.toLocaleString("id-ID")} segmen pada area peta.`) + scopeNote }
+          : undefined);
       } catch (error) {
         if (!closed && !active.signal.aborted) { remove?.(); remove = undefined; onStatus({ message: error instanceof Error ? error.message : "Layer sungai gagal.", retry: () => { void load(); } }); }
       }

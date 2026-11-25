@@ -8,7 +8,7 @@ interface SitesPage {
 
 export async function getEvacuationSites(signal?: AbortSignal): Promise<EvacuationSite[]> {
   async function readPage(offset: number): Promise<SitesPage> {
-    const response = await fetchBackend(`/api/v1/evacuation/sites?limit=100&offset=${offset}`, {
+    const response = await fetchBackend(`/api/v1/evacuation/sites?limit=1000&offset=${offset}`, {
       next: { revalidate: 300 },
       signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(20_000)]) : AbortSignal.timeout(20_000),
     });
@@ -32,8 +32,8 @@ export async function getEvacuationSites(signal?: AbortSignal): Promise<Evacuati
 
   const first = await readPage(0);
   const items = [...first.items];
-  for (let offset = 100; offset < first.total; offset += 600) {
-    const offsets = Array.from({ length: Math.min(6, Math.ceil((first.total - offset) / 100)) }, (_, index) => offset + index * 100);
+  for (let offset = 1000; offset < first.total; offset += 6000) {
+    const offsets = Array.from({ length: Math.min(6, Math.ceil((first.total - offset) / 1000)) }, (_, index) => offset + index * 1000);
     const pages = await Promise.all(offsets.map(readPage));
     for (const page of pages) {
       if (page.total !== first.total) throw new Error("Daftar titik evakuasi berubah. Coba lagi.");

@@ -8,6 +8,11 @@ export interface FloodEvent {
   id: number;
   event_datetime: string | null;
   regency_id: number | null;
+  /** Impacts now travel with the list, so a year no longer costs one request per event. */
+  houses_flooded?: number | null;
+  fatalities?: number | null;
+  missing?: number | null;
+  event_type?: { name: string | null } | null;
 }
 
 export interface FloodStatistics {
@@ -28,19 +33,6 @@ export async function getFloodStatistics(query = ""): Promise<FloodStatistics> {
     throw new Error("Respons statistik Flood tidak valid.");
   }
   return data;
-}
-
-interface FloodDetail extends FloodEvent { impacts: FloodImpact[]; event_type?: { name: string | null } | null }
-
-export interface FloodImpact {
-  fatalities: number | null;
-  missing: number | null;
-  houses_flooded?: number | null;
-  schools_damaged?: number | null;
-  religious_facilities_damaged?: number | null;
-  health_facilities_damaged?: number | null;
-  offices_damaged?: number | null;
-  bridges_damaged?: number | null;
 }
 
 async function readFlood<T>(path: string): Promise<T> {
@@ -76,8 +68,6 @@ export async function listFloodEvents(query: string): Promise<FloodEvent[]> {
   }
 }
 
-export function getFloodDetail(id: number) { return readFlood<FloodDetail>(`events/${id}`); }
-
 export { getFacilityTotals } from "./facilities";
 
 export async function getFloodHistory(requestedYear?: number): Promise<FloodHistoryData> {
@@ -98,29 +88,17 @@ export async function getFloodHistory(requestedYear?: number): Promise<FloodHist
   const events = await listFloodEvents(dates(year));
 
   const names = new Map(statistics.by_regency.map((entry) => [entry.regency_id, regionName(entry.regency_name)]));
-  const rows: FloodHistoryRow[] = [];
-  // Bound concurrency because the live list contract exposes impacts only on event detail.
-  // Round trips, not backend throughput, set the wall time: a 2021 request is 305 of them.
-  // Twelve at a time halves the rounds, and the backend served 24 with no failures.
-  for (let index = 0; index < events.length; index += 12) {
-    const batch = await Promise.all(events.slice(index, index + 12).map(async (event) => {
-      const detail = await getFloodDetail(event.id);
-      const sum = (field: "fatalities" | "missing" | "houses_flooded") => {
-        const values = detail.impacts.map((impact) => impact[field]);
-        return values.length && values.every((value) => Number.isSafeInteger(value) && value! >= 0)
-          ? values.reduce<number>((total, value) => total + (value ?? 0), 0) : null;
-      };
-      return {
-        id: String(event.id),
-        date: event.event_datetime?.slice(0, 10) ?? "",
-        region: names.get(event.regency_id ?? -1) ?? "—",
-        district: "", village: "", severity: null, housesFlooded: sum("houses_flooded"),
-        floodType: detail.event_type?.name ?? null,
-        deaths: sum("fatalities"), missing: sum("missing"),
-      };
-    }));
-    rows.push(...batch);
-  }
+  // The events list carries impacts and the event type, so no per-event detail read is needed.
+  const impact = (value: number | null | undefined) => Number.isSafeInteger(value) && value! >= 0 ? value! : null;
+  const rows: FloodHistoryRow[] = events.map((event) => ({
+    id: String(event.id),
+    date: event.event_datetime?.slice(0, 10) ?? "",
+    region: names.get(event.regency_id ?? -1) ?? "—",
+    district: "", village: "", severity: null,
+    housesFlooded: impact(event.houses_flooded),
+    floodType: event.event_type?.name ?? null,
+    deaths: impact(event.fatalities), missing: impact(event.missing),
+  }));
   return {
     source: "backend", years, regions: [...names.values()], rows,
     previousCounts: previous.by_regency.map((entry) => ({ region: regionName(entry.regency_name), events: entry.total_events, housesFlooded: previousImpacts.get(entry.regency_id) ?? null })),
