@@ -17,7 +17,7 @@ const columns: ColumnDef<AnalysisRow>[] = [
   { accessorKey: "susceptibility", header: ({ column }) => <SortHeader column={column} title="Kerawanan" />, cell: ({ row }) => row.original.susceptibility ?? "—", sortingFn: (a, b) => classOrder.indexOf(a.original.susceptibility) - classOrder.indexOf(b.original.susceptibility) },
   { accessorKey: "population", header: ({ column }) => <SortHeader column={column} title="Penduduk" />, cell: ({ row }) => row.original.population === null ? "—" : numberFormatter.format(row.original.population) },
   { accessorKey: "areaKm2", header: ({ column }) => <SortHeader column={column} title="Luas" />, cell: ({ row }) => row.original.areaKm2 === null ? "—" : `${numberFormatter.format(row.original.areaKm2)} km²` },
-  { accessorKey: "rivers", header: ({ column }) => <SortHeader column={column} title="Jumlah Sungai" />, cell: ({ row }) => row.original.rivers ?? "—" },
+  { accessorKey: "rivers", header: ({ column }) => <SortHeader column={column} title="Jumlah Sungai" />, cell: ({ row }) => row.original.rivers === null ? "—" : numberFormatter.format(row.original.rivers) },
   { accessorKey: "elevationM", header: ({ column }) => <SortHeader column={column} title="Elevasi" />, cell: ({ row }) => row.original.elevationM === null ? "—" : `${numberFormatter.format(row.original.elevationM)} mdpl` },
 ];
 

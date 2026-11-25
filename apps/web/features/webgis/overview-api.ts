@@ -121,7 +121,7 @@ export async function getWorkspaceOverview(regionIds: string[], from: string, to
   if (rainfall != null) overview.susceptibility.notes.push(`Parameter rata-rata hujan kecamatan ${rainfall.toLocaleString("id-ID", { maximumFractionDigits: 1 })} mm. Periode belum tersedia.`);
   else if (records.some((row) => row.mean_hujan_mm == null)) overview.susceptibility.notes.push(`${records.filter((row) => row.mean_hujan_mm == null).length} kecamatan memiliki parameter hujan kosong.`);
   overview.susceptibility.notes.push("Jumlah sungai menghitung rekaman segmen API yang berpotongan dengan wilayah, bukan sungai bernama unik. Segmen lintas kecamatan dihitung satu kali dalam cakupan pilihan.");
-  if (riversResult.status === "fulfilled") overview.susceptibility.notes.push(`Data sungai disiapkan ${new Date(riversResult.value.prepared_at).toLocaleDateString("id-ID", { timeZone: "Asia/Jakarta" })}.`);
+  // Rivers come straight from the API now, so there is no preparation date to quote.
   if (riversResult.status === "rejected") overview.errors?.push("Ringkasan sungai gagal dimuat.");
   return overview;
 }

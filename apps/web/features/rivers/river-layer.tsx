@@ -4,6 +4,17 @@ import type { Map as LeafletMap } from "leaflet";
 import type { FeatureCollection, MultiLineString } from "geojson";
 import type { RiverProperties } from "./types";
 
+type RiverViewport = { returned: number; total_matching: number; truncated: boolean; scope_unsupported: "village" | "too-wide" | null };
+
+function riverStatus(data: RiverViewport): { message: string } | undefined {
+  if (data.scope_unsupported === "village") return { message: "Filter sungai tingkat kelurahan/desa belum tersedia." };
+  if (data.scope_unsupported === "too-wide") return { message: "Pilihan wilayah terlalu luas untuk filter sungai. Pilih lebih sedikit daerah." };
+  const shown = data.returned.toLocaleString("id-ID");
+  // A truncated page arrives longest-first, so the view is the major rivers, not a random slice.
+  if (data.truncated) return { message: `Menampilkan ${shown} sungai terpanjang dari ${data.total_matching.toLocaleString("id-ID")} segmen pada area peta. Perbesar peta untuk melihat anak sungai.` };
+  return data.returned ? undefined : { message: "Tidak ada segmen sungai pada area peta ini." };
+}
+
 export function RiverLayer({ map, enabled, regionIds, onStatus }: { map: LeafletMap; enabled: boolean; regionIds: string[]; onStatus: (status: { message: string; retry?: () => void } | undefined) => void }) {
   const scope = regionIds.join(",");
   useEffect(() => {
@@ -22,7 +33,7 @@ export function RiverLayer({ map, enabled, regionIds, onStatus }: { map: Leaflet
       try {
         const response = await fetch(`/backend/web/rivers/layers?${query}`, { signal: active.signal });
         if (!response.ok) throw new Error("Jaringan sungai belum dapat dimuat.");
-        const data: FeatureCollection<MultiLineString, RiverProperties> & { returned: number; total_matching: number; truncated: boolean; village_unsupported: boolean; region_unsupported: boolean } = await response.json();
+        const data: FeatureCollection<MultiLineString, RiverProperties> & { returned: number; total_matching: number; truncated: boolean; scope_unsupported: "village" | "too-wide" | null } = await response.json();
         const L = await import("leaflet");
         if (closed || active.signal.aborted) return;
         remove?.();
@@ -33,13 +44,7 @@ export function RiverLayer({ map, enabled, regionIds, onStatus }: { map: Leaflet
           line.bindTooltip(text);
         } }).addTo(map);
         remove = () => { layer.remove(); renderer.remove(); };
-        // The API filters rivers by viewport only, so say so rather than imply the region filter applied.
-        const scopeNote = data.region_unsupported ? " Layer sungai mengikuti area peta yang terlihat, belum filter wilayah." : "";
-        onStatus(data.village_unsupported || data.region_unsupported || data.truncated
-          // A truncated page now arrives longest-first, so the view is the major rivers
-          // rather than an arbitrary slice.
-          ? { message: (data.truncated ? `Menampilkan ${data.returned.toLocaleString("id-ID")} sungai terpanjang dari ${data.total_matching.toLocaleString("id-ID")} segmen pada area peta. Perbesar peta untuk melihat anak sungai.` : `Menampilkan ${data.returned.toLocaleString("id-ID")} segmen pada area peta.`) + scopeNote }
-          : undefined);
+        onStatus(riverStatus(data));
       } catch (error) {
         if (!closed && !active.signal.aborted) { remove?.(); remove = undefined; onStatus({ message: error instanceof Error ? error.message : "Layer sungai gagal.", retry: () => { void load(); } }); }
       }

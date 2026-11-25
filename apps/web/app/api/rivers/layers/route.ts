@@ -1,6 +1,7 @@
 import type { LineString, MultiLineString } from "geojson";
 import { fetchBackend } from "@/lib/api/backend";
 import { parseRiverRegions, parseRiverBounds } from "@/features/rivers/data";
+import { riverScope } from "@/features/rivers/filter";
 
 /** Matches the generalization the prepared read model used before the API gained a viewport. */
 const displayToleranceM3857 = 50;
@@ -20,13 +21,19 @@ function asMultiLine(geom: RiverRow["geom"]): MultiLineString | null {
   return null;
 }
 
+const emptyCollection = (extra: Record<string, unknown>) =>
+  Response.json({ type: "FeatureCollection", features: [], total_matching: 0, returned: 0, truncated: false, scope_unsupported: null, ...extra });
+
 export async function GET(request: Request) {
   let regions: string[], bounds: number[];
   try { const query = new URL(request.url).searchParams; regions = parseRiverRegions(query); bounds = parseRiverBounds(query.get("bbox")); }
   catch { return Response.json({ error: "Filter peta tidak valid." }, { status: 422 }); }
-  const villageScoped = regions.some((id) => id.replace(/^!/, "").split("/").length === 3);
   try {
-    const query = `bbox=${bounds.join(",")}&simplify_m=${displayToleranceM3857}&limit=${viewportLimit}`;
+    const scope = await riverScope(regions);
+    if (scope.kind === "village") return emptyCollection({ scope_unsupported: "village" });
+    if (scope.kind === "too-wide") return emptyCollection({ scope_unsupported: "too-wide" });
+    if (scope.kind === "empty") return emptyCollection({});
+    const query = `bbox=${bounds.join(",")}&simplify_m=${displayToleranceM3857}&limit=${viewportLimit}${scope.query ? `&${scope.query}` : ""}`;
     const response = await fetchBackend(`/api/v1/rivers?${query}`, { signal: request.signal, next: { revalidate: 3600 } });
     if (!response.ok) throw new Error(`Rivers HTTP ${response.status}`);
     const page: { items?: RiverRow[]; total?: number; truncated?: boolean } = await response.json();
@@ -40,9 +47,7 @@ export async function GET(request: Request) {
     });
     return Response.json({
       type: "FeatureCollection", features,
-      total_matching: page.total, returned: features.length, truncated: !!page.truncated,
-      // /api/v1/rivers filters by viewport only, so an administrative selection cannot narrow it yet.
-      region_unsupported: regions.length > 0, village_unsupported: villageScoped,
+      total_matching: page.total, returned: features.length, truncated: !!page.truncated, scope_unsupported: null,
     });
   } catch (error) {
     console.error("rivers.layers", error instanceof Error ? error.message : "unavailable");
