@@ -38,9 +38,11 @@ intersection is not prepared and is reported unavailable. A failed river source
 cannot blank successful Flood or district parameter data. The server keeps a
 source-keyed 60-second in-memory cache of the published artifact.
 
-The live API lacks bbox filters or vector tiles. No page-open request enumerates
-all 114 pages or downloads raw lines. For future data growth, add indexed PostGIS
-viewport filtering/tiles; do not move source enumeration into the browser.
+The live API supports bbox and regency/district filters for viewport queries,
+but it does not serve vector tiles. The prepared artifact remains the map display
+path. No page-open request enumerates all 114 pages or downloads raw lines; for
+future data growth, add vector tiles rather than moving source enumeration into
+the browser.
 
 Publish `data/processed/web/rivers.json` with the web app or use the configured
 `BEJIR_PREPARED_DATA_DIR` mount. Next.js tracing includes the artifact and excludes

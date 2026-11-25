@@ -82,7 +82,11 @@ generalization, maximum 2000) and `limit` up to 5000. The response keeps
 filtered with `ST_Intersects` against an index-backed EPSG:3857 envelope,
 simplified in EPSG:3857, and returned as EPSG:4326 GeoJSON rounded to six
 decimals. Requests without `bbox` behave exactly as before, including
-full-precision geometry. Geometry type is not stable within a simplified page:
+full-precision geometry. `regency_id` and `district_id` filter by intersection
+with the real administrative boundary, not the boundary's bounding box, so
+rivers outside the selected region are excluded. Results are ordered by
+`shape_length` descending (then `id`), so a truncated province-wide page shows
+the largest rivers first instead of a contiguous id range. Geometry type is not stable within a simplified page:
 the source `core.rivers` column is `MULTILINESTRINGZ`, but
 `ST_SimplifyPreserveTopology` turns a single-part MultiLineString into a
 LineString. A page with `simplify_m > 0` therefore mixes `LineString` and

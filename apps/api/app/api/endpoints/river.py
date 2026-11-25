@@ -13,6 +13,18 @@ def get_rivers(
     name: str | None = Query(default=None, min_length=1),
     river_type: str | None = Query(default=None, min_length=1),
     layer_code: str | None = Query(default=None, min_length=1),
+    regency_id: int | None = Query(
+        default=None,
+        gt=0,
+        description="Hanya sungai yang beririsan dengan batas kabupaten/kota "
+        "ini (bukan bounding box).",
+    ),
+    district_id: int | None = Query(
+        default=None,
+        gt=0,
+        description="Hanya sungai yang beririsan dengan batas kecamatan ini "
+        "(bukan bounding box).",
+    ),
     bbox: str | None = Query(
         default=None,
         description="minx,miny,maxx,maxy dalam EPSG:4326; hanya sungai yang "
@@ -39,12 +51,19 @@ def get_rivers(
     `LineString` atau `MultiLineString`, dan koordinatnya membawa nilai Z.
     Klien wajib menerima kedua tipe geometri. Tanpa generalisasi (tanpa `bbox`
     atau `simplify_m=0`) hasilnya selalu `MultiLineString`.
+
+    Filter `regency_id`/`district_id` memakai irisan geometri batas asli, bukan
+    bounding box, sehingga sungai di luar wilayah tidak ikut terhitung. Hasil
+    diurutkan `shape_length` menurun (lalu `id`) agar halaman yang terpotong
+    menampilkan sungai terbesar lebih dulu.
     """
     return RiverService.list_rivers(
         db,
         name=name,
         river_type=river_type,
         layer_code=layer_code,
+        regency_id=regency_id,
+        district_id=district_id,
         bbox=parse_bbox(bbox) if bbox is not None else None,
         simplify_m=simplify_m,
         limit=limit,

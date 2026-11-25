@@ -22,7 +22,15 @@ def river_db():
         raw = connection.connection.driver_connection
         raw.create_function("ST_MakeEnvelope", 5, lambda *args: "ENVELOPE")
         raw.create_function("ST_Transform", 2, lambda geometry, srid: geometry)
-        raw.create_function("ST_Intersects", 2, lambda geometry, envelope: 1)
+
+        def st_intersects(geometry, other):
+            # The bbox envelope always matches; region geoms carry comma-separated
+            # river tokens so the real-boundary filter can be exercised.
+            if other == "ENVELOPE":
+                return 1
+            return int(bool(set(str(geometry).split(",")) & set(str(other).split(","))))
+
+        raw.create_function("ST_Intersects", 2, st_intersects)
         raw.create_function("ST_SimplifyPreserveTopology", 2, lambda geometry, tolerance: geometry)
         # SQLAlchemy compiles func.ST_AsGeoJSON as AsGeoJSON on SQLite.
         raw.create_function("AsGeoJSON", -1, lambda *args: GEOJSON)
@@ -38,6 +46,22 @@ def river_db():
             "(1, 1, 1, 'Ciliwung', 'Sungai', 'L1', 10.5, 'geom1'), "
             "(2, 2, 2, 'Cikapundung', 'Sungai', 'L1', 20.5, 'geom2'), "
             "(3, 3, 3, NULL, 'Saluran', 'L2', 30.5, 'geom3')"
+        )
+        connection.exec_driver_sql(
+            "CREATE TABLE core.regency (id INTEGER PRIMARY KEY, name TEXT, geom TEXT)"
+        )
+        connection.exec_driver_sql(
+            "CREATE TABLE core.districts ("
+            "id INTEGER PRIMARY KEY, name TEXT, regency_id INTEGER, geom TEXT)"
+        )
+        connection.exec_driver_sql(
+            "INSERT INTO core.regency VALUES "
+            "(1, 'Kab A', 'geom1,geom2'), (2, 'Kab B', 'geom3')"
+        )
+        connection.exec_driver_sql(
+            "INSERT INTO core.districts VALUES "
+            "(10, 'Kec A1', 1, 'geom1'), (11, 'Kec A2', 1, 'geom2'), "
+            "(12, 'Kec B1', 2, 'geom3')"
         )
         connection.commit()
         queries = []
@@ -69,7 +93,9 @@ def test_river_bbox_returns_viewport_page_with_truncated_flag(river_db):
             assert payload["simplify_m"] == 100
             assert payload["limit"] == 2
             assert payload["offset"] == 0
-            assert payload["items"][0]["name"] == "Ciliwung"
+            # Largest first so a truncated page is not a contiguous id range.
+            assert [item["shape_length"] for item in payload["items"]] == [30.5, 20.5]
+            assert [item["name"] for item in payload["items"]] == [None, "Cikapundung"]
             assert payload["items"][0]["geom"] == {
                 "type": "LineString",
                 "coordinates": [[106.8, -6.6], [106.9, -6.7]],
@@ -107,6 +133,31 @@ def test_river_without_bbox_keeps_legacy_pagination(river_db):
         app.dependency_overrides.clear()
 
 
+def test_river_regency_and_district_filters_use_real_boundary(river_db):
+    app.dependency_overrides[get_db] = lambda: river_db
+    try:
+        with TestClient(app) as client:
+            regency = client.get("/api/v1/rivers?regency_id=1").json()
+            assert regency["total"] == 2
+            assert {item["id"] for item in regency["items"]} == {1, 2}
+
+            district = client.get("/api/v1/rivers?district_id=11").json()
+            assert district["total"] == 1
+            assert district["items"][0]["id"] == 2
+
+            combined = client.get(
+                "/api/v1/rivers?regency_id=2&district_id=11"
+            ).json()
+            assert combined["total"] == 0
+
+            statements = " ".join(river_db.info["queries"])
+            assert "ST_Intersects" in statements
+            assert "core.regency" in statements
+            assert "core.districts" in statements
+    finally:
+        app.dependency_overrides.clear()
+
+
 @pytest.mark.parametrize(
     "query",
     [
@@ -121,6 +172,10 @@ def test_river_without_bbox_keeps_legacy_pagination(river_db):
         "limit=6000",
         "limit=0",
         "offset=-1",
+        "regency_id=0",
+        "district_id=0",
+        "regency_id=abc",
+        "district_id=-1",
     ],
 )
 def test_river_viewport_rejects_invalid_parameters(query):

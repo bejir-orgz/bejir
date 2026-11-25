@@ -1,6 +1,6 @@
 import json
 
-from sqlalchemy import Select, func, select
+from sqlalchemy import Select, and_, func, select
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.elements import ColumnElement
 
@@ -47,6 +47,8 @@ class RiverRepository:
         name: str | None = None,
         river_type: str | None = None,
         layer_code: str | None = None,
+        regency_id: int | None = None,
+        district_id: int | None = None,
         bbox: tuple[float, float, float, float] | None = None,
         simplify_m: int | None = None,
         limit: int = 100,
@@ -87,6 +89,30 @@ class RiverRepository:
                     ),
                 )
             )
+        # Region filters match the real boundary (not its bounding box). The
+        # selected boundary row is unique, so the join cannot duplicate rivers.
+        if regency_id is not None:
+            statement = statement.join(
+                Regency,
+                and_(
+                    Regency.id == regency_id,
+                    func.ST_Intersects(
+                        River.geom,
+                        func.ST_Transform(Regency.geom, 3857),
+                    ),
+                ),
+            )
+        if district_id is not None:
+            statement = statement.join(
+                District,
+                and_(
+                    District.id == district_id,
+                    func.ST_Intersects(
+                        River.geom,
+                        func.ST_Transform(District.geom, 3857),
+                    ),
+                ),
+            )
         if name is not None:
             statement = statement.where(River.name.ilike(f"%{name}%"))
         if river_type is not None:
@@ -99,8 +125,14 @@ class RiverRepository:
         )
         total = db.scalar(count_statement) or 0
 
+        # Largest rivers first so a truncated viewport shows the most
+        # significant segments instead of a contiguous id range. id keeps
+        # pagination deterministic when lengths tie.
         rows = db.execute(
-            statement.order_by(River.id).limit(limit).offset(offset)
+            statement.order_by(
+                River.shape_length.desc().nullslast(),
+                River.id,
+            ).limit(limit).offset(offset)
         ).all()
 
         items = [
