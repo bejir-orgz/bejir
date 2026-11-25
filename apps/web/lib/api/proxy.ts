@@ -13,6 +13,16 @@ interface Operation {
 const paths = contract.paths as Record<string, Record<string, Operation>>;
 const schemas = contract.components.schemas as Record<string, JsonSchema>;
 
+/**
+ * Upstream detail text is never echoed; it has carried credentials before. A known
+ * failure gets wording of our own so "backend down" doesn't hide an exhausted AI quota.
+ */
+function upstreamFailure(path: string, status: number): string | undefined {
+  if (path === "/api/v1/assistant/chat" && status === 503) return "Layanan AI sedang tidak tersedia atau kuotanya habis. Coba lagi nanti.";
+  if (path === "/api/v1/evacuation/routes" && status === 400) return "Belum ada jaringan jalan yang terhubung di titik ini, jadi rute belum bisa dihitung. Coba titik lain.";
+  return status >= 500 ? "Layanan backend belum tersedia." : undefined;
+}
+
 export async function proxyBackend(request: Request, path: string): Promise<Response> {
   const template = Object.keys(paths).find((entry) => {
     const pattern = entry.replace(/[.*+?^$()|[\]\\]/g, "\\$&").replace(/\{[^}]+\}/g, "[^/]+");
@@ -48,7 +58,8 @@ export async function proxyBackend(request: Request, path: string): Promise<Resp
       body: body === undefined ? undefined : JSON.stringify(body),
       cache: "no-store", signal: request.signal,
     });
-    if (upstream.status >= 500) return Response.json({ detail: "Layanan backend belum tersedia." }, { status: upstream.status });
+    const replacement = upstreamFailure(path, upstream.status);
+    if (replacement) return Response.json({ detail: replacement }, { status: upstream.status });
     const result: unknown = await upstream.json();
     const schema = operation.responses[String(upstream.status)]?.content?.["application/json"]?.schema;
     if (schema && validateSchema(schema, result, schemas).length) {

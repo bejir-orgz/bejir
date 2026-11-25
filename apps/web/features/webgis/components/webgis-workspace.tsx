@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useReducer, useRef, useSyncExternalStore, type CSSProperties } from "react";
+import { useCallback, useEffect, useState, useReducer, useRef, useSyncExternalStore, type CSSProperties } from "react";
 import { useRegionSelection } from "@/features/regions/region-selection";
 import { WebgisHeader } from "@/components/layout/webgis-header";
 import { IconMap, IconLayoutNavbarCollapse, IconLayoutNavbarCollapseFilled, IconStackFront, IconStack3Filled, IconCalendarWeek, IconCalendarWeekFilled, IconListDetails, IconListDetailsFilled } from "@tabler/icons-react";
@@ -16,6 +16,8 @@ import { BoundaryLayer } from "@/features/regions/boundary-layer";
 import { useOverview } from "../use-overview";
 import { RiverLayer } from "@/features/rivers/river-layer";
 import { ThematicLayers } from "@/features/geography/thematic-layers";
+import { MapSimulationLayer, type SelectedSimRegion } from "@/features/simulation/map-simulation-layer";
+import type { SimulationMode, SimulationParams, SimulationScope, SimulationStats } from "@/features/simulation/terrain-pack";
 import type { WorkspaceFilters, WorkspaceProps } from "../types";
 import { RegionSidebar } from "./region-sidebar";
 import { OverviewPanel } from "./overview-panel";
@@ -44,12 +46,43 @@ function subscribeToWidth(callback: () => void) {
 const getNarrowSnapshot = () => window.matchMedia(narrowQuery).matches;
 const getServerSnapshot = () => false;
 
+function parseInitialSimTarget(regionIds: string[]): {
+  regencyId: number;
+  districtId: number | null;
+  point: null;
+} | null {
+  const positive = regionIds.find((id) => !id.startsWith("!"));
+  if (!positive) return null;
+  const parts = positive.split("/").map(Number);
+  if (!Number.isSafeInteger(parts[0]) || parts[0] < 1) return null;
+  const districtId = parts.length >= 2 && Number.isSafeInteger(parts[1]) && parts[1] >= 1 ? parts[1] : null;
+  return { regencyId: parts[0], districtId, point: null };
+}
+
 export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
   const { mapRegionIds, dataRegionIds, setMapRegionIds } = useRegionSelection();
   const [localFilters, setFilters] = useState(data.initialFilters);
   const [sidebarWidth, setSidebarWidth] = useState(264);
   const [aiOpened, setAiOpened] = useState(false);
+
+  // On-map interactive DEM/slope simulation state.
   const [simulationOpen, setSimulationOpen] = useState(false);
+  const [simMode, setSimMode] = useState<SimulationMode>("flood");
+  const [simScope, setSimScope] = useState<SimulationScope>("district");
+  const [simPaused, setSimPaused] = useState(false);
+  const [simParams, setSimParams] = useState<SimulationParams>({
+    waterRiseM: 3.5,
+    triggerRainMmDay: 140,
+    criticalSlopeDeg: 18,
+  });
+  const [simTarget, setSimTarget] = useState<{
+    regencyId: number;
+    districtId: number | null;
+    point: { lat: number; lng: number } | null;
+  } | null>(null);
+  const [simRegion, setSimRegion] = useState<SelectedSimRegion | null>(null);
+  const [simStats, setSimStats] = useState<SimulationStats | null>(null);
+
   const filters = { ...localFilters, regionIds: mapRegionIds };
   useEffect(() => {
     if (data.initialFilters.regionIds.length) setMapRegionIds(data.initialFilters.regionIds);
@@ -60,6 +93,7 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
   const [regionStatus, setRegionStatus] = useState<{ message: string }>();
   const [riverStatus, setRiverStatus] = useState<{ message: string; retry?: () => void }>();
   const [thematicStatus, setThematicStatus] = useState<{ message: string; retry?: () => void }>();
+  const [simStatus, setSimStatus] = useState<{ message: string; retry?: () => void }>();
   const narrow = useSyncExternalStore(subscribeToWidth, getNarrowSnapshot, getServerSnapshot);
   const [panels, dispatch] = useReducer(panelReducer, data.initialFilters.regionIds.length ? { left: null, overview: true } : initialPanelState);
   const lastTrigger = useRef<HTMLButtonElement | null>(null);
@@ -86,6 +120,31 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
     dispatch({ type: "toggle-left", panel, narrow });
   }
 
+  function toggleSimulation() {
+    setSimulationOpen((prev) => {
+      const next = !prev;
+      if (next && !simTarget) {
+        const initial = parseInitialSimTarget(mapRegionIds);
+        if (initial) {
+          setSimScope(initial.districtId !== null ? "district" : "regency");
+          setSimTarget(initial);
+        }
+      }
+      return next;
+    });
+  }
+
+  const handleSelectSimTarget = useCallback(
+    (target: { regencyId: number; districtId: number | null; point: { lat: number; lng: number } | null }) => {
+      setSimTarget(target);
+    },
+    [],
+  );
+
+  const handlePickSimExample = useCallback((regencyId: number, districtId: number | null) => {
+    setSimTarget({ regencyId, districtId, point: null });
+  }, []);
+
   return (
     <div className="webgis-screen flex flex-col [&_>_.gis-header]:shrink-0 [--gis-blue:var(--primary)] [--gis-border:var(--border)] [--gis-muted:#737373] [--gis-slide-duration:280ms] [--gis-slide-easing:cubic-bezier(.22,1,.36,1)] text-[#000] bg-[#fff] text-[14px] leading-[20px] h-dvh min-h-120 overflow-hidden [&_button:focus-visible]:[outline:2px_solid_var(--gis-blue)] [&_button:focus-visible]:[outline-offset:-2px]">
       <a className="skip-link fixed z-50 top-2 left-4 [transform:translateY(-150%)] rounded-lg bg-[#2563eb] text-[white] p-[8px_16px] [&:focus]:[transform:translateY(0)]" href="#gis-main">Lewati ke peta</a>
@@ -93,7 +152,7 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
         updateFilters({ regionIds: [region.id] });
         dispatch({ type: "show-overview" });
       }} />
-      <main id="gis-main" style={{ "--sidebar-width": `min(${sidebarWidth}px, 480px, calc(100vw - 48px))` } as CSSProperties} className="gis-layout [--regions-width:var(--sidebar-width)] [--overview-width:456px] relative flex-1 min-h-0 isolate [&[data-left-open=false]]:[--regions-width:0px] [&[data-left-open=true]_.gis-left-toolbar_.gis-panel-toggle[aria-expanded=false]]:[opacity:0] [&[data-left-open=true]_.gis-left-toolbar_.gis-panel-toggle[aria-expanded=false]]:pointer-events-none [&[data-overview-open=true]_.gis-overview-trigger]:[transform:translateX(-100%)] [&[data-overview-open=true]_.gis-map-controls]:right-[calc(var(--overview-width)_+_16px)] min-[1000px]:[&[data-overview-open=true]_.gis-map_.leaflet-bottom.leaflet-right]:right-[var(--overview-width)]! min-[1000px]:max-[1199.01px]:[--overview-width:380px] max-[999.01px]:[--regions-width:0px] max-[999.01px]:[--overview-width:min(456px,calc(100%_-_56px))] max-[999.01px]:[&[data-left-open=true]_.gis-overview-toggle]:hidden max-[999.01px]:[&[data-overview-open=true]_.gis-left-toolbar]:hidden" data-left-open={leftOpen} data-overview-open={overviewOpen} onKeyDown={(event) => {
+      <main id="gis-main" style={{ "--sidebar-width": `min(${sidebarWidth}px, 480px, calc(100vw - 48px))` } as CSSProperties} className="gis-layout [--regions-width:var(--sidebar-width)] [--overview-width:456px] relative flex-1 min-h-0 isolate [&[data-left-open=false]]:[--regions-width:0px] [&[data-left-open=true]_.gis-left-toolbar_.gis-panel-toggle[aria-expanded=false]]:[opacity:0] [&[data-left-open=true]_.gis-left-toolbar_.gis-panel-toggle[aria-expanded=false]]:pointer-events-none [&[data-overview-open=true]_.gis-overview-trigger]:[transform:translateX(-100%)] [&[data-overview-open=true]_.gis-map-controls]:right-[calc(var(--overview-width)_+_16px)] [&[data-overview-open=true]_.gis-map-status]:right-[calc(var(--overview-width)_+_16px)] min-[1000px]:[&[data-overview-open=true]_.gis-map_.leaflet-bottom.leaflet-right]:right-[var(--overview-width)]! min-[1000px]:max-[1199.01px]:[--overview-width:380px] max-[999.01px]:[--regions-width:0px] max-[999.01px]:[--overview-width:min(456px,calc(100%_-_56px))] max-[999.01px]:[&[data-left-open=true]_.gis-overview-toggle]:hidden max-[999.01px]:[&[data-overview-open=true]_.gis-left-toolbar]:hidden" data-left-open={leftOpen} data-overview-open={overviewOpen} onKeyDown={(event) => {
         if (event.key === "Escape" && !event.defaultPrevented && (simulationOpen || leftOpen || overviewOpen)) {
           event.preventDefault();
           if (simulationOpen) {
@@ -105,23 +164,60 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
         }
       }}>
         <h1 className="sr-only">Map Interaktif Jawa Barat</h1>
-        <InteractiveMap dataStatus={regionStatus ?? routeStatus ?? riverStatus ?? thematicStatus ?? evacuation.dataStatus}>{(map) => <><RiverLayer map={map} enabled={filters.layerIds.includes("rivers")} regionIds={filters.regionIds} onStatus={setRiverStatus} /><ThematicLayers map={map} layerIds={filters.layerIds} regionIds={filters.regionIds} onStatus={setThematicStatus} /><EvacuationLayer map={map} sites={evacuation.sites} enabled={evacuationEnabled} /><BoundaryLayer map={map} regionIds={filters.regionIds} onStatus={setRegionStatus} /><EvacuationRouting map={map} enabled={evacuationEnabled} onStatus={setRouteStatus} /></>}</InteractiveMap>
+        <InteractiveMap dataStatus={simStatus ?? regionStatus ?? routeStatus ?? riverStatus ?? thematicStatus ?? evacuation.dataStatus}>
+          {(map) => (
+            <>
+              <RiverLayer map={map} enabled={filters.layerIds.includes("rivers")} regionIds={filters.regionIds} onStatus={setRiverStatus} />
+              <ThematicLayers map={map} layerIds={filters.layerIds} regionIds={filters.regionIds} onStatus={setThematicStatus} />
+              <MapSimulationLayer
+                map={map}
+                enabled={simulationOpen}
+                mode={simMode}
+                scope={simScope}
+                params={simParams}
+                paused={simPaused}
+                selectedTarget={simTarget}
+                onSelectTarget={handleSelectSimTarget}
+                onRegionResolved={setSimRegion}
+                onStatsChange={setSimStats}
+                onStatus={setSimStatus}
+              />
+              <EvacuationLayer map={map} sites={evacuation.sites} enabled={evacuationEnabled} />
+              <BoundaryLayer map={map} regionIds={filters.regionIds} onStatus={setRegionStatus} />
+              <EvacuationRouting map={map} enabled={evacuationEnabled && !simulationOpen} onStatus={setRouteStatus} />
+            </>
+          )}
+        </InteractiveMap>
         {!leftOpen && (!narrow || !overviewOpen) && (
           <MapQuickBar
             layers={data.layers}
             selectedLayerIds={filters.layerIds}
             overviewOpen={overviewOpen}
             simulationOpen={simulationOpen}
-            onToggleSimulation={() => setSimulationOpen((prev) => !prev)}
+            onToggleSimulation={toggleSimulation}
             onChange={updateFilters}
           />
         )}
         <HydroSimulationPanel
           open={simulationOpen}
           overviewOpen={overviewOpen}
+          mode={simMode}
+          scope={simScope}
+          params={simParams}
+          paused={simPaused}
+          selectedRegion={simRegion}
+          stats={simStats}
+          onModeChange={setSimMode}
+          onScopeChange={setSimScope}
+          onParamsChange={(patch) => setSimParams((prev) => ({ ...prev, ...patch }))}
+          onTogglePause={() => setSimPaused((prev) => !prev)}
+          onPickExample={handlePickSimExample}
+          onResetRegion={() => {
+            setSimTarget(null);
+            setSimRegion(null);
+            setSimStats(null);
+          }}
           onClose={() => setSimulationOpen(false)}
-          elevationLabel={overview.elevation}
-          susceptibilityLabel={overview.susceptibility.label}
         />
         <RegionSidebar onWidthChange={setSidebarWidth} hidden={panels.left !== "regions"} filters={filters} onChange={updateFilters} />
         <OptionsSidebar mode="layers" hidden={panels.left !== "layers"} data={data} filters={filters} onChange={updateFilters} />

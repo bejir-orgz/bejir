@@ -88,7 +88,7 @@ export function MapQuickBar({
           onClick={onToggleSimulation}
         >
           <IconAlertTriangle className="size-3.5" aria-hidden="true" />
-          <span>Simulasi Edukatif</span>
+          <span>Simulasi Peta</span>
         </Button>
       </div>
     </div>

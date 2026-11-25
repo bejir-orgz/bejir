@@ -1,68 +1,94 @@
 "use client";
 
-import { useState } from "react";
 import {
   IconAlertTriangle,
+  IconClick,
   IconCloudRain,
   IconLayersIntersect,
   IconPlayerPause,
   IconPlayerPlay,
-  IconShieldCheck,
+  IconRefresh,
   IconX,
 } from "@tabler/icons-react";
 import { useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { useRegionSelection } from "@/features/regions/region-selection";
+import type { SelectedSimRegion } from "@/features/simulation/map-simulation-layer";
+import type {
+  SimulationMode,
+  SimulationParams,
+  SimulationScope,
+  SimulationStats,
+} from "@/features/simulation/terrain-pack";
 
-type SimTab = "flood" | "landslide";
-type SlopePreset = "gentle" | "moderate" | "steep";
+const floodPresets = [
+  { label: "Ringan (+1,5 m)", value: 1.5 },
+  { label: "Sedang (+3,5 m)", value: 3.5 },
+  { label: "Ekstrem (+7,0 m)", value: 7.0 },
+];
 
-const slopeAngles: Record<SlopePreset, { label: string; deg: number; factor: number }> = {
-  gentle: { label: "Landai (8°)", deg: 8, factor: 0.45 },
-  moderate: { label: "Curam (24°)", deg: 24, factor: 0.85 },
-  steep: { label: "Sangat Curam (38°)", deg: 38, factor: 1.25 },
-};
+const slopeThresholds = [
+  { label: "Sensitif (14°)", value: 14 },
+  { label: "Normal (18°)", value: 18 },
+  { label: "Kuat (24°)", value: 24 },
+];
+
+const quickRegionTemplates = [
+  { label: "Kab. Bandung (Cekungan)", match: "kabupaten bandung" },
+  { label: "Kab. Bogor (Perbukitan)", match: "kabupaten bogor" },
+];
 
 export function HydroSimulationPanel({
   open,
   overviewOpen,
+  mode,
+  scope,
+  params,
+  paused,
+  selectedRegion,
+  stats,
+  onModeChange,
+  onScopeChange,
+  onParamsChange,
+  onTogglePause,
+  onPickExample,
+  onResetRegion,
   onClose,
-  elevationLabel,
-  susceptibilityLabel,
 }: {
   open: boolean;
   overviewOpen: boolean;
+  mode: SimulationMode;
+  scope: SimulationScope;
+  params: SimulationParams;
+  paused: boolean;
+  selectedRegion: SelectedSimRegion | null;
+  stats: SimulationStats | null;
+  onModeChange: (mode: SimulationMode) => void;
+  onScopeChange: (scope: SimulationScope) => void;
+  onParamsChange: (patch: Partial<SimulationParams>) => void;
+  onTogglePause: () => void;
+  onPickExample: (regencyId: number, districtId: number | null) => void;
+  onResetRegion: () => void;
   onClose: () => void;
-  elevationLabel: string;
-  susceptibilityLabel: string;
 }) {
   const reduced = useReducedMotion();
-  const [tab, setTab] = useState<SimTab>("flood");
-  const [rainfall, setRainfall] = useState(95);
-  const [slope, setSlope] = useState<SlopePreset>("moderate");
-  const [paused, setPaused] = useState(false);
+  const { tree, toMapIds } = useRegionSelection();
 
   if (!open) return null;
 
-  const isRunning = !reduced && !paused;
-  const rainRatio = (rainfall - 20) / 160; // 0 .. 1
-  // Water rises from y=148 (low) up to y=96 (high flood stage) in SVG coordinates
-  const waterLevelY = Math.round(148 - rainRatio * 50);
-  const floodStage =
-    rainfall < 65
-      ? { label: "Aliran Normal di Dalam Alur", tone: "bg-emerald-100 text-emerald-900 border-emerald-300" }
-      : rainfall < 120
-        ? { label: "Meluap ke Sempadan & Bantaran", tone: "bg-amber-100 text-amber-900 border-amber-300" }
-        : { label: "Genangan Cekungan Permukiman", tone: "bg-red-100 text-red-900 border-red-300" };
+  const regencyNodes = tree.flatMap((root) => (root.children?.length ? root.children : [root]));
+  const quickRegionExamples = quickRegionTemplates
+    .map((tpl) => {
+      const found = regencyNodes.find((node) => node.name.toLowerCase() === tpl.match);
+      const mapped = found ? toMapIds([found.id])[0] : "";
+      const id = Number(mapped);
+      return Number.isSafeInteger(id) && id > 0 ? { label: tpl.label, regencyId: id, districtId: null } : null;
+    })
+    .filter((item): item is { label: string; regencyId: number; districtId: null } => item !== null);
 
-  const slopeMeta = slopeAngles[slope];
-  const saturationIndex = Math.min(100, Math.round(rainRatio * 78 * slopeMeta.factor + (slope === "steep" ? 22 : 10)));
-  const slideOffset = saturationIndex > 55 ? Math.round(((saturationIndex - 55) / 45) * 34) : 0;
-  const slopeStage =
-    saturationIndex < 45
-      ? { label: "Lereng Stabil · Pori Tanah Belum Jenuh", tone: "bg-emerald-100 text-emerald-900 border-emerald-300" }
-      : saturationIndex < 72
-        ? { label: "Waspada Kejenuhan · Retakan Permukaan", tone: "bg-amber-100 text-amber-900 border-amber-300" }
-        : { label: "Potensi Pergerakan Material Tanah", tone: "bg-red-100 text-red-900 border-red-300" };
+  const affectedAreaText = stats
+    ? `${stats.affectedAreaKm2.toLocaleString("id-ID", { maximumFractionDigits: 1 })} km² (${stats.affectedPct.toLocaleString("id-ID", { maximumFractionDigits: 1 })}%)`
+    : "0 km²";
 
   return (
     <section
@@ -70,277 +96,305 @@ export function HydroSimulationPanel({
       role="dialog"
       aria-modal="false"
       aria-labelledby="gis-sim-title"
-      className={`gis-sim-panel absolute bottom-14 left-3 right-3 z-4 mx-auto w-[min(548px,calc(100vw-24px))] rounded-2xl border border-neutral-300 bg-white p-4 text-neutral-900 transition-[opacity,transform,right] duration-200 ease-[var(--ease-out-strong)] starting:scale-96 starting:opacity-0 max-[999.01px]:bottom-12 max-[999.01px]:p-3.5 ${
-        overviewOpen ? "min-[1000px]:left-16 min-[1000px]:right-[calc(var(--overview-width)+64px)]" : "min-[1000px]:left-16 min-[1000px]:right-16"
+      className={`gis-sim-panel absolute bottom-3 left-3 right-3 z-4 mx-auto max-h-[52dvh] overflow-y-auto w-[min(620px,calc(100vw-24px))] rounded-2xl border border-neutral-300 bg-white/97 p-3.5 text-neutral-900 backdrop-blur-[2px] transition-[opacity,transform,right] duration-200 ease-[var(--ease-out-strong)] starting:scale-96 starting:opacity-0 max-[999.01px]:bottom-2.5 max-[999.01px]:p-2.5 ${
+        overviewOpen
+          ? "min-[1000px]:left-16 min-[1000px]:right-[calc(var(--overview-width)+58px)]"
+          : "min-[1000px]:left-16 min-[1000px]:right-16"
       }`}
     >
-      <div className="flex items-start justify-between gap-3 border-b border-neutral-200 pb-3">
+      {/* Header & Mandatory Disclaimer */}
+      <div className="flex flex-wrap items-start justify-between gap-2 border-b border-neutral-200 pb-2.5">
         <div className="min-w-0">
           <span className="inline-flex items-center gap-1.5 rounded-md border border-amber-300 bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-900">
             <IconAlertTriangle className="size-3.5 shrink-0" aria-hidden="true" />
             SIMULASI EDUKATIF · BUKAN KONDISI BENCANA AKTUAL
           </span>
-          <h2 id="gis-sim-title" className="mt-1.5 text-base leading-6 font-semibold text-neutral-900">
-            Laboratorium Konsep Banjir Cekungan &amp; Stabilitas Lereng
+          <h2 id="gis-sim-title" className="mt-1 text-sm leading-5 font-semibold text-neutral-900">
+            Simulasi Kontur Peta Berbasis DEM &amp; Kemiringan Lereng
           </h2>
         </div>
-        <div className="flex shrink-0 items-center gap-1.5">
-          {!reduced && (
+
+        <div className="flex shrink-0 items-center gap-1">
+          {!reduced && selectedRegion && (
             <Button
               type="button"
               variant="outline"
               size="sm"
+              className="h-7 px-2 text-xs"
               aria-pressed={paused}
-              aria-label={paused ? "Putar animasi simulasi" : "Jeda animasi simulasi"}
-              onClick={() => setPaused((prev) => !prev)}
+              aria-label={paused ? "Putar animasi peta" : "Jeda animasi peta"}
+              onClick={onTogglePause}
             >
               {paused ? <IconPlayerPlay className="size-3.5" aria-hidden="true" /> : <IconPlayerPause className="size-3.5" aria-hidden="true" />}
               <span>{paused ? "Putar" : "Jeda"}</span>
             </Button>
           )}
-          <Button type="button" variant="ghost" size="icon-sm" aria-label="Tutup panel simulasi edukatif" onClick={onClose}>
+          {selectedRegion && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-7 px-2 text-xs"
+              aria-label="Reset daerah simulasi"
+              onClick={onResetRegion}
+            >
+              <IconRefresh className="size-3.5" aria-hidden="true" />
+              <span>Reset</span>
+            </Button>
+          )}
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            className="h-7 w-7"
+            aria-label="Tutup panel simulasi peta"
+            onClick={onClose}
+          >
             <IconX className="size-4" aria-hidden="true" />
           </Button>
         </div>
       </div>
 
-      <div className="mt-3 flex gap-2" role="tablist" aria-label="Mode simulasi hidro-geologi">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === "flood"}
-          className={`flex-1 cursor-pointer rounded-xl border px-3 py-2 text-xs font-semibold transition-colors ${
-            tab === "flood" ? "border-blue-600 bg-blue-600 text-white" : "border-neutral-200 bg-neutral-50 text-neutral-700 hover:bg-blue-50"
-          }`}
-          onClick={() => setTab("flood")}
-        >
-          <span className="inline-flex items-center gap-1.5">
-            <IconCloudRain className="size-4" aria-hidden="true" />
-            Genangan Banjir Cekungan
-          </span>
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === "landslide"}
-          className={`flex-1 cursor-pointer rounded-xl border px-3 py-2 text-xs font-semibold transition-colors ${
-            tab === "landslide" ? "border-blue-600 bg-blue-600 text-white" : "border-neutral-200 bg-neutral-50 text-neutral-700 hover:bg-blue-50"
-          }`}
-          onClick={() => setTab("landslide")}
-        >
-          <span className="inline-flex items-center gap-1.5">
-            <IconLayersIntersect className="size-4" aria-hidden="true" />
-            Pergerakan Tanah &amp; Lereng
-          </span>
-        </button>
-      </div>
-
-      <div className="mt-3 rounded-xl border border-neutral-200 bg-[#f4f8fd] p-2.5">
-        {tab === "flood" ? (
-          <svg
-            viewBox="0 0 520 190"
-            className="block h-auto w-full rounded-lg bg-gradient-to-b from-[#e0effe] to-[#f8fbff]"
-            role="img"
-            aria-label={`Penampang simulasi banjir dengan curah hujan skenario ${rainfall} milimeter per hari, status ${floodStage.label}`}
-          >
-            {/* Hujan turun proporsional */}
-            <g stroke="#3b82f6" strokeWidth="1.5" strokeLinecap="round" opacity={0.25 + rainRatio * 0.55}>
-              {[38, 86, 134, 182, 230, 278, 326, 374, 422, 470].map((x, idx) => (
-                <line
-                  key={x}
-                  x1={x}
-                  y1={12 + (idx % 3) * 10}
-                  x2={x - 6}
-                  y2={28 + (idx % 3) * 10}
-                  className={isRunning ? "gis-river-flow" : undefined}
-                />
-              ))}
-            </g>
-
-            {/* Bukit jauh */}
-            <path d="M0 132 Q90 88 180 124 T380 116 T520 128 V190 H0 Z" fill="#cbd5e1" opacity="0.5" />
-
-            {/* Permukiman bantaran & dataran tinggi aman */}
-            <g>
-              {/* Rumah di sempadan rendah */}
-              <rect x="132" y="108" width="28" height="22" rx="2" fill="#ffffff" stroke="#475569" strokeWidth="1.5" />
-              <polygon points="129,108 146,95 163,108" fill="#ef4444" />
-              <rect x="348" y="106" width="30" height="24" rx="2" fill="#ffffff" stroke="#475569" strokeWidth="1.5" />
-              <polygon points="345,106 363,92 381,106" fill="#f97316" />
-
-              {/* Pos aman di teras tinggi */}
-              <rect x="446" y="76" width="34" height="24" rx="2" fill="#ffffff" stroke="#15803d" strokeWidth="1.5" />
-              <polygon points="443,76 463,62 483,76" fill="#16a34a" />
-              <text x="434" y="56" fontSize="10" fontWeight="600" fill="#14532d">Teras Tinggi</text>
-            </g>
-
-            {/* Massa Air & Gelombang Dinamis */}
-            <g
-              style={{
-                transform: `translateY(${waterLevelY - 148}px)`,
-                transition: reduced ? "none" : "transform 260ms cubic-bezier(0.23, 1, 0.32, 1)",
-              }}
-            >
-              <path
-                d="M0 148 Q65 142 130 148 T260 148 T390 148 T520 148 V245 H0 Z"
-                fill="#2563eb"
-                opacity="0.76"
-              />
-              <path
-                d="M0 151 Q65 156 130 151 T260 151 T390 151 T520 151"
-                fill="none"
-                stroke="#bae6fd"
-                strokeWidth="2.5"
-                className={isRunning ? "gis-river-flow" : undefined}
-              />
-            </g>
-
-            {/* Penampang Tanah & Alur Sungai Cekung */}
-            <path
-              d="M0 112 L96 116 L124 130 L196 130 L226 164 L294 164 L322 130 L402 130 L432 100 L520 100 V190 H0 Z"
-              fill="#64748b"
-            />
-            <path
-              d="M0 112 L96 116 L124 130 L196 130 L226 164 L294 164 L322 130 L402 130 L432 100 L520 100"
-              fill="none"
-              stroke="#334155"
-              strokeWidth="2.5"
-            />
-            <text x="233" y="180" fontSize="10" fontWeight="600" fill="#f8fafc">Alur Sungai</text>
-            <text x="122" y="145" fontSize="10" fontWeight="600" fill="#f8fafc">Dataran Banjir</text>
-          </svg>
-        ) : (
-          <svg
-            viewBox="0 0 520 190"
-            className="block h-auto w-full rounded-lg bg-gradient-to-b from-[#e0effe] to-[#f8fbff]"
-            role="img"
-            aria-label={`Penampang simulasi stabilitas lereng ${slopeMeta.label} pada curah hujan ${rainfall} milimeter per hari, status ${slopeStage.label}`}
-          >
-            {/* Hujan meresap ke pori tanah */}
-            <g stroke="#3b82f6" strokeWidth="1.5" strokeLinecap="round" opacity={0.25 + rainRatio * 0.55}>
-              {[60, 110, 160, 210, 260, 310, 360].map((x, idx) => (
-                <line
-                  key={x}
-                  x1={x}
-                  y1={10 + (idx % 2) * 12}
-                  x2={x - 5}
-                  y2={26 + (idx % 2) * 12}
-                  className={isRunning ? "gis-river-flow" : undefined}
-                />
-              ))}
-            </g>
-
-            {/* Batuan Dasar Stabil (Bedrock) */}
-            <path d="M0 64 L148 64 L374 168 L520 168 V190 H0 Z" fill="#475569" />
-            <text x="28" y="176" fontSize="10" fontWeight="600" fill="#e2e8f0">Batuan Dasar Kedap</text>
-
-            {/* Bidang Gelincir (Slip Surface) */}
-            <line
-              x1="146"
-              y1="64"
-              x2="374"
-              y2="168"
-              stroke="#f59e0b"
-              strokeWidth="2.5"
-              strokeDasharray="6 5"
-            />
-            <text x="196" y="118" fontSize="10" fontWeight="600" fill="#fef3c7" transform="rotate(24 196 118)">
-              Bidang Gelincir
-            </text>
-
-            {/* Massa Tanah Atas Lereng yang Bergerak saat Jenuh */}
-            <g
-              style={{
-                transform: `translate(${slideOffset}px, ${Math.round(slideOffset * 0.45)}px)`,
-                transition: reduced ? "none" : "transform 300ms cubic-bezier(0.23, 1, 0.32, 1)",
-              }}
-            >
-              <polygon
-                points="146,64 236,64 366,154 342,154"
-                fill={saturationIndex >= 72 ? "#92400e" : "#a16207"}
-                opacity="0.92"
-              />
-              {/* Zona Jenuh Air Pori */}
-              <polygon
-                points="146,64 190,64 360,154 342,154"
-                fill="#2563eb"
-                opacity={Math.min(0.65, saturationIndex / 135)}
-              />
-              {/* Vegetasi kecil di atas massa tanah */}
-              <circle cx="204" cy="54" r="8" fill="#16a34a" />
-              <line x1="204" y1="62" x2="204" y2="66" stroke="#14532d" strokeWidth="2" />
-            </g>
-
-            {/* Retakan mahkota lereng ketika mendekati jenuh */}
-            {saturationIndex >= 48 && (
-              <path d="M144 48 L149 56 L145 64" fill="none" stroke="#dc2626" strokeWidth="2" />
-            )}
-
-            {/* Permukaan Puncak Bukit Kiri & Kaki Lereng Kanan */}
-            <polygon points="0,46 146,46 146,64 0,64" fill="#15803d" />
-            <rect x="416" y="144" width="32" height="24" rx="2" fill="#ffffff" stroke="#334155" strokeWidth="1.5" />
-            <polygon points="413,144 432,130 451,144" fill="#dc2626" />
-            <text x="398" y="124" fontSize="10" fontWeight="600" fill="#1e293b">Area Kaki Lereng</text>
-          </svg>
-        )}
-      </div>
-
-      <div className="mt-3 flex flex-col gap-2.5">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <label htmlFor="gis-sim-rainfall" className="text-xs font-semibold text-neutral-800">
-            Intensitas Hujan Skenario: <span className="text-blue-700 tabular-nums">{rainfall} mm/hari</span>
-          </label>
-          <span
-            className={`inline-flex items-center rounded-lg border px-2 py-0.5 text-[11px] font-semibold ${
-              tab === "flood" ? floodStage.tone : slopeStage.tone
+      {/* Mode Tabs + Scope Switcher */}
+      <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-1 min-w-[230px] gap-1.5" role="tablist" aria-label="Pilih skenario simulasi peta">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mode === "flood"}
+            className={`flex-1 cursor-pointer rounded-xl border px-2.5 py-1.5 text-xs font-semibold transition-colors ${
+              mode === "flood"
+                ? "border-blue-600 bg-blue-600 text-white"
+                : "border-neutral-200 bg-neutral-50 text-neutral-700 hover:bg-blue-50"
             }`}
+            onClick={() => onModeChange("flood")}
           >
-            {tab === "flood" ? floodStage.label : `${slopeStage.label} (${saturationIndex}%)`}
-          </span>
+            <span className="inline-flex items-center justify-center gap-1.5">
+              <IconCloudRain className="size-3.5" aria-hidden="true" />
+              Banjir (DEM)
+            </span>
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mode === "landslide"}
+            className={`flex-1 cursor-pointer rounded-xl border px-2.5 py-1.5 text-xs font-semibold transition-colors ${
+              mode === "landslide"
+                ? "border-orange-600 bg-orange-600 text-white"
+                : "border-neutral-200 bg-neutral-50 text-neutral-700 hover:bg-orange-50"
+            }`}
+            onClick={() => onModeChange("landslide")}
+          >
+            <span className="inline-flex items-center justify-center gap-1.5">
+              <IconLayersIntersect className="size-3.5" aria-hidden="true" />
+              Longsor (Lereng)
+            </span>
+          </button>
         </div>
 
-        <input
-          id="gis-sim-rainfall"
-          name="sim-rainfall"
-          type="range"
-          min={20}
-          max={180}
-          step={5}
-          value={rainfall}
-          onChange={(event) => setRainfall(Number(event.target.value))}
-          className="h-2 w-full cursor-pointer accent-blue-600"
-        />
+        <div className="inline-flex items-center rounded-xl border border-neutral-200 bg-neutral-50 p-0.5" role="group" aria-label="Cakupan klik wilayah">
+          <button
+            type="button"
+            aria-pressed={scope === "district"}
+            onClick={() => onScopeChange("district")}
+            className={`cursor-pointer rounded-lg px-2.5 py-1 text-[11px] font-semibold transition-colors ${
+              scope === "district" ? "bg-white text-neutral-900 shadow-xs" : "text-neutral-600 hover:text-neutral-900"
+            }`}
+          >
+            Kecamatan
+          </button>
+          <button
+            type="button"
+            aria-pressed={scope === "regency"}
+            onClick={() => onScopeChange("regency")}
+            className={`cursor-pointer rounded-lg px-2.5 py-1 text-[11px] font-semibold transition-colors ${
+              scope === "regency" ? "bg-white text-neutral-900 shadow-xs" : "text-neutral-600 hover:text-neutral-900"
+            }`}
+          >
+            Kabupaten
+          </button>
+        </div>
+      </div>
 
-        {tab === "landslide" && (
-          <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-            <span className="text-xs text-neutral-600 mr-1">Kemiringan lereng:</span>
-            {(Object.keys(slopeAngles) as SlopePreset[]).map((key) => (
+      {/* Selected Region Summary or Click Guidance */}
+      {!selectedRegion ? (
+        <div className="mt-2.5 flex flex-col gap-2 rounded-xl border border-dashed border-blue-300 bg-blue-50/60 p-3 text-xs text-blue-950">
+          <div className="flex items-start gap-2">
+            <IconClick className="mt-0.5 size-4 shrink-0 text-blue-600" aria-hidden="true" />
+            <p className="leading-4">
+              <strong>Klik daerah mana pun di peta</strong> untuk menjalankan simulasi langsung pada kontur ketinggian DEM &amp; kemiringan lereng wilayah tersebut.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-[11px] font-medium text-blue-800">Atau coba cepat:</span>
+            {quickRegionExamples.map((ex) => (
               <button
-                key={key}
+                key={ex.regencyId}
                 type="button"
-                aria-pressed={slope === key}
-                onClick={() => setSlope(key)}
-                className={`cursor-pointer rounded-lg border px-2.5 py-1 text-xs font-medium transition-colors ${
-                  slope === key
-                    ? "border-blue-600 bg-blue-50 text-blue-700"
-                    : "border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-50"
-                }`}
+                onClick={() => {
+                  onScopeChange("regency");
+                  onPickExample(ex.regencyId, ex.districtId);
+                }}
+                className="cursor-pointer rounded-lg border border-blue-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-blue-800 transition-colors hover:bg-blue-100"
               >
-                {slopeAngles[key].label}
+                {ex.label}
               </button>
             ))}
           </div>
-        )}
+        </div>
+      ) : (
+        <div className="mt-2.5 flex flex-col gap-2.5">
+          {/* Active Region + Live Terrain Stats */}
+          <div className="grid grid-cols-3 gap-2 rounded-xl border border-neutral-200 bg-neutral-50/90 p-2 sm:grid-cols-[minmax(0,1.2fr)_repeat(3,minmax(0,0.75fr))] sm:p-2.5">
+            <div className="col-span-3 min-w-0 sm:col-span-1">
+              <p className="truncate text-xs font-semibold text-neutral-900">{selectedRegion.title}</p>
+              <p className="truncate text-[11px] text-neutral-600">
+                {selectedRegion.subtitle}
+                {selectedRegion.pointSample
+                  ? ` · Titik ${selectedRegion.pointSample.demM.toFixed(0)} m dpl`
+                  : ""}
+              </p>
+            </div>
+            <div>
+              <span className="block text-[10px] font-medium text-neutral-500">Elevasi DEM</span>
+              <strong className="text-xs font-semibold text-neutral-900 tabular-nums">
+                {Math.round(selectedRegion.raster.minDemM)} s.d. {Math.round(selectedRegion.raster.maxDemM)} m
+              </strong>
+            </div>
+            <div>
+              <span className="block text-[10px] font-medium text-neutral-500">Lereng Maks</span>
+              <strong className="text-xs font-semibold text-neutral-900 tabular-nums">
+                {selectedRegion.raster.maxSlopeDeg.toFixed(1)}°
+              </strong>
+            </div>
+            <div>
+              <span className="block text-[10px] font-medium text-neutral-500">
+                {mode === "flood" ? "Estimasi Genangan" : "Zona Rawan Lereng"}
+              </span>
+              <strong
+                className={`text-xs font-semibold tabular-nums ${
+                  mode === "flood" ? "text-blue-700" : "text-orange-700"
+                }`}
+              >
+                {affectedAreaText}
+              </strong>
+            </div>
+          </div>
 
-        <p className="flex items-start gap-1.5 rounded-xl bg-neutral-50 p-2.5 text-[11px] leading-4 text-neutral-600">
-          <IconShieldCheck className="mt-0.5 size-3.5 shrink-0 text-blue-600" aria-hidden="true" />
-          <span>
-            {tab === "flood"
-              ? `Konteks wilayah aktif: elevasi rata-rata ${elevationLabel}, status kerawanan ${susceptibilityLabel}. Pada dataran rendah dekat sungai, kenaikan debit meluapkan air ke cekungan permukiman.`
-              : `Konteks wilayah aktif: elevasi rata-rata ${elevationLabel}. Pada perbukitan curam Jawa Barat, hujan berkepanjangan menjenuhkan pori tanah di atas batuan kedap dan memicu pergerakan lereng.`}
-          </span>
-        </p>
-      </div>
+          {/* Scenario Controls */}
+          {mode === "flood" ? (
+            <div className="flex flex-col gap-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <label htmlFor="gis-sim-water" className="text-xs font-semibold text-neutral-800">
+                  Kenaikan Muka Air Luapan:{" "}
+                  <span className="text-blue-700 tabular-nums">
+                    +{params.waterRiseM.toLocaleString("id-ID", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} m
+                  </span>
+                </label>
+                <div className="flex flex-wrap gap-1">
+                  {floodPresets.map((preset) => (
+                    <button
+                      key={preset.value}
+                      type="button"
+                      aria-pressed={Math.abs(params.waterRiseM - preset.value) < 0.05}
+                      onClick={() => onParamsChange({ waterRiseM: preset.value })}
+                      className={`cursor-pointer rounded-lg border px-2 py-0.5 text-[11px] font-medium transition-colors ${
+                        Math.abs(params.waterRiseM - preset.value) < 0.05
+                          ? "border-blue-600 bg-blue-50 text-blue-800"
+                          : "border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-100"
+                      }`}
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <input
+                id="gis-sim-water"
+                name="sim-water-rise"
+                type="range"
+                min={0.5}
+                max={12.0}
+                step={0.5}
+                value={params.waterRiseM}
+                onChange={(event) => onParamsChange({ waterRiseM: Number(event.target.value) })}
+                className="h-2 w-full cursor-pointer accent-blue-600"
+              />
+              <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-neutral-600">
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="inline-flex items-center gap-1">
+                    <span className="size-2.5 rounded-xs bg-[#38BDF8]" aria-hidden="true" />
+                    Dangkal (&lt;0,5 m)
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <span className="size-2.5 rounded-xs bg-[#2563EB]" aria-hidden="true" />
+                    Sedang (0,5 s.d. 2 m)
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <span className="size-2.5 rounded-xs bg-[#1E3A8A]" aria-hidden="true" />
+                    Dalam (&gt;2 m)
+                  </span>
+                </div>
+                <span className="text-[10px] text-neutral-500">Klik daerah lain di peta untuk pindah lokasi</span>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <label htmlFor="gis-sim-rain" className="text-xs font-semibold text-neutral-800">
+                  Hujan Pemicu Kejenuhan Tanah:{" "}
+                  <span className="text-orange-700 tabular-nums">{params.triggerRainMmDay} mm/hari</span>
+                </label>
+                <div className="flex flex-wrap gap-1">
+                  {slopeThresholds.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      aria-pressed={params.criticalSlopeDeg === opt.value}
+                      onClick={() => onParamsChange({ criticalSlopeDeg: opt.value })}
+                      className={`cursor-pointer rounded-lg border px-2 py-0.5 text-[11px] font-medium transition-colors ${
+                        params.criticalSlopeDeg === opt.value
+                          ? "border-orange-600 bg-orange-50 text-orange-800"
+                          : "border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-100"
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <input
+                id="gis-sim-rain"
+                name="sim-trigger-rain"
+                type="range"
+                min={40}
+                max={220}
+                step={10}
+                value={params.triggerRainMmDay}
+                onChange={(event) => onParamsChange({ triggerRainMmDay: Number(event.target.value) })}
+                className="h-2 w-full cursor-pointer accent-orange-600"
+              />
+              <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-neutral-600">
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="inline-flex items-center gap-1">
+                    <span className="size-2.5 rounded-xs bg-[#FFD000]" aria-hidden="true" />
+                    Waspada
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <span className="size-2.5 rounded-xs bg-[#FF6A00]" aria-hidden="true" />
+                    Siaga
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <span className="size-2.5 rounded-xs bg-[#FF0000]" aria-hidden="true" />
+                    Kritis + arah turun lereng
+                  </span>
+                </div>
+                <span className="text-[10px] text-neutral-500">Parameter: Slope + Hujan + Tutupan Lahan + DEM</span>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </section>
   );
 }

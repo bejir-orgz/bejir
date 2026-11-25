@@ -1,21 +1,36 @@
-import { readPrepared } from "@/features/geography/prepared-data";
-import type { PreparedBoundaries } from "@/features/geography/thematic-geometry";
 import { fetchBackend } from "@/lib/api/backend";
+
+/** region = "<regency>", "<regency>/<district>" or "<regency>/<district>/<village>". */
+const collections = ["regencies", "districts", "villages"];
+
+interface BoundaryRecord {
+  name?: unknown;
+  regency_id?: unknown;
+  geom?: unknown;
+}
 
 export async function GET(request: Request) {
   const region = new URL(request.url).searchParams.get("region") || "";
-  if (!/^[1-9]\d*(?:\/[1-9]\d*){0,2}$/.test(region)) return Response.json({ error: "Wilayah tidak valid." }, { status: 422 });
+  if (!/^[1-9]\d*(?:\/[1-9]\d*){0,2}$/.test(region)) {
+    return Response.json({ error: "Wilayah tidak valid." }, { status: 422 });
+  }
   const parts = region.split("/").map(Number);
+  const collection = collections[parts.length - 1];
+  const targetId = parts[parts.length - 1];
   try {
-    if (parts.length === 3) {
-      const response = await fetchBackend(`/api/v1/geography/villages/${parts[2]}`, { signal: request.signal, next: { revalidate: 3600 } });
-      if (!response.ok) throw new Error("Village boundary failed");
-      return Response.json(await response.json());
+    const response = await fetchBackend(`/api/v1/geography/${collection}/${targetId}`, {
+      signal: request.signal,
+      next: { revalidate: 3600 },
+    });
+    if (response.status === 404) return Response.json({ error: "Wilayah tidak ditemukan." }, { status: 404 });
+    if (!response.ok) throw new Error(`Boundary HTTP ${response.status}`);
+    const record: BoundaryRecord = await response.json();
+    // A district reached through the wrong parent is a different region, not a backend failure.
+    if (parts.length === 2 && record.regency_id !== parts[0]) {
+      return Response.json({ error: "Wilayah tidak ditemukan." }, { status: 404 });
     }
-    const data = await readPrepared<PreparedBoundaries>("boundaries");
-    const feature = (parts.length === 1 ? data.regencies : data.districts).features.find((row) => row.properties.id === parts.at(-1));
-    if (!feature || (parts.length === 2 && feature.properties.regency_id !== parts[0])) return Response.json({ error: "Wilayah tidak ditemukan." }, { status: 404 });
-    return Response.json({ name: feature.properties.name, geom: feature.geometry });
+    if (typeof record.name !== "string" || !record.geom) throw new Error("Batas wilayah tidak lengkap.");
+    return Response.json({ name: record.name, geom: record.geom });
   } catch (error) {
     console.error("geography.boundary", error instanceof Error ? error.message : "unavailable");
     return Response.json({ error: "Batas wilayah belum tersedia." }, { status: 503 });

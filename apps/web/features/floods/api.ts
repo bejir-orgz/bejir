@@ -2,6 +2,7 @@ import type { FloodImpactsResponse } from "../../lib/api/schemas";
 import type { FloodHistoryData, FloodHistoryRow } from "./types";
 import { unavailableSnapshot } from "./history-summary";
 import { fetchBackend } from "../../lib/api/backend";
+import { regencyLabel } from "../geography/catalog";
 
 export interface FloodEvent {
   id: number;
@@ -51,7 +52,7 @@ async function readFlood<T>(path: string): Promise<T> {
   return response.json();
 }
 
-const regionName = (name: string | null) => name === null ? "—" : /^(Kota|Kabupaten)\s/i.test(name) ? name : `Kabupaten ${name}`;
+const regionName = (name: string | null) => name === null ? "—" : regencyLabel(name);
 
 export async function listFloodEvents(query: string): Promise<FloodEvent[]> {
   const events: FloodEvent[] = [];
@@ -99,8 +100,8 @@ export async function getFloodHistory(requestedYear?: number): Promise<FloodHist
   const names = new Map(statistics.by_regency.map((entry) => [entry.regency_id, regionName(entry.regency_name)]));
   const rows: FloodHistoryRow[] = [];
   // Bound concurrency because the live list contract exposes impacts only on event detail.
-  for (let index = 0; index < events.length; index += 6) {
-    const batch = await Promise.all(events.slice(index, index + 6).map(async (event) => {
+  for (let index = 0; index < events.length; index += 12) {
+    const batch = await Promise.all(events.slice(index, index + 12).map(async (event) => {
       const detail = await getFloodDetail(event.id);
       const sum = (field: "fatalities" | "missing" | "houses_flooded") => {
         const values = detail.impacts.map((impact) => impact[field]);

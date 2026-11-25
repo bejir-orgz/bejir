@@ -1,4 +1,5 @@
 import { getSpatialDistricts, readSpatialRows } from "../geography/spatial-data";
+import { regencyLabel } from "../geography/catalog";
 import type { DistrictRainfallMonthlyResponse } from "../../lib/api/schemas";
 import { validateSchema } from "../../lib/api/validation";
 import contract from "../../lib/api/openapi.json" with { type: "json" };
@@ -71,7 +72,7 @@ export async function getRainfallPageData(): Promise<RainfallPageData> {
     const totals = aggregateRainfall(parameters);
     return {
       id: String(regency.id), period: null, classification: null,
-      region: /^(Kabupaten|Kota)\s/i.test(regency.name) ? regency.name : `Kabupaten ${regency.name}`,
+      region: regencyLabel(regency.name),
       rainfallMm: totals.average, averageMm: totals.average, minimumMm: totals.minimum, maximumMm: totals.maximum,
       parameters,
       monthly: districts.filter((row) => row.regency_id === regency.id).flatMap((district) => (byDistrict.get(district.district_id) ?? []).map((row) => ({

@@ -12,7 +12,7 @@ import type { RainfallClass, RainfallRow } from "../types";
 
 const periodFormatter = new Intl.DateTimeFormat("id-ID", { month: "long", year: "numeric" });
 const monthFormatter = new Intl.DateTimeFormat("id-ID", { month: "long" });
-const integerFormatter = new Intl.NumberFormat("id-ID");
+const rainfallFormatter = new Intl.NumberFormat("id-ID", { maximumFractionDigits: 1 });
 const classOrder: RainfallClass[] = ["Sangat Rendah", "Rendah", "Sedang", "Tinggi", "Sangat Tinggi"];
 
 export function RainfallTable({ rows, error }: { rows: RainfallRow[]; error?: string }) {
@@ -47,14 +47,14 @@ export function RainfallTable({ rows, error }: { rows: RainfallRow[]; error?: st
       },
       {
         accessorKey: "rainfallMm",
-        header: ({ column }) => <SortHeader column={column} title="Curah Hujan" />,
+        header: ({ column }) => <SortHeader column={column} title="Curah Hujan/Bulan" />,
         cell: ({ row }) => {
           const val = row.original.rainfallMm;
           if (val === null) return "—";
           const pct = Math.min(100, Math.max(4, Math.round((val / maxRainfall) * 100)));
           return (
             <div className="flex flex-col gap-1 pr-4">
-              <span className="tabular-nums font-medium">{integerFormatter.format(val)} mm</span>
+              <span className="tabular-nums font-medium">{rainfallFormatter.format(val)} mm</span>
               <span className="h-1 w-24 overflow-hidden rounded-full bg-blue-100" aria-hidden="true">
                 <span className="block h-full rounded-full bg-blue-500 transition-[width] duration-300" style={{ width: `${pct}%` }} />
               </span>
@@ -65,12 +65,12 @@ export function RainfallTable({ rows, error }: { rows: RainfallRow[]; error?: st
       {
         accessorKey: "minimumMm",
         header: ({ column }) => <SortHeader column={column} title="Minimum" />,
-        cell: ({ row }) => (row.original.minimumMm === null ? "—" : <span className="tabular-nums">{integerFormatter.format(row.original.minimumMm)} mm</span>),
+        cell: ({ row }) => (row.original.minimumMm === null ? "—" : <span className="tabular-nums">{rainfallFormatter.format(row.original.minimumMm)} mm</span>),
       },
       {
         accessorKey: "maximumMm",
         header: ({ column }) => <SortHeader column={column} title="Maksimum" />,
-        cell: ({ row }) => (row.original.maximumMm === null ? "—" : <span className="tabular-nums">{integerFormatter.format(row.original.maximumMm)} mm</span>),
+        cell: ({ row }) => (row.original.maximumMm === null ? "—" : <span className="tabular-nums">{rainfallFormatter.format(row.original.maximumMm)} mm</span>),
       },
     ],
     [maxRainfall],

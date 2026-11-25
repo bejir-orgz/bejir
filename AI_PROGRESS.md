@@ -7,7 +7,7 @@ Dokumen ini mencatat status pengerjaan aktual dari daftar task pada `AI_IMPLEMEN
 - **Active Repository**: `frontend/bejir`
 - **Active Branch**: `dev-animasi-FE`
 - **Creative Direction**: Living Hydrological Atlas (`ENERGY 2 / RHYTHM 3 / MOTION 2` untuk Landing; `ENERGY 2 / RHYTHM 2 / MOTION 2` untuk WebGIS & Dashboards)
-- **Build & Test Status**: `npm run lint` PASS (0 errors), 24/24 suite `*.test.mjs` PASS (0 fail), `npm run build` PASS (Next.js 16.3.8 production build).
+- **Build & Test Status**: `npm run lint` PASS (0 errors, 0 warnings), 25/25 suite `*.test.mjs` (87/87 tests) PASS, `npm run build` PASS (Next.js 16.3.8 production build, 18 routes).
 
 ## Completed Tasks
 
@@ -23,6 +23,10 @@ Dokumen ini mencatat status pengerjaan aktual dari daftar task pada `AI_IMPLEMEN
 - **UI-010**: Fix Clipped Frequency Chart & Upgrade Analysis Dashboard `/analisis` (`analysis-page.tsx`, `analysis-charts.tsx`, `analysis-table.tsx`)
 - **UI-011**: Overview Panel & Bejir AI Assistant ("Aji") Interactive Polish (`overview-panel.tsx`, `assistant.tsx`)
 - **UI-012**: Full Multi-Viewport QA (`1440x900`, `768x1024`, `390x844`), Reduced-Motion Verification, Accessibility Check, Unit Tests, and Production Build
+- **SIM-001**: Porting Perbaikan Pemuatan Data Wilayah Live dari `main/bejir` (`thematic-geometry.ts`, `api/geography/boundary/route.ts`, `prepared-data.ts`, `catalog.ts`, `search.ts`, `overview-api.ts`, `use-overview.ts`, `api/flood/history/route.ts`, `proxy.ts`, `facility-rows.tsx`, `layout.tsx`, `next.config.ts`)
+- **SIM-002**: Generator & Paket Kontur Ringan Jawa Barat (`gis/scripts/build-simulation-pack.mjs` -> `public/simulation/terrain-dem-hand.png` 763,9 KB, `terrain-hazard-params.png` 686,2 KB, `terrain-meta.json`; proyeksi `EPSG:32748` ke grid `EPSG:3857` `768x615` bebas korupsi premultiplied alpha)
+- **SIM-003**: Mesin Fisik & Layer Simulasi Interaktif Langsung di Peta (`features/simulation/terrain-pack.ts`, `terrain-pack.test.mjs`, `map-simulation-layer.tsx`) dengan klik daerah (`Kecamatan` / `Kabupaten`), genangan banjir berbasis DEM + HAND dengan riak gelombang, serta kerentanan longsor berbasis Slope + Hujan + Tutupan Lahan + partikel aliran turun lereng
+- **SIM-004**: Panel Kontrol Simulasi On-Map Ringkas & QA Multi-Viewport (`hydro-simulation-panel.tsx`, `map-quick-bar.tsx`, `webgis-workspace.tsx`; teruji di `1440px`, `768px`, dan `390px` dengan `overflow: false`)
 
 ## Tasks In Progress
 
@@ -35,7 +39,7 @@ Dokumen ini mencatat status pengerjaan aktual dari daftar task pada `AI_IMPLEMEN
 
 ## Known Issues & Environment Notes
 
-1. Pada lingkungan pengembangan baru tanpa menjalankan `npm run prepare:data` dan `npm run prepare:rivers`, berkas lokal `data/processed/web/boundaries.json` dan `rivers.json` belum terbentuk sehingga `/map` menampilkan pesan status jujur `"Batas wilayah belum dapat dimuat..."`. Pada deployment produksi yang sudah menjalankan skrip persiapan data, poligon batas dan sungai tampil normal.
+1. Batas wilayah (`627` kecamatan dan `27` kabupaten/kota) serta 4 layer tematik (`DEM`, `Curah Hujan`, `Kerawanan Banjir`, `Tutupan Lahan`) kini dimuat langsung dari endpoint live backend `/api/v1/geography/boundaries` tanpa memerlukan file lokal `boundaries.json`. Hanya layer `Jaringan Sungai` yang masih menunggu filter `bbox` pada endpoint `/api/v1/rivers` dari tim backend.
 2. Permintaan `/favicon.ico` bawaan browser mengembalikan `404` karena proyek belum menyertakan berkas ikon tab browser khusus di `app/favicon.ico` (tidak memengaruhi fungsi halaman).
 
 ## Key Decisions Made

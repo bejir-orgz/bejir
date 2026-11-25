@@ -5,10 +5,7 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: resolve(__dirname, "../.."),
 
   outputFileTracingIncludes: {
-    "/*": [
-      "../../data/processed/web/boundaries.json",
-      "../../data/processed/web/rivers.json",
-    ],
+    "/*": ["../../data/processed/web/rivers.json"],
   },
 
   outputFileTracingExcludes: {

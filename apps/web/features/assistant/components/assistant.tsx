@@ -20,7 +20,9 @@ const starterQuestions = [
 export function BejirAssistant({ defaultLayerIds }: { defaultLayerIds: readonly string[] }) {
   const [question, setQuestion] = useState("");
   const [selectedLayerIds, setSelectedLayerIds] = useState<readonly string[] | null>(null);
-  const sourceLayerIds = assistantLayers.filter((layer) => (selectedLayerIds ?? defaultLayerIds).includes(layer.id)).map((layer) => layer.id);
+  // Flood history has no map layer to switch on, so include it by default.
+  const defaultSourceIds = [...defaultLayerIds, "flood-area"];
+  const sourceLayerIds = assistantLayers.filter((layer) => (selectedLayerIds ?? defaultSourceIds).includes(layer.id)).map((layer) => layer.id);
   const [exchanges, setExchanges] = useState<{ id: number; question: string; answer: string; error?: boolean }[]>([]);
   const [pending, setPending] = useState(false);
   const request = useRef<AbortController | null>(null);
