@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "projection": "EPSG:3857-grid",
   "width": 768,
   "height": 615,
@@ -14,12 +14,14 @@
   "cellAreaKm2": 0.12794,
   "stats": {
     "validPixels": 289546,
+    "totalBuildings": 8247452,
     "minDemM": -4.2,
     "maxDemM": 3002.1,
     "maxSlopeDeg": 61.5
   },
   "files": {
     "demHand": "/simulation/terrain-dem-hand.png",
-    "hazardParams": "/simulation/terrain-hazard-params.png"
+    "hazardParams": "/simulation/terrain-hazard-params.png",
+    "buildings": "/simulation/terrain-buildings.png"
   }
 }

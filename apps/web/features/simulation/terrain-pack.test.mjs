@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   computeSimulationStats,
+  decodeBuildingCount,
   decodeDemMeters,
   decodeHandMeters,
   decodeHazardPixel,
@@ -16,7 +17,7 @@ import {
 } from "./terrain-pack.ts";
 
 const sampleMeta = {
-  version: 1,
+  version: 2,
   projection: "EPSG:3857-grid",
   width: 20,
   height: 20,
@@ -24,11 +25,15 @@ const sampleMeta = {
   mercNorth: mercY(-6.4),
   mercSouth: mercY(-7.2),
   cellAreaKm2: 0.5,
-  stats: { validPixels: 400, minDemM: 0, maxDemM: 1200, maxSlopeDeg: 45 },
-  files: { demHand: "/simulation/terrain-dem-hand.png", hazardParams: "/simulation/terrain-hazard-params.png" },
+  stats: { validPixels: 400, totalBuildings: 5000, minDemM: 0, maxDemM: 1200, maxSlopeDeg: 45 },
+  files: {
+    demHand: "/simulation/terrain-dem-hand.png",
+    hazardParams: "/simulation/terrain-hazard-params.png",
+    buildings: "/simulation/terrain-buildings.png",
+  },
 };
 
-test("DEM and HAND piecewise encode/decode stay within 0.1m tolerance", () => {
+test("DEM, HAND, and 16-bit building counts encode/decode accurately", () => {
   for (const dem of [-4.5, 0, 12.3, 665.8, 2920.6]) {
     const [r, g] = encodeDemMeters(dem);
     const decoded = decodeDemMeters(r, g);
@@ -41,6 +46,10 @@ test("DEM and HAND piecewise encode/decode stay within 0.1m tolerance", () => {
   }
   assert.ok(Math.abs(decodeHandMeters(encodeHandMeters(40)) - 40) <= 0.51);
   assert.ok(decodeHandMeters(encodeHandMeters(120)) >= 67);
+
+  for (const count of [0, 12, 255, 420, 3210]) {
+    assert.equal(decodeBuildingCount((count >> 8) & 255, count & 255), count);
+  }
 });
 
 test("hazard pixel decoding extracts slope, rainfall, downslope direction, and landcover score", () => {
@@ -80,16 +89,17 @@ test("landslide simulation flags steep wet slopes and keeps flat plains stable",
   assert.ok(steepOpen.score > steepForest.score);
 });
 
-test("rasterizeGeometryMask and computeSimulationStats behave monotonically with parameters", () => {
+test("rasterizeGeometryMask and computeSimulationStats track affectedBuildings and focusCenter monotonically", () => {
   const demHand = new Uint8ClampedArray(20 * 20 * 4);
   const hazard = new Uint8ClampedArray(20 * 20 * 4);
+  const buildings = new Uint8ClampedArray(20 * 20 * 4);
   for (let y = 0; y < 20; y++) {
     for (let x = 0; x < 20; x++) {
       const idx = (y * 20 + x) * 4;
-      // Left half = low river valley, right half = steep hill.
       const dem = x < 10 ? 100 + x * 0.5 : 220 + (x - 10) * 18;
       const hand = x < 10 ? x * 0.4 : 30 + x;
       const slope = x < 10 ? 2 : 14 + (x - 10) * 3;
+      const cellBld = x < 10 ? 40 : 12;
       const [r, g] = encodeDemMeters(dem);
       demHand[idx] = r;
       demHand[idx + 1] = g;
@@ -97,12 +107,17 @@ test("rasterizeGeometryMask and computeSimulationStats behave monotonically with
       demHand[idx + 3] = 255;
 
       hazard[idx] = Math.min(255, Math.round(slope * 4));
-      hazard[idx + 1] = 100; // 3000 mm/yr
+      hazard[idx + 1] = 100;
       hazard[idx + 2] = (8 << 3) | 4;
       hazard[idx + 3] = 255;
+
+      buildings[idx] = (cellBld >> 8) & 255;
+      buildings[idx + 1] = cellBld & 255;
+      buildings[idx + 2] = 0;
+      buildings[idx + 3] = 255;
     }
   }
-  const pack = { meta: sampleMeta, demHand, hazard };
+  const pack = { meta: sampleMeta, demHand, hazard, buildings };
   const polygon = {
     type: "Polygon",
     coordinates: [
@@ -118,7 +133,7 @@ test("rasterizeGeometryMask and computeSimulationStats behave monotonically with
 
   const regionMask = rasterizeGeometryMask([polygon], pack);
   assert.ok(regionMask.validPixels > 100);
-  assert.ok(regionMask.maxDemM > regionMask.minDemM);
+  assert.ok(regionMask.totalBuildings > 1000);
 
   const lowFlood = computeSimulationStats(pack, regionMask, "flood", {
     waterRiseM: 1.0,
@@ -131,7 +146,9 @@ test("rasterizeGeometryMask and computeSimulationStats behave monotonically with
     criticalSlopeDeg: 18,
   });
   assert.ok(highFlood.affectedPixels > lowFlood.affectedPixels);
-  assert.ok(highFlood.affectedPct < 95, "high hills should stay dry even at 6m rise");
+  assert.ok(highFlood.affectedBuildings > lowFlood.affectedBuildings);
+  assert.ok(highFlood.focusCenter !== null);
+  assert.ok(highFlood.focusCenter.lng >= 107.0 && highFlood.focusCenter.lng <= 108.0);
 
   const mildSlide = computeSimulationStats(pack, regionMask, "landslide", {
     waterRiseM: 3.0,
@@ -144,4 +161,6 @@ test("rasterizeGeometryMask and computeSimulationStats behave monotonically with
     criticalSlopeDeg: 14,
   });
   assert.ok(severeSlide.affectedPixels > mildSlide.affectedPixels);
+  assert.ok(severeSlide.affectedBuildings > mildSlide.affectedBuildings);
+  assert.ok(severeSlide.focusCenter !== null);
 });

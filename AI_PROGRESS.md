@@ -27,6 +27,9 @@ Dokumen ini mencatat status pengerjaan aktual dari daftar task pada `AI_IMPLEMEN
 - **SIM-002**: Generator & Paket Kontur Ringan Jawa Barat (`gis/scripts/build-simulation-pack.mjs` -> `public/simulation/terrain-dem-hand.png` 763,9 KB, `terrain-hazard-params.png` 686,2 KB, `terrain-meta.json`; proyeksi `EPSG:32748` ke grid `EPSG:3857` `768x615` bebas korupsi premultiplied alpha)
 - **SIM-003**: Mesin Fisik & Layer Simulasi Interaktif Langsung di Peta (`features/simulation/terrain-pack.ts`, `terrain-pack.test.mjs`, `map-simulation-layer.tsx`) dengan klik daerah (`Kecamatan` / `Kabupaten`), genangan banjir berbasis DEM + HAND dengan riak gelombang, serta kerentanan longsor berbasis Slope + Hujan + Tutupan Lahan + partikel aliran turun lereng
 - **SIM-004**: Panel Kontrol Simulasi On-Map Ringkas & QA Multi-Viewport (`hydro-simulation-panel.tsx`, `map-quick-bar.tsx`, `webgis-workspace.tsx`; teruji di `1440px`, `768px`, dan `390px` dengan `overflow: false`)
+- **MAP3D-001**: Ekstraksi Data Bangunan Asli Jawa Barat (`02_processed/bangunan/bangunan_jumlah.tif` -> `public/simulation/terrain-buildings.png` 172,5 KB, `8.247.452` bangunan; total paket kontur + bangunan `1,62 MB`) & perluasan `terrain-pack.ts` + `terrain-pack.test.mjs` untuk metrik `affectedBuildings` dan `focusCenter`
+- **MAP3D-002**: Engine Peta 3D Natural MapLibre (`features/map/three-d/webgl-support.ts`, `natural-style.ts`, `maplibre-workspace-map.tsx`, `public/maplibre/maplibre-gl-worker.mjs`): 3D Terrain Mesh, Hillshade matahari, Garis Kontur mdpl dinamis, Rumah & Gedung 3D OpenFreeMap, langit atmosferik, mode `Satelit 3D`, dan simulasi banjir/longsor yang membungkus kontur 3D tepat di bawah layer gedung 3D
+- **MAP3D-003**: Dual-Engine Switcher (`3D Kontur` / `Satelit 3D` / `2D Klasik`), tombol `Lihat Dekat 3D`, kartu metrik `Bangunan Terpapar`, serta QA Chrome DevTools (`0 errors`, `overflow: false` di `1440px`, `768px`, `390px`)
 
 ## Tasks In Progress
 

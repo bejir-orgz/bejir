@@ -2,6 +2,7 @@
 
 import {
   IconAlertTriangle,
+  IconBuildingSkyscraper,
   IconClick,
   IconCloudRain,
   IconLayersIntersect,
@@ -47,10 +48,12 @@ export function HydroSimulationPanel({
   paused,
   selectedRegion,
   stats,
+  canZoom3d,
   onModeChange,
   onScopeChange,
   onParamsChange,
   onTogglePause,
+  onZoomClose3d,
   onPickExample,
   onResetRegion,
   onClose,
@@ -63,10 +66,12 @@ export function HydroSimulationPanel({
   paused: boolean;
   selectedRegion: SelectedSimRegion | null;
   stats: SimulationStats | null;
+  canZoom3d: boolean;
   onModeChange: (mode: SimulationMode) => void;
   onScopeChange: (scope: SimulationScope) => void;
   onParamsChange: (patch: Partial<SimulationParams>) => void;
   onTogglePause: () => void;
+  onZoomClose3d: (center: { lat: number; lng: number }) => void;
   onPickExample: (regencyId: number, districtId: number | null) => void;
   onResetRegion: () => void;
   onClose: () => void;
@@ -90,13 +95,17 @@ export function HydroSimulationPanel({
     ? `${stats.affectedAreaKm2.toLocaleString("id-ID", { maximumFractionDigits: 1 })} km² (${stats.affectedPct.toLocaleString("id-ID", { maximumFractionDigits: 1 })}%)`
     : "0 km²";
 
+  const affectedBuildingsText = stats
+    ? `~${stats.affectedBuildings.toLocaleString("id-ID")} unit`
+    : "0 unit";
+
   return (
     <section
       id="gis-hydro-simulation-panel"
       role="dialog"
       aria-modal="false"
       aria-labelledby="gis-sim-title"
-      className={`gis-sim-panel absolute bottom-3 left-3 right-3 z-4 mx-auto max-h-[52dvh] overflow-y-auto w-[min(620px,calc(100vw-24px))] rounded-2xl border border-neutral-300 bg-white/97 p-3.5 text-neutral-900 backdrop-blur-[2px] transition-[opacity,transform,right] duration-200 ease-[var(--ease-out-strong)] starting:scale-96 starting:opacity-0 max-[999.01px]:bottom-2.5 max-[999.01px]:p-2.5 ${
+      className={`gis-sim-panel absolute bottom-3 left-3 right-3 z-4 mx-auto max-h-[54dvh] overflow-y-auto w-[min(648px,calc(100vw-24px))] rounded-2xl border border-neutral-300 bg-white/97 p-3.5 text-neutral-900 backdrop-blur-[2px] transition-[opacity,transform,right] duration-200 ease-[var(--ease-out-strong)] starting:scale-96 starting:opacity-0 max-[999.01px]:bottom-2.5 max-[999.01px]:p-2.5 ${
         overviewOpen
           ? "min-[1000px]:left-16 min-[1000px]:right-[calc(var(--overview-width)+58px)]"
           : "min-[1000px]:left-16 min-[1000px]:right-16"
@@ -110,11 +119,25 @@ export function HydroSimulationPanel({
             SIMULASI EDUKATIF · BUKAN KONDISI BENCANA AKTUAL
           </span>
           <h2 id="gis-sim-title" className="mt-1 text-sm leading-5 font-semibold text-neutral-900">
-            Simulasi Kontur Peta Berbasis DEM &amp; Kemiringan Lereng
+            Simulasi Kontur 3D Berbasis DEM, Lereng &amp; Bangunan
           </h2>
         </div>
 
-        <div className="flex shrink-0 items-center gap-1">
+        <div className="flex shrink-0 flex-wrap items-center gap-1">
+          {canZoom3d && selectedRegion && stats?.focusCenter && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-7 border-blue-300 bg-blue-50 px-2 text-xs text-blue-800 hover:bg-blue-100 hover:text-blue-950"
+              onClick={() => {
+                if (stats.focusCenter) onZoomClose3d(stats.focusCenter);
+              }}
+            >
+              <IconBuildingSkyscraper className="size-3.5" aria-hidden="true" />
+              <span>Lihat Dekat 3D</span>
+            </Button>
+          )}
           {!reduced && selectedRegion && (
             <Button
               type="button"
@@ -222,36 +245,38 @@ export function HydroSimulationPanel({
           <div className="flex items-start gap-2">
             <IconClick className="mt-0.5 size-4 shrink-0 text-blue-600" aria-hidden="true" />
             <p className="leading-4">
-              <strong>Klik daerah mana pun di peta</strong> untuk menjalankan simulasi langsung pada kontur ketinggian DEM &amp; kemiringan lereng wilayah tersebut.
+              <strong>Klik daerah mana pun di peta</strong> untuk menjalankan simulasi langsung pada kontur ketinggian DEM, kemiringan lereng, dan sebaran bangunan 3D wilayah tersebut.
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-[11px] font-medium text-blue-800">Atau coba cepat:</span>
-            {quickRegionExamples.map((ex) => (
-              <button
-                key={ex.regencyId}
-                type="button"
-                onClick={() => {
-                  onScopeChange("regency");
-                  onPickExample(ex.regencyId, ex.districtId);
-                }}
-                className="cursor-pointer rounded-lg border border-blue-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-blue-800 transition-colors hover:bg-blue-100"
-              >
-                {ex.label}
-              </button>
-            ))}
-          </div>
+          {quickRegionExamples.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-[11px] font-medium text-blue-800">Atau coba cepat:</span>
+              {quickRegionExamples.map((ex) => (
+                <button
+                  key={ex.regencyId}
+                  type="button"
+                  onClick={() => {
+                    onScopeChange("regency");
+                    onPickExample(ex.regencyId, ex.districtId);
+                  }}
+                  className="cursor-pointer rounded-lg border border-blue-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-blue-800 transition-colors hover:bg-blue-100"
+                >
+                  {ex.label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       ) : (
         <div className="mt-2.5 flex flex-col gap-2.5">
-          {/* Active Region + Live Terrain Stats */}
-          <div className="grid grid-cols-3 gap-2 rounded-xl border border-neutral-200 bg-neutral-50/90 p-2 sm:grid-cols-[minmax(0,1.2fr)_repeat(3,minmax(0,0.75fr))] sm:p-2.5">
-            <div className="col-span-3 min-w-0 sm:col-span-1">
+          {/* Active Region + 4 Live Terrain & Building Stats */}
+          <div className="grid grid-cols-2 gap-2 rounded-xl border border-neutral-200 bg-neutral-50/90 p-2 sm:grid-cols-[minmax(0,1.25fr)_repeat(4,minmax(0,0.75fr))] sm:p-2.5">
+            <div className="col-span-2 min-w-0 sm:col-span-1">
               <p className="truncate text-xs font-semibold text-neutral-900">{selectedRegion.title}</p>
               <p className="truncate text-[11px] text-neutral-600">
                 {selectedRegion.subtitle}
                 {selectedRegion.pointSample
-                  ? ` · Titik ${selectedRegion.pointSample.demM.toFixed(0)} m dpl`
+                  ? ` · ${selectedRegion.pointSample.demM.toFixed(0)} m dpl`
                   : ""}
               </p>
             </div>
@@ -277,6 +302,12 @@ export function HydroSimulationPanel({
                 }`}
               >
                 {affectedAreaText}
+              </strong>
+            </div>
+            <div>
+              <span className="block text-[10px] font-medium text-neutral-500">Bangunan Terpapar</span>
+              <strong className="text-xs font-semibold text-neutral-900 tabular-nums">
+                {affectedBuildingsText}
               </strong>
             </div>
           </div>
@@ -335,7 +366,7 @@ export function HydroSimulationPanel({
                     Dalam (&gt;2 m)
                   </span>
                 </div>
-                <span className="text-[10px] text-neutral-500">Klik daerah lain di peta untuk pindah lokasi</span>
+                <span className="text-[10px] text-neutral-500">Klik kanan + seret peta untuk memutar sudut 3D</span>
               </div>
             </div>
           ) : (

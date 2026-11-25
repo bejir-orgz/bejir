@@ -2,15 +2,18 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { Map as LeafletMap, TileLayer } from "leaflet";
-import { IconCurrentLocation, IconMinus, IconPlus } from "@tabler/icons-react";
+import { IconCurrentLocation, IconMinus, IconMountain, IconPlus } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { westJavaBasemap } from "../basemap";
+import type { MapEngineMode } from "../three-d/webgl-support";
 import "leaflet/dist/leaflet.css";
 
 /** Owns map lifecycle; domain layers are composed by the workspace. */
-export function InteractiveMap({ children, dataStatus }: {
+export function InteractiveMap({ children, dataStatus, canSwitch3d = false, onSwitchMode }: {
   children?: (map: LeafletMap) => ReactNode;
   dataStatus?: { message: string; retry?: () => void };
+  canSwitch3d?: boolean;
+  onSwitchMode?: (mode: MapEngineMode) => void;
 }) {
   const container = useRef<HTMLDivElement>(null);
   const instance = useRef<LeafletMap | null>(null);
@@ -81,7 +84,21 @@ export function InteractiveMap({ children, dataStatus }: {
           else instance.current?.flyToBounds(westJavaBasemap.bounds, { padding: [24, 24], duration: 0.65 });
         }}><IconCurrentLocation className="size-6" aria-hidden="true" /></Button>
       </div>
-      <p className="gis-map-disclaimer absolute z-1 left-2 bottom-6 max-w-[calc(100%_-_64px)] p-[4px_8px] rounded-sm text-[10px] leading-[16px] bg-[#fffffff2] text-[#525252] pointer-events-none">Jawa Barat · Peta dasar OSM · Data backend</p>
+      {canSwitch3d && onSwitchMode ? (
+        <div className="absolute z-2 left-[calc(var(--regions-width,0px)_+_12px)] bottom-10 [transition:left_var(--gis-slide-duration)_var(--gis-slide-easing)] motion-reduce:[transition:none]">
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="h-8 gap-1.5 rounded-xl border-blue-300 bg-white/95 px-2.5 text-xs font-semibold text-blue-700 hover:bg-blue-50"
+            onClick={() => onSwitchMode("3d-natural")}
+          >
+            <IconMountain className="size-3.5" aria-hidden="true" />
+            <span>Kembali ke 3D Kontur</span>
+          </Button>
+        </div>
+      ) : null}
+      <p className="gis-map-disclaimer absolute z-1 left-2 bottom-6 max-w-[calc(100%_-_64px)] p-[4px_8px] rounded-sm text-[10px] leading-[16px] bg-[#fffffff2] text-[#525252] pointer-events-none">Jawa Barat · Peta dasar OSM (2D Klasik) · Data backend</p>
     </section>
   );
 }

@@ -33,6 +33,7 @@ const SOURCE_FILES = {
   slope: path.join(processedDir, "slope/slope_jabar_30m.tif"),
   rain: path.join(processedDir, "hujan/hujan_30m_masked.tif"),
   landcover: path.join(processedDir, "landcover/skor_landcover.tif"),
+  buildings: path.join(processedDir, "bangunan/bangunan_jumlah.tif"),
 };
 
 function clamp(value, min, max) {
@@ -303,7 +304,12 @@ class GeoTiffSampler {
     }
 
     if (pixelOffset + this.bytesPerSample > buf.length) return null;
-    const val = this.bits === 32 ? buf.readFloatLE(pixelOffset) : buf[pixelOffset];
+    const val =
+      this.bits === 32
+        ? this.sampleFormat === 2
+          ? buf.readInt32LE(pixelOffset)
+          : buf.readFloatLE(pixelOffset)
+        : buf[pixelOffset];
     if (!Number.isFinite(val)) return null;
     if (Math.abs(val - this.nodata) < 1e-3) return null;
     return val;
@@ -399,10 +405,12 @@ function main() {
     slope: new GeoTiffSampler(SOURCE_FILES.slope),
     rain: new GeoTiffSampler(SOURCE_FILES.rain),
     landcover: new GeoTiffSampler(SOURCE_FILES.landcover),
+    buildings: new GeoTiffSampler(SOURCE_FILES.buildings),
   };
 
   const demHandRgba = new Uint8Array(TARGET_WIDTH * TARGET_HEIGHT * 4);
   const hazardRgba = new Uint8Array(TARGET_WIDTH * TARGET_HEIGHT * 4);
+  const buildingsRgba = new Uint8Array(TARGET_WIDTH * TARGET_HEIGHT * 4);
 
   const mNorth = mercY(BOUNDS.north);
   const mSouth = mercY(BOUNDS.south);
@@ -410,11 +418,16 @@ function main() {
   const mercSpan = mNorth - mSouth;
 
   let validPixels = 0;
+  let totalBuildings = 0;
   let minDemM = Infinity;
   let maxDemM = -Infinity;
   let maxSlopeDeg = 0;
 
   try {
+    // Each target cell covers ~12x12 source 30m pixels; use a 6-step block sample (every 2nd pixel * 4)
+    // to preserve accurate regional building totals while keeping build time under a few seconds.
+    const blockOffsets = [-5, -3, -1, 1, 3, 5];
+
     for (let gy = 0; gy < TARGET_HEIGHT; gy++) {
       const lat = unmercY(mNorth - ((gy + 0.5) / TARGET_HEIGHT) * mercSpan);
       for (let gx = 0; gx < TARGET_WIDTH; gx++) {
@@ -430,6 +443,17 @@ function main() {
         const slopeRaw = samplers.slope.sample(col, row);
         const rainRaw = samplers.rain.sample(col, row);
         const lcRaw = samplers.landcover.sample(col, row);
+
+        let bldSampleSum = 0;
+        for (const dy of blockOffsets) {
+          for (const dx of blockOffsets) {
+            const b = samplers.buildings.sample(col + dx, row + dy);
+            if (b !== null && b > 0) bldSampleSum += b;
+          }
+        }
+        // Scale 36 sampled 30m pixels (6x6 at stride 2) to the full ~144-pixel cell footprint (12x12).
+        const cellBuildings = clamp(Math.round(bldSampleSum * 4), 0, 65535);
+        totalBuildings += cellBuildings;
 
         const hand = handRaw ?? 67;
         const slope = slopeRaw ?? 0;
@@ -460,6 +484,11 @@ function main() {
         hazardRgba[idx + 2] = (dir32 << 3) | lcScore;
         hazardRgba[idx + 3] = 255;
 
+        buildingsRgba[idx] = (cellBuildings >> 8) & 255;
+        buildingsRgba[idx + 1] = cellBuildings & 255;
+        buildingsRgba[idx + 2] = 0;
+        buildingsRgba[idx + 3] = 255;
+
         validPixels++;
         if (dem < minDemM) minDemM = dem;
         if (dem > maxDemM) maxDemM = dem;
@@ -473,13 +502,16 @@ function main() {
   fs.mkdirSync(outputDir, { recursive: true });
   const demPng = encodeRgbaPng(TARGET_WIDTH, TARGET_HEIGHT, demHandRgba);
   const hazardPng = encodeRgbaPng(TARGET_WIDTH, TARGET_HEIGHT, hazardRgba);
+  const buildingsPng = encodeRgbaPng(TARGET_WIDTH, TARGET_HEIGHT, buildingsRgba);
 
   const demOut = path.join(outputDir, "terrain-dem-hand.png");
   const hazardOut = path.join(outputDir, "terrain-hazard-params.png");
+  const buildingsOut = path.join(outputDir, "terrain-buildings.png");
   const metaOut = path.join(outputDir, "terrain-meta.json");
 
   fs.writeFileSync(demOut, demPng);
   fs.writeFileSync(hazardOut, hazardPng);
+  fs.writeFileSync(buildingsOut, buildingsPng);
 
   // Average cell area in km2 around West Java mean latitude (-6.865 deg).
   const midLatRad = (((BOUNDS.north + BOUNDS.south) / 2) * Math.PI) / 180;
@@ -488,7 +520,7 @@ function main() {
   const cellAreaKm2 = Number(((widthKm * heightKm) / (TARGET_WIDTH * TARGET_HEIGHT)).toFixed(5));
 
   const meta = {
-    version: 1,
+    version: 2,
     projection: "EPSG:3857-grid",
     width: TARGET_WIDTH,
     height: TARGET_HEIGHT,
@@ -498,6 +530,7 @@ function main() {
     cellAreaKm2,
     stats: {
       validPixels,
+      totalBuildings,
       minDemM: Number(minDemM.toFixed(1)),
       maxDemM: Number(maxDemM.toFixed(1)),
       maxSlopeDeg: Number(maxSlopeDeg.toFixed(1)),
@@ -505,17 +538,18 @@ function main() {
     files: {
       demHand: "/simulation/terrain-dem-hand.png",
       hazardParams: "/simulation/terrain-hazard-params.png",
+      buildings: "/simulation/terrain-buildings.png",
     },
   };
 
   fs.writeFileSync(metaOut, JSON.stringify(meta, null, 2) + "\n", "utf8");
 
-  const totalKb = ((demPng.length + hazardPng.length) / 1024).toFixed(1);
+  const totalKb = ((demPng.length + hazardPng.length + buildingsPng.length) / 1024).toFixed(1);
   console.log(
-    `Built terrain pack: ${validPixels} valid pixels, DEM ${meta.stats.minDemM}..${meta.stats.maxDemM}m, max slope ${meta.stats.maxSlopeDeg} deg`,
+    `Built terrain pack: ${validPixels} valid pixels, ${totalBuildings.toLocaleString("id-ID")} buildings, DEM ${meta.stats.minDemM}..${meta.stats.maxDemM}m, max slope ${meta.stats.maxSlopeDeg} deg`,
   );
   console.log(
-    `Sizes: terrain-dem-hand.png ${(demPng.length / 1024).toFixed(1)} KB, terrain-hazard-params.png ${(hazardPng.length / 1024).toFixed(1)} KB (total ${totalKb} KB)`,
+    `Sizes: dem-hand ${(demPng.length / 1024).toFixed(1)} KB, hazard ${(hazardPng.length / 1024).toFixed(1)} KB, buildings ${(buildingsPng.length / 1024).toFixed(1)} KB (total ${totalKb} KB)`,
   );
 }
 

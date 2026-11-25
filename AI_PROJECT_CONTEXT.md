@@ -17,7 +17,7 @@ Dokumen ini adalah ringkasan konteks teknis bagi model AI penerus yang mengerjak
 - **UI Primitives**: shadcn/ui (`radix-ui` `^1.8.1`, `class-variance-authority`, `tailwind-merge`) di `apps/web/components/ui/`
 - **Icons**: `@tabler/icons-react` `^3.49.0` (wajib digunakan secara konsisten; jangan memasang Lucide atau menyimpan ikon UI sebagai SVG statis baru)
 - **Motion Library**: `framer-motion` `^14.6.0` (sudah terpasang; mendukung `LazyMotion`, `domAnimation`, `m`, `AnimatePresence`, `useReducedMotion`, `animate`)
-- **Peta Interaktif**: `leaflet` `^1.9.4` dengan basemap OpenStreetMap dan Canvas/SVG layer di `apps/web/features/map/`, `features/geography/`, `features/rivers/`, `features/evacuation/`, `features/regions/`
+- **Peta Interaktif**: Dual-engine pada `/map`: **MapLibre GL JS** (`^6.19.0`) + **maplibre-contour** (`^0.2.0`) sebagai mode utama **3D Kontur & Gedung 3D** (OpenFreeMap Liberty + AWS Terrarium DEM + Esri World Imagery Satelit 3D, tanpa API key; worker ESM disajikan statis di `public/maplibre/maplibre-gl-worker.mjs`), serta **Leaflet** (`^1.9.4`) sebagai mode **2D Klasik** / fallback otomatis bila WebGL tidak tersedia.
 - **Visualisasi Grafik & Tabel**: `recharts` `^3.8.0` (melalui `components/ui/chart.tsx`) dan `@tanstack/react-table` `^8.21.3` (melalui `components/shared/data-table.tsx`)
 - **Tipografi**: `Google Sans Flex` via `next/font/google` (`--font-google-sans-flex`)
 

@@ -7,15 +7,12 @@ import type { ThematicCollection } from "@/features/geography/thematic-geometry"
 import { useRegionSelection } from "@/features/regions/region-selection";
 import {
   computeSimulationStats,
-  decodeDemMeters,
-  decodeHandMeters,
-  decodeHazardPixel,
-  evaluateFloodCell,
-  evaluateLandslideCell,
   loadTerrainPack,
   pointInGeometry,
   rasterizeGeometryMask,
+  renderSimulationToImageData,
   samplePointMetrics,
+  type DebrisSeed,
   type PointTerrainSample,
   type RegionRasterMask,
   type SimulationMode,
@@ -50,97 +47,6 @@ interface DebrisParticle {
 
 // Cache rasterized polygon masks per (scope + id) so slider drags run at 60fps.
 const maskCache = new Map<string, RegionRasterMask>();
-
-function renderRegionToBuffer(
-  pack: TerrainPack,
-  region: RegionRasterMask,
-  mode: SimulationMode,
-  params: SimulationParams,
-  revealProgress: number,
-  wavePhase: number,
-  imgData: ImageData,
-  seedsOut: { x: number; y: number; rad: number; tier: 2 | 3 }[],
-) {
-  const { width } = pack.meta;
-  const { demHand, hazard } = pack;
-  const out = imgData.data;
-  out.fill(0);
-  seedsOut.length = 0;
-
-  const boxWidth = region.maxX - region.minX + 1;
-  const effectiveWater = params.waterRiseM * revealProgress;
-  const effectiveRain = 40 + (params.triggerRainMmDay - 40) * revealProgress;
-
-  for (let gy = region.minY; gy <= region.maxY; gy++) {
-    const maskRow = (gy - region.minY) * boxWidth;
-    for (let gx = region.minX; gx <= region.maxX; gx++) {
-      if (region.mask[maskRow + (gx - region.minX)] === 0) continue;
-      const idx4 = (gy * width + gx) * 4;
-
-      if (mode === "flood") {
-        const demM = decodeDemMeters(demHand[idx4], demHand[idx4 + 1]);
-        const handM = decodeHandMeters(demHand[idx4 + 2]);
-        const cell = evaluateFloodCell(demM, handM, region.p10DemM, effectiveWater);
-        if (!cell.flooded) continue;
-
-        const shimmer = Math.sin(gx * 0.42 + gy * 0.28 - wavePhase) * 14;
-        if (cell.tier === 3) {
-          out[idx4] = Math.max(0, Math.min(255, 30 + shimmer * 0.5));
-          out[idx4 + 1] = Math.max(0, Math.min(255, 58 + shimmer * 0.8));
-          out[idx4 + 2] = Math.max(0, Math.min(255, 138 + shimmer));
-          out[idx4 + 3] = 220;
-        } else if (cell.tier === 2) {
-          out[idx4] = Math.max(0, Math.min(255, 37 + shimmer * 0.6));
-          out[idx4 + 1] = Math.max(0, Math.min(255, 99 + shimmer));
-          out[idx4 + 2] = Math.max(0, Math.min(255, 235 + shimmer * 0.6));
-          out[idx4 + 3] = 192;
-        } else {
-          out[idx4] = Math.max(0, Math.min(255, 56 + shimmer * 0.6));
-          out[idx4 + 1] = Math.max(0, Math.min(255, 189 + shimmer * 0.8));
-          out[idx4 + 2] = 248;
-          out[idx4 + 3] = 160;
-        }
-      } else {
-        const { slopeDeg, rainMmYr, downslopeRad, landcoverScore } = decodeHazardPixel(
-          hazard[idx4],
-          hazard[idx4 + 1],
-          hazard[idx4 + 2],
-        );
-        const cell = evaluateLandslideCell(
-          slopeDeg,
-          rainMmYr,
-          landcoverScore,
-          effectiveRain,
-          params.criticalSlopeDeg,
-        );
-        if (cell.tier === 0) continue;
-
-        if (cell.tier === 3) {
-          out[idx4] = 225;
-          out[idx4 + 1] = 20;
-          out[idx4 + 2] = 20;
-          out[idx4 + 3] = 232;
-          if ((gx + gy) % 2 === 0 && seedsOut.length < 400) {
-            seedsOut.push({ x: gx + 0.5, y: gy + 0.5, rad: downslopeRad, tier: 3 });
-          }
-        } else if (cell.tier === 2) {
-          out[idx4] = 255;
-          out[idx4 + 1] = 102;
-          out[idx4 + 2] = 0;
-          out[idx4 + 3] = 212;
-          if ((gx + gy) % 3 === 0 && seedsOut.length < 400) {
-            seedsOut.push({ x: gx + 0.5, y: gy + 0.5, rad: downslopeRad, tier: 2 });
-          }
-        } else {
-          out[idx4] = 250;
-          out[idx4 + 1] = 204;
-          out[idx4 + 2] = 21;
-          out[idx4 + 3] = 185;
-        }
-      }
-    }
-  }
-}
 
 export function MapSimulationLayer({
   map,
@@ -531,7 +437,7 @@ export function MapSimulationLayer({
     }
 
     const imgData = offCtx.createImageData(pack.meta.width, pack.meta.height);
-    const seeds: { x: number; y: number; rad: number; tier: 2 | 3 }[] = [];
+    const seeds: DebrisSeed[] = [];
     const particles: DebrisParticle[] = [];
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const animateMotion = !reduced && !paused;
@@ -574,7 +480,7 @@ export function MapSimulationLayer({
       const revealRaw = reduced || revealStartRef.current === 0 ? 1 : Math.min(1, elapsed / 620);
       const revealProgress = 1 - Math.pow(1 - revealRaw, 3);
 
-      renderRegionToBuffer(
+      renderSimulationToImageData(
         pack,
         resolved.region.raster,
         mode,

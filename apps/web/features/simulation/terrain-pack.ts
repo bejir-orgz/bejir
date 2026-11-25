@@ -19,6 +19,7 @@ export interface TerrainMeta {
   cellAreaKm2: number;
   stats: {
     validPixels: number;
+    totalBuildings?: number;
     minDemM: number;
     maxDemM: number;
     maxSlopeDeg: number;
@@ -26,6 +27,7 @@ export interface TerrainMeta {
   files: {
     demHand: string;
     hazardParams: string;
+    buildings?: string;
   };
 }
 
@@ -33,6 +35,7 @@ export interface TerrainPack {
   meta: TerrainMeta;
   demHand: Uint8ClampedArray;
   hazard: Uint8ClampedArray;
+  buildings: Uint8ClampedArray | null;
 }
 
 export interface RegionRasterMask {
@@ -43,6 +46,7 @@ export interface RegionRasterMask {
   maxY: number;
   validPixels: number;
   totalAreaKm2: number;
+  totalBuildings: number;
   minDemM: number;
   p10DemM: number;
   maxDemM: number;
@@ -56,6 +60,7 @@ export interface PointTerrainSample {
   slopeDeg: number;
   rainMmYr: number;
   landcoverScore: number;
+  buildingCount: number;
 }
 
 export interface SimulationParams {
@@ -68,9 +73,18 @@ export interface SimulationStats {
   affectedPixels: number;
   affectedAreaKm2: number;
   affectedPct: number;
+  affectedBuildings: number;
   tierCounts: [number, number, number];
   maxDepthM: number;
   maxRiskScore: number;
+  focusCenter: { lat: number; lng: number } | null;
+}
+
+export interface DebrisSeed {
+  x: number;
+  y: number;
+  rad: number;
+  tier: 2 | 3;
 }
 
 function clamp(value: number, min: number, max: number): number {
@@ -92,6 +106,10 @@ export function encodeDemMeters(demM: number): [number, number] {
 
 export function decodeDemMeters(r: number, g: number): number {
   return ((r << 8) | g) / 10 - 20;
+}
+
+export function decodeBuildingCount(r: number, g: number): number {
+  return (r << 8) | g;
 }
 
 export function encodeHandMeters(handM: number): number {
@@ -169,7 +187,7 @@ export function pointInGeometry(lng: number, lat: number, geometry: Polygon | Mu
   return false;
 }
 
-function geometryBounds(geometries: (Polygon | MultiPolygon)[]): {
+export function geometryBounds(geometries: (Polygon | MultiPolygon)[]): {
   minLng: number;
   maxLng: number;
   minLat: number;
@@ -206,7 +224,7 @@ export function rasterizeGeometryMask(
   geometries: (Polygon | MultiPolygon)[],
   pack: TerrainPack,
 ): RegionRasterMask {
-  const { meta, demHand, hazard } = pack;
+  const { meta, demHand, hazard, buildings } = pack;
   const { width, height, cellAreaKm2 } = meta;
   const bbox = geometryBounds(geometries);
 
@@ -228,6 +246,7 @@ export function rasterizeGeometryMask(
   let slopeSum = 0;
   let maxSlopeDeg = 0;
   let validPixels = 0;
+  let totalBuildings = 0;
 
   for (let gy = minY; gy <= maxY; gy++) {
     const { lat } = gridToLatLng(minX, gy, meta);
@@ -253,6 +272,9 @@ export function rasterizeGeometryMask(
       if (dem > maxDemM) maxDemM = dem;
       slopeSum += slope;
       if (slope > maxSlopeDeg) maxSlopeDeg = slope;
+      if (buildings) {
+        totalBuildings += decodeBuildingCount(buildings[idx4], buildings[idx4 + 1]);
+      }
       validPixels++;
     }
   }
@@ -274,6 +296,7 @@ export function rasterizeGeometryMask(
     maxY,
     validPixels,
     totalAreaKm2: validPixels * cellAreaKm2,
+    totalBuildings,
     minDemM,
     p10DemM,
     maxDemM,
@@ -328,27 +351,42 @@ export function computeSimulationStats(
   params: SimulationParams,
 ): SimulationStats {
   const { width, cellAreaKm2 } = pack.meta;
-  const { demHand, hazard } = pack;
+  const { demHand, hazard, buildings } = pack;
   const boxWidth = region.maxX - region.minX + 1;
 
   let affectedPixels = 0;
+  let affectedBuildings = 0;
   let maxDepthM = 0;
   let maxRiskScore = 0;
   const tierCounts: [number, number, number] = [0, 0, 0];
+
+  // Track the highest-impact inhabited cell so "Lihat Dekat 3D" lands on visible 3D buildings in the hazard zone.
+  let bestFocusScore = -1;
+  let bestFocusGx = -1;
+  let bestFocusGy = -1;
 
   for (let gy = region.minY; gy <= region.maxY; gy++) {
     const maskRow = (gy - region.minY) * boxWidth;
     for (let gx = region.minX; gx <= region.maxX; gx++) {
       if (region.mask[maskRow + (gx - region.minX)] === 0) continue;
       const idx4 = (gy * width + gx) * 4;
+      const cellBuildings = buildings ? decodeBuildingCount(buildings[idx4], buildings[idx4 + 1]) : 0;
+
       if (mode === "flood") {
         const demM = decodeDemMeters(demHand[idx4], demHand[idx4 + 1]);
         const handM = decodeHandMeters(demHand[idx4 + 2]);
         const res = evaluateFloodCell(demM, handM, region.p10DemM, params.waterRiseM);
         if (res.tier > 0) {
           affectedPixels++;
+          affectedBuildings += cellBuildings;
           tierCounts[res.tier - 1]++;
           if (res.depthM > maxDepthM) maxDepthM = res.depthM;
+          const focusScore = res.tier * 40 + Math.min(200, cellBuildings) * 2;
+          if (focusScore > bestFocusScore) {
+            bestFocusScore = focusScore;
+            bestFocusGx = gx;
+            bestFocusGy = gy;
+          }
         }
       } else {
         const { slopeDeg, rainMmYr, landcoverScore } = decodeHazardPixel(
@@ -365,21 +403,125 @@ export function computeSimulationStats(
         );
         if (res.tier > 0) {
           affectedPixels++;
+          affectedBuildings += cellBuildings;
           tierCounts[res.tier - 1]++;
           if (res.score > maxRiskScore) maxRiskScore = res.score;
+          const focusScore = res.score + Math.min(120, cellBuildings) * 1.5;
+          if (focusScore > bestFocusScore) {
+            bestFocusScore = focusScore;
+            bestFocusGx = gx;
+            bestFocusGy = gy;
+          }
         }
       }
     }
   }
 
+  const focusCenter =
+    bestFocusGx >= 0 && bestFocusGy >= 0 ? gridToLatLng(bestFocusGx, bestFocusGy, pack.meta) : null;
+
   return {
     affectedPixels,
     affectedAreaKm2: affectedPixels * cellAreaKm2,
     affectedPct: region.validPixels > 0 ? (affectedPixels / region.validPixels) * 100 : 0,
+    affectedBuildings,
     tierCounts,
     maxDepthM,
     maxRiskScore,
+    focusCenter,
   };
+}
+
+/** Shared pixel renderer used identically by both the 2D Leaflet canvas overlay and the 3D MapLibre draped canvas source. */
+export function renderSimulationToImageData(
+  pack: TerrainPack,
+  region: RegionRasterMask,
+  mode: SimulationMode,
+  params: SimulationParams,
+  revealProgress: number,
+  wavePhase: number,
+  imgData: ImageData,
+  seedsOut: DebrisSeed[],
+): void {
+  const { width } = pack.meta;
+  const { demHand, hazard } = pack;
+  const out = imgData.data;
+  out.fill(0);
+  seedsOut.length = 0;
+
+  const boxWidth = region.maxX - region.minX + 1;
+  const effectiveWater = params.waterRiseM * revealProgress;
+  const effectiveRain = 40 + (params.triggerRainMmDay - 40) * revealProgress;
+
+  for (let gy = region.minY; gy <= region.maxY; gy++) {
+    const maskRow = (gy - region.minY) * boxWidth;
+    for (let gx = region.minX; gx <= region.maxX; gx++) {
+      if (region.mask[maskRow + (gx - region.minX)] === 0) continue;
+      const idx4 = (gy * width + gx) * 4;
+
+      if (mode === "flood") {
+        const demM = decodeDemMeters(demHand[idx4], demHand[idx4 + 1]);
+        const handM = decodeHandMeters(demHand[idx4 + 2]);
+        const cell = evaluateFloodCell(demM, handM, region.p10DemM, effectiveWater);
+        if (!cell.flooded) continue;
+
+        const shimmer = Math.sin(gx * 0.42 + gy * 0.28 - wavePhase) * 14;
+        if (cell.tier === 3) {
+          out[idx4] = clamp(30 + shimmer * 0.5, 0, 255);
+          out[idx4 + 1] = clamp(58 + shimmer * 0.8, 0, 255);
+          out[idx4 + 2] = clamp(138 + shimmer, 0, 255);
+          out[idx4 + 3] = 216;
+        } else if (cell.tier === 2) {
+          out[idx4] = clamp(37 + shimmer * 0.6, 0, 255);
+          out[idx4 + 1] = clamp(99 + shimmer, 0, 255);
+          out[idx4 + 2] = clamp(235 + shimmer * 0.6, 0, 255);
+          out[idx4 + 3] = 190;
+        } else {
+          out[idx4] = clamp(56 + shimmer * 0.6, 0, 255);
+          out[idx4 + 1] = clamp(189 + shimmer * 0.8, 0, 255);
+          out[idx4 + 2] = 248;
+          out[idx4 + 3] = 158;
+        }
+      } else {
+        const { slopeDeg, rainMmYr, downslopeRad, landcoverScore } = decodeHazardPixel(
+          hazard[idx4],
+          hazard[idx4 + 1],
+          hazard[idx4 + 2],
+        );
+        const cell = evaluateLandslideCell(
+          slopeDeg,
+          rainMmYr,
+          landcoverScore,
+          effectiveRain,
+          params.criticalSlopeDeg,
+        );
+        if (cell.tier === 0) continue;
+
+        if (cell.tier === 3) {
+          out[idx4] = 225;
+          out[idx4 + 1] = 20;
+          out[idx4 + 2] = 20;
+          out[idx4 + 3] = 230;
+          if ((gx + gy) % 2 === 0 && seedsOut.length < 400) {
+            seedsOut.push({ x: gx + 0.5, y: gy + 0.5, rad: downslopeRad, tier: 3 });
+          }
+        } else if (cell.tier === 2) {
+          out[idx4] = 255;
+          out[idx4 + 1] = 102;
+          out[idx4 + 2] = 0;
+          out[idx4 + 3] = 208;
+          if ((gx + gy) % 3 === 0 && seedsOut.length < 400) {
+            seedsOut.push({ x: gx + 0.5, y: gy + 0.5, rad: downslopeRad, tier: 2 });
+          }
+        } else {
+          out[idx4] = 250;
+          out[idx4 + 1] = 204;
+          out[idx4 + 2] = 21;
+          out[idx4 + 3] = 180;
+        }
+      }
+    }
+  }
 }
 
 export function samplePointMetrics(pack: TerrainPack, lat: number, lng: number): PointTerrainSample | null {
@@ -395,7 +537,10 @@ export function samplePointMetrics(pack: TerrainPack, lat: number, lng: number):
     pack.hazard[idx4 + 1],
     pack.hazard[idx4 + 2],
   );
-  return { demM, handM, slopeDeg, rainMmYr, landcoverScore };
+  const buildingCount = pack.buildings
+    ? decodeBuildingCount(pack.buildings[idx4], pack.buildings[idx4 + 1])
+    : 0;
+  return { demM, handM, slopeDeg, rainMmYr, landcoverScore, buildingCount };
 }
 
 function decodePngToRgba(url: string, width: number, height: number): Promise<Uint8ClampedArray> {
@@ -427,11 +572,14 @@ export function loadTerrainPack(): Promise<TerrainPack> {
       const metaRes = await fetch("/simulation/terrain-meta.json");
       if (!metaRes.ok) throw new Error("Metadata kontur simulasi gagal dimuat.");
       const meta: TerrainMeta = await metaRes.json();
-      const [demHand, hazard] = await Promise.all([
+      const [demHand, hazard, buildings] = await Promise.all([
         decodePngToRgba(meta.files.demHand, meta.width, meta.height),
         decodePngToRgba(meta.files.hazardParams, meta.width, meta.height),
+        meta.files.buildings
+          ? decodePngToRgba(meta.files.buildings, meta.width, meta.height).catch(() => null)
+          : Promise.resolve(null),
       ]);
-      return { meta, demHand, hazard };
+      return { meta, demHand, hazard, buildings };
     })().catch((error) => {
       cachedPackPromise = null;
       throw error;

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { OverviewButton } from "@/components/ui/overview-button";
 import dynamic from "next/dynamic";
 import { InteractiveMap } from "@/features/map/components/interactive-map";
+import { supportsWebGL, type MapEngineMode } from "@/features/map/three-d/webgl-support";
 import { EvacuationLayer } from "@/features/evacuation/evacuation-layer";
 import { useEvacuationSites } from "@/features/evacuation/use-evacuation-sites";
 import { EvacuationRouting } from "@/features/evacuation/evacuation-routing";
@@ -29,6 +30,10 @@ import { HydroSimulationPanel } from "./hydro-simulation-panel";
 import { initialPanelState, panelReducer, type LeftPanel } from "../panel-state";
 
 const BejirAssistant = dynamic(() => import("@/features/assistant/components/assistant").then((module) => module.BejirAssistant));
+const MapLibreWorkspaceMap = dynamic(
+  () => import("@/features/map/three-d/maplibre-workspace-map").then((module) => module.MapLibreWorkspaceMap),
+  { ssr: false },
+);
 
 const leftTools = [
   { id: "regions", label: "daerah", icon: IconMap, filledIcon: IconMap },
@@ -45,6 +50,10 @@ function subscribeToWidth(callback: () => void) {
 }
 const getNarrowSnapshot = () => window.matchMedia(narrowQuery).matches;
 const getServerSnapshot = () => false;
+
+const subscribeNoop = () => () => {};
+const getWebGLSnapshot = () => supportsWebGL();
+const getWebGLServerSnapshot = () => false;
 
 function parseInitialSimTarget(regionIds: string[]): {
   regencyId: number;
@@ -65,7 +74,11 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
   const [sidebarWidth, setSidebarWidth] = useState(264);
   const [aiOpened, setAiOpened] = useState(false);
 
-  // On-map interactive DEM/slope simulation state.
+  const webglAvailable = useSyncExternalStore(subscribeNoop, getWebGLSnapshot, getWebGLServerSnapshot);
+  const [preferredEngine, setPreferredEngine] = useState<MapEngineMode | null>(null);
+  const engineMode: MapEngineMode = preferredEngine ?? (webglAvailable ? "3d-natural" : "2d-classic");
+
+  // On-map interactive DEM/slope/building simulation state.
   const [simulationOpen, setSimulationOpen] = useState(false);
   const [simMode, setSimMode] = useState<SimulationMode>("flood");
   const [simScope, setSimScope] = useState<SimulationScope>("district");
@@ -82,6 +95,7 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
   } | null>(null);
   const [simRegion, setSimRegion] = useState<SelectedSimRegion | null>(null);
   const [simStats, setSimStats] = useState<SimulationStats | null>(null);
+  const [focusRequest, setFocusRequest] = useState<{ lat: number; lng: number; nonce: number } | null>(null);
 
   const filters = { ...localFilters, regionIds: mapRegionIds };
   useEffect(() => {
@@ -145,6 +159,18 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
     setSimTarget({ regencyId, districtId, point: null });
   }, []);
 
+  const handleZoomClose3d = useCallback(
+    (center: { lat: number; lng: number }) => {
+      if (engineMode === "2d-classic" && webglAvailable) {
+        setPreferredEngine("3d-natural");
+      }
+      setFocusRequest({ lat: center.lat, lng: center.lng, nonce: Date.now() });
+    },
+    [engineMode, webglAvailable],
+  );
+
+  const activeDataStatus = simStatus ?? regionStatus ?? routeStatus ?? riverStatus ?? thematicStatus ?? evacuation.dataStatus;
+
   return (
     <div className="webgis-screen flex flex-col [&_>_.gis-header]:shrink-0 [--gis-blue:var(--primary)] [--gis-border:var(--border)] [--gis-muted:#737373] [--gis-slide-duration:280ms] [--gis-slide-easing:cubic-bezier(.22,1,.36,1)] text-[#000] bg-[#fff] text-[14px] leading-[20px] h-dvh min-h-120 overflow-hidden [&_button:focus-visible]:[outline:2px_solid_var(--gis-blue)] [&_button:focus-visible]:[outline-offset:-2px]">
       <a className="skip-link fixed z-50 top-2 left-4 [transform:translateY(-150%)] rounded-lg bg-[#2563eb] text-[white] p-[8px_16px] [&:focus]:[transform:translateY(0)]" href="#gis-main">Lewati ke peta</a>
@@ -152,7 +178,7 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
         updateFilters({ regionIds: [region.id] });
         dispatch({ type: "show-overview" });
       }} />
-      <main id="gis-main" style={{ "--sidebar-width": `min(${sidebarWidth}px, 480px, calc(100vw - 48px))` } as CSSProperties} className="gis-layout [--regions-width:var(--sidebar-width)] [--overview-width:456px] relative flex-1 min-h-0 isolate [&[data-left-open=false]]:[--regions-width:0px] [&[data-left-open=true]_.gis-left-toolbar_.gis-panel-toggle[aria-expanded=false]]:[opacity:0] [&[data-left-open=true]_.gis-left-toolbar_.gis-panel-toggle[aria-expanded=false]]:pointer-events-none [&[data-overview-open=true]_.gis-overview-trigger]:[transform:translateX(-100%)] [&[data-overview-open=true]_.gis-map-controls]:right-[calc(var(--overview-width)_+_16px)] [&[data-overview-open=true]_.gis-map-status]:right-[calc(var(--overview-width)_+_16px)] min-[1000px]:[&[data-overview-open=true]_.gis-map_.leaflet-bottom.leaflet-right]:right-[var(--overview-width)]! min-[1000px]:max-[1199.01px]:[--overview-width:380px] max-[999.01px]:[--regions-width:0px] max-[999.01px]:[--overview-width:min(456px,calc(100%_-_56px))] max-[999.01px]:[&[data-left-open=true]_.gis-overview-toggle]:hidden max-[999.01px]:[&[data-overview-open=true]_.gis-left-toolbar]:hidden" data-left-open={leftOpen} data-overview-open={overviewOpen} onKeyDown={(event) => {
+      <main id="gis-main" style={{ "--sidebar-width": `min(${sidebarWidth}px, 480px, calc(100vw - 48px))` } as CSSProperties} className="gis-layout [--regions-width:var(--sidebar-width)] [--overview-width:456px] relative flex-1 min-h-0 isolate [&[data-left-open=false]]:[--regions-width:0px] [&[data-left-open=true]_.gis-left-toolbar_.gis-panel-toggle[aria-expanded=false]]:[opacity:0] [&[data-left-open=true]_.gis-left-toolbar_.gis-panel-toggle[aria-expanded=false]]:pointer-events-none [&[data-overview-open=true]_.gis-overview-trigger]:[transform:translateX(-100%)] [&[data-overview-open=true]_.gis-map-controls]:right-[calc(var(--overview-width)_+_16px)] [&[data-overview-open=true]_.gis-map-status]:right-[calc(var(--overview-width)_+_16px)] min-[1000px]:[&[data-overview-open=true]_.gis-map_.leaflet-bottom.leaflet-right]:right-[var(--overview-width)]! min-[1000px]:[&[data-overview-open=true]_.gis-map_.maplibregl-ctrl-bottom-right]:right-[var(--overview-width)]! min-[1000px]:max-[1199.01px]:[--overview-width:380px] max-[999.01px]:[--regions-width:0px] max-[999.01px]:[--overview-width:min(456px,calc(100%_-_56px))] max-[999.01px]:[&[data-left-open=true]_.gis-overview-toggle]:hidden max-[999.01px]:[&[data-overview-open=true]_.gis-left-toolbar]:hidden" data-left-open={leftOpen} data-overview-open={overviewOpen} onKeyDown={(event) => {
         if (event.key === "Escape" && !event.defaultPrevented && (simulationOpen || leftOpen || overviewOpen)) {
           event.preventDefault();
           if (simulationOpen) {
@@ -164,30 +190,61 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
         }
       }}>
         <h1 className="sr-only">Map Interaktif Jawa Barat</h1>
-        <InteractiveMap dataStatus={simStatus ?? regionStatus ?? routeStatus ?? riverStatus ?? thematicStatus ?? evacuation.dataStatus}>
-          {(map) => (
-            <>
-              <RiverLayer map={map} enabled={filters.layerIds.includes("rivers")} regionIds={filters.regionIds} onStatus={setRiverStatus} />
-              <ThematicLayers map={map} layerIds={filters.layerIds} regionIds={filters.regionIds} onStatus={setThematicStatus} />
-              <MapSimulationLayer
-                map={map}
-                enabled={simulationOpen}
-                mode={simMode}
-                scope={simScope}
-                params={simParams}
-                paused={simPaused}
-                selectedTarget={simTarget}
-                onSelectTarget={handleSelectSimTarget}
-                onRegionResolved={setSimRegion}
-                onStatsChange={setSimStats}
-                onStatus={setSimStatus}
-              />
-              <EvacuationLayer map={map} sites={evacuation.sites} enabled={evacuationEnabled} />
-              <BoundaryLayer map={map} regionIds={filters.regionIds} onStatus={setRegionStatus} />
-              <EvacuationRouting map={map} enabled={evacuationEnabled && !simulationOpen} onStatus={setRouteStatus} />
-            </>
-          )}
-        </InteractiveMap>
+        {engineMode === "2d-classic" ? (
+          <InteractiveMap
+            dataStatus={activeDataStatus}
+            canSwitch3d={webglAvailable}
+            onSwitchMode={setPreferredEngine}
+          >
+            {(map) => (
+              <>
+                <RiverLayer map={map} enabled={filters.layerIds.includes("rivers")} regionIds={filters.regionIds} onStatus={setRiverStatus} />
+                <ThematicLayers map={map} layerIds={filters.layerIds} regionIds={filters.regionIds} onStatus={setThematicStatus} />
+                <MapSimulationLayer
+                  map={map}
+                  enabled={simulationOpen}
+                  mode={simMode}
+                  scope={simScope}
+                  params={simParams}
+                  paused={simPaused}
+                  selectedTarget={simTarget}
+                  onSelectTarget={handleSelectSimTarget}
+                  onRegionResolved={setSimRegion}
+                  onStatsChange={setSimStats}
+                  onStatus={setSimStatus}
+                />
+                <EvacuationLayer map={map} sites={evacuation.sites} enabled={evacuationEnabled} />
+                <BoundaryLayer map={map} regionIds={filters.regionIds} onStatus={setRegionStatus} />
+                <EvacuationRouting map={map} enabled={evacuationEnabled && !simulationOpen} onStatus={setRouteStatus} />
+              </>
+            )}
+          </InteractiveMap>
+        ) : (
+          <MapLibreWorkspaceMap
+            engineMode={engineMode}
+            onEngineModeChange={setPreferredEngine}
+            layerIds={filters.layerIds}
+            regionIds={filters.regionIds}
+            evacuationSites={evacuation.sites}
+            evacuationEnabled={evacuationEnabled}
+            simulationOpen={simulationOpen}
+            simMode={simMode}
+            simScope={simScope}
+            simParams={simParams}
+            simPaused={simPaused}
+            simTarget={simTarget}
+            focusRequest={focusRequest}
+            dataStatus={activeDataStatus}
+            onSelectSimTarget={handleSelectSimTarget}
+            onSimRegionResolved={setSimRegion}
+            onSimStatsChange={setSimStats}
+            onThematicStatus={setThematicStatus}
+            onRegionStatus={setRegionStatus}
+            onRiverStatus={setRiverStatus}
+            onRouteStatus={setRouteStatus}
+            onSimStatus={setSimStatus}
+          />
+        )}
         {!leftOpen && (!narrow || !overviewOpen) && (
           <MapQuickBar
             layers={data.layers}
@@ -207,15 +264,18 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
           paused={simPaused}
           selectedRegion={simRegion}
           stats={simStats}
+          canZoom3d={webglAvailable}
           onModeChange={setSimMode}
           onScopeChange={setSimScope}
           onParamsChange={(patch) => setSimParams((prev) => ({ ...prev, ...patch }))}
           onTogglePause={() => setSimPaused((prev) => !prev)}
+          onZoomClose3d={handleZoomClose3d}
           onPickExample={handlePickSimExample}
           onResetRegion={() => {
             setSimTarget(null);
             setSimRegion(null);
             setSimStats(null);
+            setFocusRequest(null);
           }}
           onClose={() => setSimulationOpen(false)}
         />
