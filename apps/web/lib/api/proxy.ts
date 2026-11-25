@@ -22,6 +22,8 @@ function upstreamFailure(path: string, status: number): string | undefined {
   // The routing road network covers only part of the province and refuses the rest in
   // English. Our own validator already answered 422, so a 400 here is that refusal.
   if (path === "/api/v1/evacuation/routes" && status === 400) return "Belum ada jaringan jalan yang terhubung di titik ini, jadi rute belum bisa dihitung. Coba titik lain.";
+  // One broken feature should not read as the whole site being down.
+  if (path === "/api/v1/evacuation/routes" && status >= 500) return "Pencarian rute evakuasi sedang bermasalah. Fitur peta yang lain tetap bisa dipakai.";
   return status >= 500 ? "Layanan backend belum tersedia." : undefined;
 }
 
