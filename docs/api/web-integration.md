@@ -82,7 +82,13 @@ generalization, maximum 2000) and `limit` up to 5000. The response keeps
 filtered with `ST_Intersects` against an index-backed EPSG:3857 envelope,
 simplified in EPSG:3857, and returned as EPSG:4326 GeoJSON rounded to six
 decimals. Requests without `bbox` behave exactly as before, including
-full-precision geometry. The web
+full-precision geometry. Geometry type is not stable within a simplified page:
+the source `core.rivers` column is `MULTILINESTRINGZ`, but
+`ST_SimplifyPreserveTopology` turns a single-part MultiLineString into a
+LineString. A page with `simplify_m > 0` therefore mixes `LineString` and
+`MultiLineString`; requests without generalization (no `bbox`, or
+`simplify_m=0`) always return `MultiLineString`. GeoJSON positions also carry Z.
+Consumers must accept both geometry types and must not drop one silently. The web
 registers this operation in its gateway. Run `npm run prepare:rivers` after
 preparing the administrative catalog, and ship `rivers.json` with the other
 prepared artifacts. See [river preparation](../deployment/river-layer.md).

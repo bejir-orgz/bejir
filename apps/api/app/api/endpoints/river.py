@@ -32,6 +32,13 @@ def get_rivers(
     """
     Daftar segmen sungai. Dengan `bbox`, endpoint ini melayani layer peta per
     viewport sehingga 114.304 baris tidak perlu diunduh sekaligus.
+
+    Format `geom` tidak seragam dalam satu halaman: sumber `core.rivers`
+    bertipe MULTILINESTRINGZ, tetapi generalisasi `simplify_m` mengubah
+    MultiLineString satu bagian menjadi LineString. Jadi `geom` dapat berupa
+    `LineString` atau `MultiLineString`, dan koordinatnya membawa nilai Z.
+    Klien wajib menerima kedua tipe geometri. Tanpa generalisasi (tanpa `bbox`
+    atau `simplify_m=0`) hasilnya selalu `MultiLineString`.
     """
     return RiverService.list_rivers(
         db,
