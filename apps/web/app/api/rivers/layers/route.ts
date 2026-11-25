@@ -3,9 +3,17 @@ import { fetchBackend } from "@/lib/api/backend";
 import { parseRiverRegions, parseRiverBounds } from "@/features/rivers/data";
 import { riverScope } from "@/features/rivers/filter";
 
-/** Matches the generalization the prepared read model used before the API gained a viewport. */
-const displayToleranceM3857 = 50;
-const viewportLimit = 4000;
+/**
+ * A wide viewport is the expensive case upstream: counting and sorting every matching
+ * river costs about six seconds before a single row is serialized, and full detail there
+ * is invisible anyway at roughly 300 m per pixel. Ask for less of it as the view widens.
+ */
+function viewportDetail(bounds: number[]): { limit: number; simplifyM: number } {
+  const span = Math.max(bounds[2] - bounds[0], bounds[3] - bounds[1]);
+  if (span > 2) return { limit: 1000, simplifyM: 400 };
+  if (span > 0.5) return { limit: 2500, simplifyM: 150 };
+  return { limit: 4000, simplifyM: 50 };
+}
 
 interface RiverRow {
   id: number;
@@ -33,7 +41,8 @@ export async function GET(request: Request) {
     if (scope.kind === "village") return emptyCollection({ scope_unsupported: "village" });
     if (scope.kind === "too-wide") return emptyCollection({ scope_unsupported: "too-wide" });
     if (scope.kind === "empty") return emptyCollection({});
-    const query = `bbox=${bounds.join(",")}&simplify_m=${displayToleranceM3857}&limit=${viewportLimit}${scope.query ? `&${scope.query}` : ""}`;
+    const { limit, simplifyM } = viewportDetail(bounds);
+    const query = `bbox=${bounds.join(",")}&simplify_m=${simplifyM}&limit=${limit}${scope.query ? `&${scope.query}` : ""}`;
     const response = await fetchBackend(`/api/v1/rivers?${query}`, { signal: request.signal, next: { revalidate: 3600 } });
     if (!response.ok) throw new Error(`Rivers HTTP ${response.status}`);
     const page: { items?: RiverRow[]; total?: number; truncated?: boolean } = await response.json();
