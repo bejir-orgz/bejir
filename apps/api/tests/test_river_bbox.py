@@ -146,6 +146,12 @@ def test_river_regency_and_district_filters_use_real_boundary(river_db):
             assert district["total"] == 1
             assert district["items"][0]["id"] == 2
 
+            multiple = client.get(
+                "/api/v1/rivers?district_id=10&district_id=11"
+            ).json()
+            assert multiple["total"] == 2
+            assert {item["id"] for item in multiple["items"]} == {1, 2}
+
             combined = client.get(
                 "/api/v1/rivers?regency_id=2&district_id=11"
             ).json()
@@ -156,6 +162,22 @@ def test_river_regency_and_district_filters_use_real_boundary(river_db):
             assert "ST_Subdivide" in statements
             assert "core.regency" in statements
             assert "core.districts" in statements
+    finally:
+        app.dependency_overrides.clear()
+
+
+def test_river_regency_summary_returns_counts_without_geometry(river_db):
+    app.dependency_overrides[get_db] = lambda: river_db
+    try:
+        with TestClient(app) as client:
+            response = client.get("/api/v1/rivers/summary")
+            assert response.status_code == 200
+            assert response.json() == [
+                {"regency_id": 1, "regency_name": "Kab A", "total": 2},
+                {"regency_id": 2, "regency_name": "Kab B", "total": 1},
+            ]
+            assert all("geom" not in row for row in response.json())
+            assert "ST_Subdivide" in " ".join(river_db.info["queries"])
     finally:
         app.dependency_overrides.clear()
 

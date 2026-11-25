@@ -13,10 +13,10 @@ from app.models.geography.river import River
 # (10k+ vertices): the GIST bbox admits too many rivers and each exact test
 # walks the full polygon. Tiles keep both the candidate set and the exact test
 # small while preserving the original boundary geometry.
-_BOUNDARY_TILE_VERTICES = 256
+_BOUNDARY_TILE_VERTICES = 2048
 
 
-def _intersecting_river_ids(model, boundary_id: int) -> Select:
+def _intersecting_river_ids(model, boundary_ids: list[int]) -> Select:
     tiles = (
         select(
             func.ST_Subdivide(
@@ -24,7 +24,7 @@ def _intersecting_river_ids(model, boundary_id: int) -> Select:
                 _BOUNDARY_TILE_VERTICES,
             ).label("tile")
         )
-        .where(model.id == boundary_id)
+        .where(model.id.in_(boundary_ids))
         .subquery()
     )
     river = aliased(River)
@@ -67,6 +67,33 @@ class RiverRepository:
         }
 
     @staticmethod
+    def get_regency_summary(db: Session) -> list[dict]:
+        """River segment count intersecting each regency boundary."""
+        tiles = (
+            select(
+                Regency.id.label("regency_id"),
+                func.ST_Subdivide(
+                    func.ST_Transform(Regency.geom, 3857),
+                    _BOUNDARY_TILE_VERTICES,
+                ).label("tile"),
+            )
+            .cte("regency_tiles")
+        )
+        statement = (
+            select(
+                Regency.id.label("regency_id"),
+                Regency.name.label("regency_name"),
+                func.count(func.distinct(River.id)).label("total"),
+            )
+            .select_from(Regency)
+            .outerjoin(tiles, tiles.c.regency_id == Regency.id)
+            .outerjoin(River, func.ST_Intersects(River.geom, tiles.c.tile))
+            .group_by(Regency.id, Regency.name)
+            .order_by(Regency.id)
+        )
+        return [dict(row) for row in db.execute(statement).mappings().all()]
+
+    @staticmethod
     def get_all(
         db: Session,
         *,
@@ -74,7 +101,7 @@ class RiverRepository:
         river_type: str | None = None,
         layer_code: str | None = None,
         regency_id: int | None = None,
-        district_id: int | None = None,
+        district_ids: list[int] | None = None,
         bbox: tuple[float, float, float, float] | None = None,
         simplify_m: int | None = None,
         limit: int = 100,
@@ -119,11 +146,11 @@ class RiverRepository:
         # as a tiled semi-join so each river is returned once.
         if regency_id is not None:
             statement = statement.where(
-                River.id.in_(_intersecting_river_ids(Regency, regency_id))
+                River.id.in_(_intersecting_river_ids(Regency, [regency_id]))
             )
-        if district_id is not None:
+        if district_ids:
             statement = statement.where(
-                River.id.in_(_intersecting_river_ids(District, district_id))
+                River.id.in_(_intersecting_river_ids(District, district_ids))
             )
         if name is not None:
             statement = statement.where(River.name.ilike(f"%{name}%"))

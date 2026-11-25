@@ -1,12 +1,20 @@
 from sqlalchemy.orm import Session
 
 from app.repositories.geography import RiverRepository
+from app.schemas.geography.river import RiverRegencySummary
 
 # Viewport default matches /api/v1/geography/boundaries.
 VIEWPORT_SIMPLIFY_M = 100
 
 
 class RiverService:
+    @staticmethod
+    def get_regency_summary(db: Session) -> list[RiverRegencySummary]:
+        return [
+            RiverRegencySummary(**row)
+            for row in RiverRepository.get_regency_summary(db)
+        ]
+
     @staticmethod
     def list_rivers(
         db: Session,
@@ -15,7 +23,7 @@ class RiverService:
         river_type: str | None = None,
         layer_code: str | None = None,
         regency_id: int | None = None,
-        district_id: int | None = None,
+        district_ids: list[int] | None = None,
         bbox: tuple[float, float, float, float] | None = None,
         simplify_m: int | None = None,
         limit: int = 100,
@@ -30,7 +38,7 @@ class RiverService:
             river_type=river_type,
             layer_code=layer_code,
             regency_id=regency_id,
-            district_id=district_id,
+            district_ids=district_ids,
             bbox=bbox,
             simplify_m=simplify_m,
             limit=limit,

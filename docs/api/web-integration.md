@@ -84,9 +84,14 @@ simplified in EPSG:3857, and returned as EPSG:4326 GeoJSON rounded to six
 decimals. Requests without `bbox` behave exactly as before, including
 full-precision geometry. `regency_id` and `district_id` filter by intersection
 with the real administrative boundary, not the boundary's bounding box, so
-rivers outside the selected region are excluded. Results are ordered by
-`shape_length` descending (then `id`), so a truncated province-wide page shows
-the largest rivers first instead of a contiguous id range. Geometry type is not stable within a simplified page:
+rivers outside the selected region are excluded. `district_id` is repeatable
+(up to 100 values) and returns the union for the selected districts. Results are
+ordered by `shape_length` descending (then `id`), so a truncated province-wide
+page shows the largest rivers first instead of a contiguous id range.
+`GET /api/v1/rivers/summary` returns one `{regency_id, regency_name, total}`
+row per regency/city without geometry; totals use the same exact boundary
+intersection and are static for a dataset, so they can be cached. Register the
+new operation in the web gateway/OpenAPI snapshot before browser use. Geometry type is not stable within a simplified page:
 the source `core.rivers` column is `MULTILINESTRINGZ`, but
 `ST_SimplifyPreserveTopology` turns a single-part MultiLineString into a
 LineString. A page with `simplify_m > 0` therefore mixes `LineString` and
