@@ -10,9 +10,9 @@ import { floodRankingSource } from "./flood-data";
 import styles from "./landing.module.css";
 
 const steps = [
-  { title: "Pilih wilayah di Jawa Barat", text: "Cari kabupaten, kota, atau kecamatan untuk memfokuskan batas administrasi dan periode pengamatan." },
-  { title: "Bandingkan layer hidrologi & medan", text: "Nyalakan curah hujan, jaringan sungai, elevasi DEM, tutupan lahan, dan kelas kerawanan secara berdampingan." },
-  { title: "Uji rute evakuasi & baca sumbernya", text: "Klik titik di peta untuk mencari rute evakuasi terdekat serta pelajari catatan metode di panel ringkasan." },
+  { title: "Pilih wilayah pada peta 3D berkontur", text: "Cari kabupaten, kota, atau kecamatan untuk melihat batas administrasi, kontur elevasi, bangunan 3D, dan periode pengamatan." },
+  { title: "Bandingkan layer hidrologi & simulasi DEM", text: "Nyalakan curah hujan, jaringan sungai, kerawanan, atau jalankan simulasi edukatif banjir DEM dan longsor lereng langsung di atas peta." },
+  { title: "Cari titik evakuasi aman & baca sumbernya", text: "Klik titik di peta untuk mencari rute atau titik evakuasi aman terdekat serta pelajari catatan metode di panel ringkasan." },
 ];
 
 const floodSource = "https://bnpb.go.id/storage/app/media/Buletin%20Info%20Bencana/Buku%20Data%20Bencana%202024/20250613_Buku%20Data%202024.pdf#page=142";
@@ -138,7 +138,7 @@ export function LandingPage() {
             </MotionReveal>
             <p className={styles.mapFootnote}>
               <IconShieldCheck size={15} aria-hidden="true" />
-              Pratinjau di atas merupakan ilustrasi konsep antarmuka berbasis parameter SIBAJAWA. Data observasi, batas 627 kecamatan, dan perhitungan rute tersedia langsung pada halaman Map Interaktif.
+              Pratinjau di atas merupakan ilustrasi konsep antarmuka berbasis parameter SIBAJAWA. Peta 3D berkontur dengan bangunan 3D, simulasi edukatif DEM dan lereng, batas 627 kecamatan, serta pencarian evakuasi tersedia langsung pada halaman Map Interaktif.
             </p>
           </div>
         </section>

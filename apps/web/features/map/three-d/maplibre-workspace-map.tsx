@@ -30,6 +30,7 @@ import { isRegionSelected } from "@/features/webgis/region-tree";
 import { landCoverColor } from "@/features/geography/land-cover-colors";
 import { classColors, classLabels } from "@/features/geography/aggregation";
 import type { EvacuationSite } from "@/features/evacuation/types";
+import { fetchNearestEvacuationSite, formatStraightDistance } from "@/features/evacuation/nearby-fallback";
 import { riverViewportStatusMessage, type RiverViewportStatus } from "@/features/rivers/data";
 import type { RiverProperties } from "@/features/rivers/types";
 import { requestBackend } from "@/lib/api/client";
@@ -38,6 +39,7 @@ import { useRegionSelection } from "@/features/regions/region-selection";
 import type { SelectedSimRegion } from "@/features/simulation/map-simulation-layer";
 import {
   computeSimulationStats,
+  findNearestSafeEvacuationSite,
   geometryBounds,
   loadTerrainPack,
   pointInGeometry,
@@ -169,6 +171,8 @@ export function MapLibreWorkspaceMap({
   simPaused,
   simTarget,
   focusRequest,
+  safeEvacRequestNonce,
+  onSafeEvacNoteChange,
   dataStatus,
   onSelectSimTarget,
   onSimRegionResolved,
@@ -192,6 +196,8 @@ export function MapLibreWorkspaceMap({
   simPaused: boolean;
   simTarget: { regencyId: number; districtId: number | null; point: { lat: number; lng: number } | null } | null;
   focusRequest: { lat: number; lng: number; nonce: number } | null;
+  safeEvacRequestNonce: number;
+  onSafeEvacNoteChange: (note: string | null) => void;
   dataStatus?: { message: string; retry?: () => void };
   onSelectSimTarget: (target: { regencyId: number; districtId: number | null; point: { lat: number; lng: number } | null }) => void;
   onSimRegionResolved: (region: SelectedSimRegion | null) => void;
@@ -974,6 +980,126 @@ export function MapLibreWorkspaceMap({
     });
   }, [mapReady, focusRequest]);
 
+  // 11b) Respond to "Evakuasi Aman" button inside active simulation (finds nearest site outside flood/landslide zone).
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!mapReady || !map) return;
+    const rSrc = map.getSource(MAPLIBRE_IDS.evacRouteSource);
+    const pSrc = map.getSource(MAPLIBRE_IDS.evacRoutePointsSource);
+
+    const clearSafeGuide = () => {
+      if (isGeoJsonSource(rSrc)) rSrc.setData(emptyCollection);
+      if (isGeoJsonSource(pSrc)) pSrc.setData(emptyCollection);
+    };
+
+    if (!simulationOpen || !safeEvacRequestNonce || !pack || !resolvedSim) {
+      clearSafeGuide();
+      onSafeEvacNoteChange(null);
+      return;
+    }
+
+    if (!evacuationSites.length) {
+      onSafeEvacNoteChange("Memuat titik evakuasi untuk mencari lokasi aman terdekat...");
+      return;
+    }
+
+    const stats = computeSimulationStats(pack, resolvedSim.region.raster, simMode, simParams);
+    const origin = resolvedSim.region.clickedPoint ?? stats.focusCenter;
+    if (!origin) return;
+
+    const match = findNearestSafeEvacuationSite(
+      pack,
+      resolvedSim.region.raster.p10DemM,
+      simMode,
+      simParams,
+      origin,
+      evacuationSites,
+    );
+
+    if (!match) {
+      clearSafeGuide();
+      onSafeEvacNoteChange("Tidak ditemukan titik evakuasi aman pada kategori aktif saat ini.");
+      return;
+    }
+
+    if (map.getLayer(MAPLIBRE_IDS.evacRouteLineLayer)) {
+      map.setPaintProperty(MAPLIBRE_IDS.evacRouteLineLayer, "line-color", "#15803d");
+      map.setPaintProperty(MAPLIBRE_IDS.evacRouteLineLayer, "line-dasharray", [2, 2]);
+    }
+    if (isGeoJsonSource(rSrc)) {
+      rSrc.setData({
+        type: "FeatureCollection",
+        features: [
+          {
+            type: "Feature",
+            geometry: {
+              type: "LineString",
+              coordinates: [
+                [origin.lng, origin.lat],
+                [match.longitude, match.latitude],
+              ],
+            },
+            properties: {},
+          },
+        ],
+      });
+    }
+    if (isGeoJsonSource(pSrc)) {
+      pSrc.setData({
+        type: "FeatureCollection",
+        features: [
+          {
+            type: "Feature",
+            geometry: { type: "Point", coordinates: [origin.lng, origin.lat] },
+            properties: { role: "origin" },
+          },
+          {
+            type: "Feature",
+            geometry: { type: "Point", coordinates: [match.longitude, match.latitude] },
+            properties: { role: "dest" },
+          },
+        ],
+      });
+    }
+
+    const minLng = Math.min(origin.lng, match.longitude);
+    const maxLng = Math.max(origin.lng, match.longitude);
+    const minLat = Math.min(origin.lat, match.latitude);
+    const maxLat = Math.max(origin.lat, match.latitude);
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const padBottom = window.innerWidth < 1000 ? 250 : 250;
+    map.fitBounds(
+      [
+        [minLng, minLat],
+        [maxLng, maxLat],
+      ],
+      {
+        padding: { top: 84, left: 64, right: 64, bottom: padBottom },
+        maxZoom: 15.5,
+        pitch: reduced ? 0 : 45,
+        duration: reduced ? 0 : 850,
+      },
+    );
+
+    const elevLabel = match.elevationM !== null ? ` (${match.elevationM.toLocaleString("id-ID")} mdpl)` : "";
+    const away = formatStraightDistance(match.distanceM);
+    onSafeEvacNoteChange(`Evakuasi aman terdekat: ${match.name}${elevLabel} · ${away} garis lurus, di luar zona simulasi.`);
+
+    return () => {
+      clearSafeGuide();
+    };
+  }, [
+    mapReady,
+    simulationOpen,
+    safeEvacRequestNonce,
+    pack,
+    resolvedSim,
+    simMode,
+    simParams,
+    evacuationSites,
+    onSafeEvacNoteChange,
+  ]);
+
   // 12) Draped 3D Simulation Canvas Renderer (Flood DEM ripples + Landslide slope particles directly on 3D terrain).
   useEffect(() => {
     const map = mapRef.current;
@@ -1173,6 +1299,10 @@ export function MapLibreWorkspaceMap({
             if (!route || !isGeometry(route.geometry)) {
               throw new Error("Tidak ada tujuan evakuasi yang dapat dijangkau.");
             }
+            if (map.getLayer(MAPLIBRE_IDS.evacRouteLineLayer)) {
+              map.setPaintProperty(MAPLIBRE_IDS.evacRouteLineLayer, "line-color", "#2563eb");
+              map.setPaintProperty(MAPLIBRE_IDS.evacRouteLineLayer, "line-dasharray", undefined);
+            }
             const rSrc = map.getSource(MAPLIBRE_IDS.evacRouteSource);
             const pSrc = map.getSource(MAPLIBRE_IDS.evacRoutePointsSource);
             if (isGeoJsonSource(rSrc)) {
@@ -1208,9 +1338,75 @@ export function MapLibreWorkspaceMap({
               message: `Rute berkendara ke ${name} · ${(route.distance_m / 1000).toLocaleString("id-ID", { maximumFractionDigits: 2 })} km · ${route.duration_minutes.toLocaleString("id-ID", { maximumFractionDigits: 1 })} menit`,
             });
           })
-          .catch((error) => {
-            if (!active.signal.aborted) {
-              onRouteStatus({ message: error instanceof Error ? error.message : "Pencarian rute gagal." });
+          .catch(async (error) => {
+            if (active.signal.aborted) return;
+            const reason = error instanceof Error ? error.message : "Pencarian rute gagal.";
+            try {
+              const site = await fetchNearestEvacuationSite(event.lngLat.lng, event.lngLat.lat, active.signal);
+              if (active.signal.aborted) return;
+              if (!site) {
+                onRouteStatus({ message: `${reason} Tidak ada titik evakuasi di sekitar sini.` });
+                return;
+              }
+              if (map.getLayer(MAPLIBRE_IDS.evacRouteLineLayer)) {
+                map.setPaintProperty(MAPLIBRE_IDS.evacRouteLineLayer, "line-color", "#b45309");
+                map.setPaintProperty(MAPLIBRE_IDS.evacRouteLineLayer, "line-dasharray", [2, 2]);
+              }
+              const rSrc = map.getSource(MAPLIBRE_IDS.evacRouteSource);
+              const pSrc = map.getSource(MAPLIBRE_IDS.evacRoutePointsSource);
+              if (isGeoJsonSource(rSrc)) {
+                rSrc.setData({
+                  type: "FeatureCollection",
+                  features: [
+                    {
+                      type: "Feature",
+                      geometry: {
+                        type: "LineString",
+                        coordinates: [
+                          [event.lngLat.lng, event.lngLat.lat],
+                          [site.longitude, site.latitude],
+                        ],
+                      },
+                      properties: {},
+                    },
+                  ],
+                });
+              }
+              if (isGeoJsonSource(pSrc)) {
+                pSrc.setData({
+                  type: "FeatureCollection",
+                  features: [
+                    {
+                      type: "Feature",
+                      geometry: { type: "Point", coordinates: [event.lngLat.lng, event.lngLat.lat] },
+                      properties: { role: "origin" },
+                    },
+                    {
+                      type: "Feature",
+                      geometry: { type: "Point", coordinates: [site.longitude, site.latitude] },
+                      properties: { role: "dest" },
+                    },
+                  ],
+                });
+              }
+              const minLng = Math.min(event.lngLat.lng, site.longitude);
+              const maxLng = Math.max(event.lngLat.lng, site.longitude);
+              const minLat = Math.min(event.lngLat.lat, site.latitude);
+              const maxLat = Math.max(event.lngLat.lat, site.latitude);
+              const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+              map.fitBounds(
+                [
+                  [minLng, minLat],
+                  [maxLng, maxLat],
+                ],
+                { padding: 64, maxZoom: 16.5, duration: reduced ? 0 : 750 },
+              );
+              const away = formatStraightDistance(site.distance_m);
+              onRouteStatus({
+                message: `${reason} Titik terdekat: ${site.name || "tanpa nama"} · ${away} garis lurus, bukan jarak berkendara. Klik lagi untuk mencoba rute.`,
+              });
+            } catch {
+              if (!active.signal.aborted) onRouteStatus({ message: reason });
             }
           });
       }

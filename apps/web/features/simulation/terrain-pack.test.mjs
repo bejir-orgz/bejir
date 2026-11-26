@@ -6,10 +6,14 @@ import {
   decodeDemMeters,
   decodeHandMeters,
   decodeHazardPixel,
+  decodePopulationCell,
+  describeClickedPointSimulation,
   encodeDemMeters,
   encodeHandMeters,
+  encodePopulationCell,
   evaluateFloodCell,
   evaluateLandslideCell,
+  findNearestSafeEvacuationSite,
   gridToLatLng,
   latLngToGrid,
   mercY,
@@ -113,7 +117,7 @@ test("rasterizeGeometryMask and computeSimulationStats track affectedBuildings a
 
       buildings[idx] = (cellBld >> 8) & 255;
       buildings[idx + 1] = cellBld & 255;
-      buildings[idx + 2] = 0;
+      buildings[idx + 2] = encodePopulationCell(x < 10 ? 320 : 80);
       buildings[idx + 3] = 255;
     }
   }
@@ -134,6 +138,7 @@ test("rasterizeGeometryMask and computeSimulationStats track affectedBuildings a
   const regionMask = rasterizeGeometryMask([polygon], pack);
   assert.ok(regionMask.validPixels > 100);
   assert.ok(regionMask.totalBuildings > 1000);
+  assert.ok(regionMask.totalPopulation > 5000);
 
   const lowFlood = computeSimulationStats(pack, regionMask, "flood", {
     waterRiseM: 1.0,
@@ -147,8 +152,26 @@ test("rasterizeGeometryMask and computeSimulationStats track affectedBuildings a
   });
   assert.ok(highFlood.affectedPixels > lowFlood.affectedPixels);
   assert.ok(highFlood.affectedBuildings > lowFlood.affectedBuildings);
+  assert.ok(highFlood.affectedPopulation > lowFlood.affectedPopulation);
   assert.ok(highFlood.focusCenter !== null);
   assert.ok(highFlood.focusCenter.lng >= 107.0 && highFlood.focusCenter.lng <= 108.0);
+
+  // Safe evacuation must skip the flooded site on the low plain (x=2) and pick the dry hillside site (x=15).
+  const floodedSitePos = gridToLatLng(2, 10, sampleMeta);
+  const drySitePos = gridToLatLng(15, 10, sampleMeta);
+  const originPos = gridToLatLng(3, 10, sampleMeta);
+  const safe = findNearestSafeEvacuationSite(
+    pack,
+    regionMask.p10DemM,
+    "flood",
+    { waterRiseM: 4.0, triggerRainMmDay: 120, criticalSlopeDeg: 18 },
+    originPos,
+    [
+      { id: 1, name: "Sekolah Terendam", category: "pendidikan", latitude: floodedSitePos.lat, longitude: floodedSitePos.lng },
+      { id: 2, name: "Masjid Bukit Aman", category: "ibadah", latitude: drySitePos.lat, longitude: drySitePos.lng },
+    ],
+  );
+  assert.equal(safe?.id, 2);
 
   const mildSlide = computeSimulationStats(pack, regionMask, "landslide", {
     waterRiseM: 3.0,
@@ -162,5 +185,30 @@ test("rasterizeGeometryMask and computeSimulationStats track affectedBuildings a
   });
   assert.ok(severeSlide.affectedPixels > mildSlide.affectedPixels);
   assert.ok(severeSlide.affectedBuildings > mildSlide.affectedBuildings);
+  assert.ok(severeSlide.affectedPopulation > mildSlide.affectedPopulation);
   assert.ok(severeSlide.focusCenter !== null);
+});
+
+test("population piecewise encoding and clicked-point assessment return expected bounds and statuses", () => {
+  for (const pop of [0, 120, 980, 4500, 18400]) {
+    const decoded = decodePopulationCell(encodePopulationCell(pop));
+    assert.ok(Math.abs(decoded - pop) <= Math.max(50, pop * 0.04), `pop ${pop} decoded to ${decoded}`);
+  }
+  const wet = describeClickedPointSimulation(
+    { demM: 660, handM: 0.6, slopeDeg: 2, rainMmYr: 2400, landcoverScore: 4, buildingCount: 40, populationCount: 180 },
+    660,
+    "flood",
+    { waterRiseM: 2.5, triggerRainMmDay: 120, criticalSlopeDeg: 18 },
+  );
+  assert.equal(wet.status, "hazard");
+  assert.match(wet.summary, /terendam/i);
+
+  const dry = describeClickedPointSimulation(
+    { demM: 710, handM: 12, slopeDeg: 4, rainMmYr: 2400, landcoverScore: 2, buildingCount: 10, populationCount: 40 },
+    660,
+    "flood",
+    { waterRiseM: 2.5, triggerRainMmDay: 120, criticalSlopeDeg: 18 },
+  );
+  assert.equal(dry.status, "safe");
+  assert.match(dry.summary, /tidak tergenang/i);
 });

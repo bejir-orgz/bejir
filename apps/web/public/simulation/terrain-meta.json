@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "projection": "EPSG:3857-grid",
   "width": 768,
   "height": 615,
@@ -15,6 +15,7 @@
   "stats": {
     "validPixels": 289546,
     "totalBuildings": 8247452,
+    "totalPopulation": 49760195,
     "minDemM": -4.2,
     "maxDemM": 3002.1,
     "maxSlopeDeg": 61.5

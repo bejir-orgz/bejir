@@ -5,17 +5,19 @@ import {
   IconPlayerPause,
   IconPlayerPlay,
   IconRefresh,
+  IconRoute,
   IconX,
 } from "@tabler/icons-react";
 import { useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useRegionSelection } from "@/features/regions/region-selection";
 import type { SelectedSimRegion } from "@/features/simulation/map-simulation-layer";
-import type {
-  SimulationMode,
-  SimulationParams,
-  SimulationScope,
-  SimulationStats,
+import {
+  describeClickedPointSimulation,
+  type SimulationMode,
+  type SimulationParams,
+  type SimulationScope,
+  type SimulationStats,
 } from "@/features/simulation/terrain-pack";
 
 const floodPresets = [
@@ -35,6 +37,13 @@ const quickRegionTemplates = [
   { label: "Kab. Bogor", match: "kabupaten bogor" },
 ];
 
+function formatCompactPopulation(count: number): string {
+  if (count >= 1_000_000) {
+    return `~${(count / 1_000_000).toLocaleString("id-ID", { maximumFractionDigits: 2 })} jt jiwa`;
+  }
+  return `~${count.toLocaleString("id-ID")} jiwa`;
+}
+
 export function HydroSimulationPanel({
   open,
   overviewOpen,
@@ -44,12 +53,14 @@ export function HydroSimulationPanel({
   paused,
   selectedRegion,
   stats,
+  safeEvacNote,
   canZoom3d,
   onModeChange,
   onScopeChange,
   onParamsChange,
   onTogglePause,
   onZoomClose3d,
+  onFindSafeEvac,
   onPickExample,
   onResetRegion,
   onClose,
@@ -62,12 +73,14 @@ export function HydroSimulationPanel({
   paused: boolean;
   selectedRegion: SelectedSimRegion | null;
   stats: SimulationStats | null;
+  safeEvacNote: string | null;
   canZoom3d: boolean;
   onModeChange: (mode: SimulationMode) => void;
   onScopeChange: (scope: SimulationScope) => void;
   onParamsChange: (patch: Partial<SimulationParams>) => void;
   onTogglePause: () => void;
   onZoomClose3d: (center: { lat: number; lng: number }) => void;
+  onFindSafeEvac: () => void;
   onPickExample: (regencyId: number, districtId: number | null) => void;
   onResetRegion: () => void;
   onClose: () => void;
@@ -94,6 +107,14 @@ export function HydroSimulationPanel({
     ? stats.affectedPct.toLocaleString("id-ID", { maximumFractionDigits: 1 })
     : "0";
   const affectedBuildings = stats ? stats.affectedBuildings.toLocaleString("id-ID") : "0";
+  const affectedPopulationText = stats ? formatCompactPopulation(stats.affectedPopulation) : "~0 jiwa";
+
+  const pointAssessment =
+    selectedRegion && selectedRegion.pointSample
+      ? describeClickedPointSimulation(selectedRegion.pointSample, selectedRegion.raster.p10DemM, mode, params)
+      : null;
+
+  const hasEvacOrigin = Boolean(selectedRegion?.clickedPoint || stats?.focusCenter);
 
   return (
     <section
@@ -265,29 +286,59 @@ export function HydroSimulationPanel({
         </div>
       ) : (
         <div className="mt-3 flex flex-col gap-3">
-          {/* Active region identity + single Focus 3D action */}
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0">
+          {/* Active region identity + clicked-point assessment + compact actions */}
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold text-neutral-900">{selectedRegion.title}</p>
-              <p className="truncate text-xs text-neutral-600">
-                {selectedRegion.subtitle}
-                {selectedRegion.pointSample ? ` · ${selectedRegion.pointSample.demM.toFixed(0)} mdpl` : ""}
-              </p>
+              <p className="truncate text-xs text-neutral-600">{selectedRegion.subtitle}</p>
+              {pointAssessment && (
+                <p
+                  className={`mt-0.5 text-xs leading-4 font-medium ${
+                    pointAssessment.status === "hazard"
+                      ? mode === "flood"
+                        ? "text-[var(--accent-foreground)]"
+                        : "text-[#c2410c]"
+                      : "text-[#15803d]"
+                  }`}
+                >
+                  {pointAssessment.summary}
+                </p>
+              )}
+              {safeEvacNote && (
+                <p className="mt-0.5 text-xs leading-4 font-medium text-[#15803d]" role="status">
+                  {safeEvacNote}
+                </p>
+              )}
             </div>
-            {canZoom3d && stats?.focusCenter && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="h-7 shrink-0 gap-1.5 rounded-lg border-neutral-300 bg-white px-2.5 text-xs font-medium text-neutral-800 hover:bg-neutral-100"
-                onClick={() => {
-                  if (stats.focusCenter) onZoomClose3d(stats.focusCenter);
-                }}
-              >
-                <IconBuildingSkyscraper className="size-3.5 text-neutral-600" aria-hidden="true" />
-                <span>Lihat Dekat 3D</span>
-              </Button>
-            )}
+
+            <div className="flex shrink-0 items-center gap-1.5">
+              {hasEvacOrigin && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-7 gap-1.5 rounded-lg border-neutral-300 bg-white px-2.5 text-xs font-medium text-neutral-800 hover:bg-neutral-100"
+                  onClick={onFindSafeEvac}
+                >
+                  <IconRoute className="size-3.5 text-neutral-600" aria-hidden="true" />
+                  <span>Evakuasi Aman</span>
+                </Button>
+              )}
+              {canZoom3d && stats?.focusCenter && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-7 gap-1.5 rounded-lg border-neutral-300 bg-white px-2.5 text-xs font-medium text-neutral-800 hover:bg-neutral-100"
+                  onClick={() => {
+                    if (stats.focusCenter) onZoomClose3d(stats.focusCenter);
+                  }}
+                >
+                  <IconBuildingSkyscraper className="size-3.5 text-neutral-600" aria-hidden="true" />
+                  <span>Lihat Dekat 3D</span>
+                </Button>
+              )}
+            </div>
           </div>
 
           {/* One flat container split by 1px hairlines (3 balanced columns, >=12px labels, tabular figures) */}
@@ -309,11 +360,12 @@ export function HydroSimulationPanel({
             </div>
 
             <div className="px-3 max-[520px]:px-0 max-[520px]:py-2">
-              <span className="block text-xs text-neutral-600">Bangunan terpapar</span>
+              <span className="block text-xs text-neutral-600">Bangunan &amp; penduduk</span>
               <div className="mt-0.5 flex items-baseline gap-1 tabular-nums">
                 <strong className="text-[15px] font-semibold text-neutral-900">~{affectedBuildings}</strong>
                 <span className="text-xs text-neutral-600">unit</span>
               </div>
+              <span className="block text-xs text-neutral-600 tabular-nums">{affectedPopulationText}</span>
             </div>
 
             <div className="pl-3 max-[520px]:pl-0 max-[520px]:pt-2">

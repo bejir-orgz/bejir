@@ -20,6 +20,7 @@ export interface TerrainMeta {
   stats: {
     validPixels: number;
     totalBuildings?: number;
+    totalPopulation?: number;
     minDemM: number;
     maxDemM: number;
     maxSlopeDeg: number;
@@ -47,6 +48,7 @@ export interface RegionRasterMask {
   validPixels: number;
   totalAreaKm2: number;
   totalBuildings: number;
+  totalPopulation: number;
   minDemM: number;
   p10DemM: number;
   maxDemM: number;
@@ -61,6 +63,22 @@ export interface PointTerrainSample {
   rainMmYr: number;
   landcoverScore: number;
   buildingCount: number;
+  populationCount: number;
+}
+
+export interface ClickedPointAssessment {
+  status: "safe" | "hazard";
+  summary: string;
+}
+
+export interface SafeEvacuationMatch {
+  id: number;
+  name: string;
+  category: string | null;
+  latitude: number;
+  longitude: number;
+  distanceM: number;
+  elevationM: number | null;
 }
 
 export interface SimulationParams {
@@ -74,6 +92,7 @@ export interface SimulationStats {
   affectedAreaKm2: number;
   affectedPct: number;
   affectedBuildings: number;
+  affectedPopulation: number;
   tierCounts: [number, number, number];
   maxDepthM: number;
   maxRiskScore: number;
@@ -110,6 +129,19 @@ export function decodeDemMeters(r: number, g: number): number {
 
 export function decodeBuildingCount(r: number, g: number): number {
   return (r << 8) | g;
+}
+
+export function encodePopulationCell(pop: number): number {
+  const clamped = Math.max(0, pop);
+  if (clamped <= 1000) return clamp(Math.round(clamped / 10), 0, 100);
+  if (clamped <= 10000) return clamp(100 + Math.round((clamped - 1000) / 90), 100, 200);
+  return clamp(200 + Math.round((clamped - 10000) / 700), 200, 255);
+}
+
+export function decodePopulationCell(b: number): number {
+  if (b <= 100) return b * 10;
+  if (b <= 200) return 1000 + (b - 100) * 90;
+  return 10000 + (b - 200) * 700;
 }
 
 export function encodeHandMeters(handM: number): number {
@@ -247,6 +279,7 @@ export function rasterizeGeometryMask(
   let maxSlopeDeg = 0;
   let validPixels = 0;
   let totalBuildings = 0;
+  let totalPopulation = 0;
 
   for (let gy = minY; gy <= maxY; gy++) {
     const { lat } = gridToLatLng(minX, gy, meta);
@@ -274,6 +307,7 @@ export function rasterizeGeometryMask(
       if (slope > maxSlopeDeg) maxSlopeDeg = slope;
       if (buildings) {
         totalBuildings += decodeBuildingCount(buildings[idx4], buildings[idx4 + 1]);
+        totalPopulation += decodePopulationCell(buildings[idx4 + 2]);
       }
       validPixels++;
     }
@@ -297,6 +331,7 @@ export function rasterizeGeometryMask(
     validPixels,
     totalAreaKm2: validPixels * cellAreaKm2,
     totalBuildings,
+    totalPopulation,
     minDemM,
     p10DemM,
     maxDemM,
@@ -356,6 +391,7 @@ export function computeSimulationStats(
 
   let affectedPixels = 0;
   let affectedBuildings = 0;
+  let affectedPopulation = 0;
   let maxDepthM = 0;
   let maxRiskScore = 0;
   const tierCounts: [number, number, number] = [0, 0, 0];
@@ -371,6 +407,7 @@ export function computeSimulationStats(
       if (region.mask[maskRow + (gx - region.minX)] === 0) continue;
       const idx4 = (gy * width + gx) * 4;
       const cellBuildings = buildings ? decodeBuildingCount(buildings[idx4], buildings[idx4 + 1]) : 0;
+      const cellPopulation = buildings ? decodePopulationCell(buildings[idx4 + 2]) : 0;
 
       if (mode === "flood") {
         const demM = decodeDemMeters(demHand[idx4], demHand[idx4 + 1]);
@@ -379,6 +416,7 @@ export function computeSimulationStats(
         if (res.tier > 0) {
           affectedPixels++;
           affectedBuildings += cellBuildings;
+          affectedPopulation += cellPopulation;
           tierCounts[res.tier - 1]++;
           if (res.depthM > maxDepthM) maxDepthM = res.depthM;
           const focusScore = res.tier * 40 + Math.min(200, cellBuildings) * 2;
@@ -404,6 +442,7 @@ export function computeSimulationStats(
         if (res.tier > 0) {
           affectedPixels++;
           affectedBuildings += cellBuildings;
+          affectedPopulation += cellPopulation;
           tierCounts[res.tier - 1]++;
           if (res.score > maxRiskScore) maxRiskScore = res.score;
           const focusScore = res.score + Math.min(120, cellBuildings) * 1.5;
@@ -425,6 +464,7 @@ export function computeSimulationStats(
     affectedAreaKm2: affectedPixels * cellAreaKm2,
     affectedPct: region.validPixels > 0 ? (affectedPixels / region.validPixels) * 100 : 0,
     affectedBuildings,
+    affectedPopulation,
     tierCounts,
     maxDepthM,
     maxRiskScore,
@@ -540,7 +580,109 @@ export function samplePointMetrics(pack: TerrainPack, lat: number, lng: number):
   const buildingCount = pack.buildings
     ? decodeBuildingCount(pack.buildings[idx4], pack.buildings[idx4 + 1])
     : 0;
-  return { demM, handM, slopeDeg, rainMmYr, landcoverScore, buildingCount };
+  const populationCount = pack.buildings ? decodePopulationCell(pack.buildings[idx4 + 2]) : 0;
+  return { demM, handM, slopeDeg, rainMmYr, landcoverScore, buildingCount, populationCount };
+}
+
+/** Evaluates the exact clicked coordinate against the active flood or landslide scenario. */
+export function describeClickedPointSimulation(
+  sample: PointTerrainSample,
+  basinFloorDemM: number,
+  mode: SimulationMode,
+  params: SimulationParams,
+): ClickedPointAssessment {
+  const elevText = `${Math.round(sample.demM).toLocaleString("id-ID")} mdpl`;
+  if (mode === "flood") {
+    const res = evaluateFloodCell(sample.demM, sample.handM, basinFloorDemM, params.waterRiseM);
+    if (res.flooded) {
+      const depth = res.depthM.toLocaleString("id-ID", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+      return {
+        status: "hazard",
+        summary: `Titik klik terendam ~${depth} m · elevasi ${elevText}`,
+      };
+    }
+    const relativeBasin = Math.max(0, (sample.demM - basinFloorDemM) * 0.55);
+    const effectiveHeight = Math.min(sample.handM, relativeBasin);
+    const margin = Math.max(0.1, effectiveHeight - params.waterRiseM);
+    const marginText = margin.toLocaleString("id-ID", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+    return {
+      status: "safe",
+      summary: `Titik klik tidak tergenang (+${marginText} m di atas muka air · ${elevText})`,
+    };
+  }
+
+  const res = evaluateLandslideCell(
+    sample.slopeDeg,
+    sample.rainMmYr,
+    sample.landcoverScore,
+    params.triggerRainMmDay,
+    params.criticalSlopeDeg,
+  );
+  const slopeText = sample.slopeDeg.toLocaleString("id-ID", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  if (res.tier === 3) {
+    return { status: "hazard", summary: `Titik klik zona kritis · lereng ${slopeText}° · ${elevText}` };
+  }
+  if (res.tier === 2) {
+    return { status: "hazard", summary: `Titik klik zona siaga · lereng ${slopeText}° · ${elevText}` };
+  }
+  if (res.tier === 1) {
+    return { status: "hazard", summary: `Titik klik zona waspada · lereng ${slopeText}° · ${elevText}` };
+  }
+  return { status: "safe", summary: `Titik klik lereng relatif stabil (${slopeText}° · ${elevText})` };
+}
+
+function quickHaversineMeters(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const rad = Math.PI / 180;
+  const dLat = (lat2 - lat1) * rad;
+  const dLng = (lng2 - lng1) * rad;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  return 6371000 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+/** Finds the closest evacuation site outside the active flood inundation or high-risk landslide zone. */
+export function findNearestSafeEvacuationSite(
+  pack: TerrainPack,
+  basinFloorDemM: number,
+  mode: SimulationMode,
+  params: SimulationParams,
+  origin: { lat: number; lng: number },
+  sites: readonly { id: number; name?: string | null; category?: string | null; latitude: number; longitude: number }[],
+): SafeEvacuationMatch | null {
+  let best: SafeEvacuationMatch | null = null;
+  for (const site of sites) {
+    const distanceM = quickHaversineMeters(origin.lat, origin.lng, site.latitude, site.longitude);
+    if (best && distanceM >= best.distanceM) continue;
+
+    const sample = samplePointMetrics(pack, site.latitude, site.longitude);
+    if (sample) {
+      if (mode === "flood") {
+        const flood = evaluateFloodCell(sample.demM, sample.handM, basinFloorDemM, params.waterRiseM);
+        if (flood.flooded) continue;
+      } else {
+        const slide = evaluateLandslideCell(
+          sample.slopeDeg,
+          sample.rainMmYr,
+          sample.landcoverScore,
+          params.triggerRainMmDay,
+          params.criticalSlopeDeg,
+        );
+        if (slide.tier >= 2) continue;
+      }
+    }
+
+    best = {
+      id: site.id,
+      name: site.name || "Titik evakuasi tanpa nama",
+      category: site.category ?? null,
+      latitude: site.latitude,
+      longitude: site.longitude,
+      distanceM,
+      elevationM: sample ? Math.round(sample.demM) : null,
+    };
+  }
+  return best;
 }
 
 function decodePngToRgba(url: string, width: number, height: number): Promise<Uint8ClampedArray> {

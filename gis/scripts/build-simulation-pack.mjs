@@ -34,6 +34,7 @@ const SOURCE_FILES = {
   rain: path.join(processedDir, "hujan/hujan_30m_masked.tif"),
   landcover: path.join(processedDir, "landcover/skor_landcover.tif"),
   buildings: path.join(processedDir, "bangunan/bangunan_jumlah.tif"),
+  population: path.join(processedDir, "penduduk/penduduk_30m.tif"),
 };
 
 function clamp(value, min, max) {
@@ -392,6 +393,14 @@ function encodeHandMeters(handM) {
   return 255;
 }
 
+/** Piecewise 8-bit population encoder for ~1 km2 cells: 0..1k (+/-5), 1k..10k (+/-45), 10k..48.5k (+/-350). */
+function encodePopulationCell(pop) {
+  const clamped = Math.max(0, pop);
+  if (clamped <= 1000) return clamp(Math.round(clamped / 10), 0, 100);
+  if (clamped <= 10000) return clamp(100 + Math.round((clamped - 1000) / 90), 100, 200);
+  return clamp(200 + Math.round((clamped - 10000) / 700), 200, 255);
+}
+
 function main() {
   for (const [key, filePath] of Object.entries(SOURCE_FILES)) {
     if (!fs.existsSync(filePath)) {
@@ -406,6 +415,7 @@ function main() {
     rain: new GeoTiffSampler(SOURCE_FILES.rain),
     landcover: new GeoTiffSampler(SOURCE_FILES.landcover),
     buildings: new GeoTiffSampler(SOURCE_FILES.buildings),
+    population: new GeoTiffSampler(SOURCE_FILES.population),
   };
 
   const demHandRgba = new Uint8Array(TARGET_WIDTH * TARGET_HEIGHT * 4);
@@ -419,13 +429,14 @@ function main() {
 
   let validPixels = 0;
   let totalBuildings = 0;
+  let totalPopulation = 0;
   let minDemM = Infinity;
   let maxDemM = -Infinity;
   let maxSlopeDeg = 0;
 
   try {
     // Each target cell covers ~12x12 source 30m pixels; use a 6-step block sample (every 2nd pixel * 4)
-    // to preserve accurate regional building totals while keeping build time under a few seconds.
+    // to preserve accurate regional building & population totals while keeping build time under a few seconds.
     const blockOffsets = [-5, -3, -1, 1, 3, 5];
 
     for (let gy = 0; gy < TARGET_HEIGHT; gy++) {
@@ -445,15 +456,20 @@ function main() {
         const lcRaw = samplers.landcover.sample(col, row);
 
         let bldSampleSum = 0;
+        let popSampleSum = 0;
         for (const dy of blockOffsets) {
           for (const dx of blockOffsets) {
             const b = samplers.buildings.sample(col + dx, row + dy);
             if (b !== null && b > 0) bldSampleSum += b;
+            const p = samplers.population.sample(col + dx, row + dy);
+            if (p !== null && p > 0) popSampleSum += p;
           }
         }
         // Scale 36 sampled 30m pixels (6x6 at stride 2) to the full ~144-pixel cell footprint (12x12).
         const cellBuildings = clamp(Math.round(bldSampleSum * 4), 0, 65535);
+        const cellPopulation = Math.max(0, Math.round(popSampleSum * 4));
         totalBuildings += cellBuildings;
+        totalPopulation += cellPopulation;
 
         const hand = handRaw ?? 67;
         const slope = slopeRaw ?? 0;
@@ -486,7 +502,7 @@ function main() {
 
         buildingsRgba[idx] = (cellBuildings >> 8) & 255;
         buildingsRgba[idx + 1] = cellBuildings & 255;
-        buildingsRgba[idx + 2] = 0;
+        buildingsRgba[idx + 2] = encodePopulationCell(cellPopulation);
         buildingsRgba[idx + 3] = 255;
 
         validPixels++;
@@ -520,7 +536,7 @@ function main() {
   const cellAreaKm2 = Number(((widthKm * heightKm) / (TARGET_WIDTH * TARGET_HEIGHT)).toFixed(5));
 
   const meta = {
-    version: 2,
+    version: 3,
     projection: "EPSG:3857-grid",
     width: TARGET_WIDTH,
     height: TARGET_HEIGHT,
@@ -531,6 +547,7 @@ function main() {
     stats: {
       validPixels,
       totalBuildings,
+      totalPopulation,
       minDemM: Number(minDemM.toFixed(1)),
       maxDemM: Number(maxDemM.toFixed(1)),
       maxSlopeDeg: Number(maxSlopeDeg.toFixed(1)),
@@ -546,7 +563,7 @@ function main() {
 
   const totalKb = ((demPng.length + hazardPng.length + buildingsPng.length) / 1024).toFixed(1);
   console.log(
-    `Built terrain pack: ${validPixels} valid pixels, ${totalBuildings.toLocaleString("id-ID")} buildings, DEM ${meta.stats.minDemM}..${meta.stats.maxDemM}m, max slope ${meta.stats.maxSlopeDeg} deg`,
+    `Built terrain pack: ${validPixels} valid pixels, ${totalBuildings.toLocaleString("id-ID")} buildings, ${totalPopulation.toLocaleString("id-ID")} population, DEM ${meta.stats.minDemM}..${meta.stats.maxDemM}m, max slope ${meta.stats.maxSlopeDeg} deg`,
   );
   console.log(
     `Sizes: dem-hand ${(demPng.length / 1024).toFixed(1)} KB, hazard ${(hazardPng.length / 1024).toFixed(1)} KB, buildings ${(buildingsPng.length / 1024).toFixed(1)} KB (total ${totalKb} KB)`,

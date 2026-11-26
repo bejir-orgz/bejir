@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState, useReducer, useRef, useSyncExternalStore, type CSSProperties } from "react";
+import { useCallback, useEffect, useMemo, useState, useReducer, useRef, useSyncExternalStore, type CSSProperties } from "react";
 import { useRegionSelection } from "@/features/regions/region-selection";
 import { WebgisHeader } from "@/components/layout/webgis-header";
 import { IconMap, IconLayoutNavbarCollapse, IconLayoutNavbarCollapseFilled, IconStackFront, IconStack3Filled, IconCalendarWeek, IconCalendarWeekFilled, IconListDetails, IconListDetailsFilled } from "@tabler/icons-react";
@@ -11,6 +11,11 @@ import dynamic from "next/dynamic";
 import { InteractiveMap } from "@/features/map/components/interactive-map";
 import { supportsWebGL, type MapEngineMode } from "@/features/map/three-d/webgl-support";
 import { EvacuationLayer } from "@/features/evacuation/evacuation-layer";
+import {
+  ALL_EVACUATION_CATEGORIES,
+  filterEvacuationSitesByCategories,
+  type EvacuationCategoryId,
+} from "@/features/evacuation/nearby-fallback";
 import { useEvacuationSites } from "@/features/evacuation/use-evacuation-sites";
 import { EvacuationRouting } from "@/features/evacuation/evacuation-routing";
 import { BoundaryLayer } from "@/features/regions/boundary-layer";
@@ -96,6 +101,11 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
   const [simRegion, setSimRegion] = useState<SelectedSimRegion | null>(null);
   const [simStats, setSimStats] = useState<SimulationStats | null>(null);
   const [focusRequest, setFocusRequest] = useState<{ lat: number; lng: number; nonce: number } | null>(null);
+  const [safeEvacRequestNonce, setSafeEvacRequestNonce] = useState(0);
+  const [safeEvacNote, setSafeEvacNote] = useState<string | null>(null);
+  const [evacuationCategories, setEvacuationCategories] = useState<EvacuationCategoryId[]>([
+    ...ALL_EVACUATION_CATEGORIES,
+  ]);
 
   const filters = { ...localFilters, regionIds: mapRegionIds };
   useEffect(() => {
@@ -103,6 +113,10 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
   }, [data.initialFilters.regionIds, setMapRegionIds]);
   const evacuationEnabled = filters.layerIds.includes("evacuation");
   const evacuation = useEvacuationSites(evacuationEnabled);
+  const filteredEvacuationSites = useMemo(
+    () => filterEvacuationSitesByCategories(evacuation.sites, evacuationCategories),
+    [evacuation.sites, evacuationCategories],
+  );
   const [routeStatus, setRouteStatus] = useState<{ message: string }>();
   const [regionStatus, setRegionStatus] = useState<{ message: string }>();
   const [riverStatus, setRiverStatus] = useState<{ message: string; retry?: () => void }>();
@@ -169,6 +183,13 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
     [engineMode, webglAvailable],
   );
 
+  function handleFindSafeEvac() {
+    if (!filters.layerIds.includes("evacuation")) {
+      updateFilters({ layerIds: [...filters.layerIds, "evacuation"] });
+    }
+    setSafeEvacRequestNonce((prev) => prev + 1);
+  }
+
   const activeDataStatus = simStatus ?? regionStatus ?? routeStatus ?? riverStatus ?? thematicStatus ?? evacuation.dataStatus;
 
   return (
@@ -208,12 +229,15 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
                   params={simParams}
                   paused={simPaused}
                   selectedTarget={simTarget}
+                  evacuationSites={filteredEvacuationSites}
+                  safeEvacRequestNonce={safeEvacRequestNonce}
+                  onSafeEvacNoteChange={setSafeEvacNote}
                   onSelectTarget={handleSelectSimTarget}
                   onRegionResolved={setSimRegion}
                   onStatsChange={setSimStats}
                   onStatus={setSimStatus}
                 />
-                <EvacuationLayer map={map} sites={evacuation.sites} enabled={evacuationEnabled} />
+                <EvacuationLayer map={map} sites={filteredEvacuationSites} enabled={evacuationEnabled} />
                 <BoundaryLayer map={map} regionIds={filters.regionIds} onStatus={setRegionStatus} />
                 <EvacuationRouting map={map} enabled={evacuationEnabled && !simulationOpen} onStatus={setRouteStatus} />
               </>
@@ -225,7 +249,7 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
             onEngineModeChange={setPreferredEngine}
             layerIds={filters.layerIds}
             regionIds={filters.regionIds}
-            evacuationSites={evacuation.sites}
+            evacuationSites={filteredEvacuationSites}
             evacuationEnabled={evacuationEnabled}
             simulationOpen={simulationOpen}
             simMode={simMode}
@@ -234,6 +258,8 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
             simPaused={simPaused}
             simTarget={simTarget}
             focusRequest={focusRequest}
+            safeEvacRequestNonce={safeEvacRequestNonce}
+            onSafeEvacNoteChange={setSafeEvacNote}
             dataStatus={activeDataStatus}
             onSelectSimTarget={handleSelectSimTarget}
             onSimRegionResolved={setSimRegion}
@@ -264,23 +290,49 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
           paused={simPaused}
           selectedRegion={simRegion}
           stats={simStats}
+          safeEvacNote={safeEvacNote}
           canZoom3d={webglAvailable}
-          onModeChange={setSimMode}
-          onScopeChange={setSimScope}
+          onModeChange={(nextMode) => {
+            setSimMode(nextMode);
+            setSafeEvacNote(null);
+          }}
+          onScopeChange={(nextScope) => {
+            setSimScope(nextScope);
+            setSafeEvacNote(null);
+          }}
           onParamsChange={(patch) => setSimParams((prev) => ({ ...prev, ...patch }))}
           onTogglePause={() => setSimPaused((prev) => !prev)}
           onZoomClose3d={handleZoomClose3d}
-          onPickExample={handlePickSimExample}
+          onFindSafeEvac={handleFindSafeEvac}
+          onPickExample={(regencyId, districtId) => {
+            setSafeEvacNote(null);
+            setSafeEvacRequestNonce(0);
+            handlePickSimExample(regencyId, districtId);
+          }}
           onResetRegion={() => {
             setSimTarget(null);
             setSimRegion(null);
             setSimStats(null);
             setFocusRequest(null);
+            setSafeEvacRequestNonce(0);
+            setSafeEvacNote(null);
           }}
-          onClose={() => setSimulationOpen(false)}
+          onClose={() => {
+            setSimulationOpen(false);
+            setSafeEvacRequestNonce(0);
+            setSafeEvacNote(null);
+          }}
         />
         <RegionSidebar onWidthChange={setSidebarWidth} hidden={panels.left !== "regions"} filters={filters} onChange={updateFilters} />
-        <OptionsSidebar mode="layers" hidden={panels.left !== "layers"} data={data} filters={filters} onChange={updateFilters} />
+        <OptionsSidebar
+          mode="layers"
+          hidden={panels.left !== "layers"}
+          data={data}
+          filters={filters}
+          evacuationCategories={evacuationCategories}
+          onEvacuationCategoriesChange={setEvacuationCategories}
+          onChange={updateFilters}
+        />
         <TimelineSidebar year={data.year} hidden={panels.left !== "timeline"} filters={filters} onChange={updateFilters} />
         <LegendSidebar layers={data.layers} hidden={panels.left !== "legends"} />
         <div className="gis-left-toolbar absolute top-4 left-0 flex flex-col gap-4 pointer-events-none [&_.gis-panel-toggle]:relative [&_.gis-panel-toggle]:z-1 [&_.gis-panel-toggle]:rounded-[0_16px_16px_0] [&_.gis-panel-toggle]:pointer-events-auto [&_.gis-panel-toggle]:[opacity:1] [&_.gis-panel-toggle]:[transform:translateX(0)] [&_.gis-panel-toggle]:[transition:transform_var(--gis-slide-duration)_var(--gis-slide-easing),opacity_120ms_ease] [&_.gis-panel-toggle[aria-expanded=true]]:z-3 [&_.gis-panel-toggle[aria-expanded=true]]:[transform:translateX(var(--sidebar-width))] [&_.gis-panel-toggle[aria-expanded=true]]:bg-[white] max-[999.01px]:gap-2 motion-reduce:[&_.gis-panel-toggle]:[transition:none]" role="group" aria-label="Alat peta">{leftTools.map(({ id, label, icon, filledIcon }) => {

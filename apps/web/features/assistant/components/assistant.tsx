@@ -75,7 +75,7 @@ export function BejirAssistant({ defaultLayerIds }: { defaultLayerIds: readonly 
     <div className="gis-ai-assistant flex flex-1 flex-col min-w-0 min-h-0">
       <div className="gis-ai-conversation pr-1 flex-1 text-[12px] leading-[16px] wrap-anywhere [&:focus-visible]:[outline:2px_solid_var(--gis-blue)] [&:focus-visible]:[outline-offset:-2px] [&:focus-visible]:rounded-lg" tabIndex={0} role="region" aria-label="Percakapan Aji">
         {exchanges.length === 0 ? (
-          <div className="mt-3 flex flex-col gap-3 rounded-2xl border border-blue-100 bg-blue-50/55 p-4 text-neutral-800">
+          <div className="mt-3 flex flex-col gap-3 rounded-2xl border border-neutral-200 bg-white p-4 text-neutral-800">
             <div>
               <h3 className="text-sm font-semibold text-neutral-900">Tanya Aji, Asisten Geospasial SIBAJAWA</h3>
               <p className="mt-1 text-xs leading-5 text-neutral-600">
@@ -84,13 +84,13 @@ export function BejirAssistant({ defaultLayerIds }: { defaultLayerIds: readonly 
             </div>
 
             {sourceLayerIds.length === 0 && (
-              <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-amber-200 bg-amber-50 p-2.5 text-xs text-amber-900">
+              <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-neutral-200 bg-neutral-50 p-2.5 text-xs text-neutral-700">
                 <span>Pilih minimal 1 sumber data, atau klik pertanyaan di bawah untuk mengaktifkan semua sumber.</span>
                 <Button
                   type="button"
                   size="sm"
                   variant="outline"
-                  className="border-amber-400 bg-white text-amber-900 hover:bg-amber-100 hover:text-amber-950"
+                  className="h-7 rounded-lg border-neutral-300 bg-white text-xs font-medium text-neutral-800 hover:bg-neutral-100"
                   onClick={() => setSelectedLayerIds(assistantLayers.map((layer) => layer.id))}
                 >
                   Aktifkan semua sumber
@@ -99,14 +99,14 @@ export function BejirAssistant({ defaultLayerIds }: { defaultLayerIds: readonly 
             )}
 
             <div className="flex flex-col gap-1.5">
-              <span className="text-[11px] font-semibold text-neutral-500">Contoh pertanyaan siap pakai:</span>
+              <span className="text-xs font-medium text-neutral-600">Contoh pertanyaan:</span>
               {starterQuestions.map((prompt) => (
                 <button
                   key={prompt}
                   type="button"
                   disabled={pending}
                   onClick={() => handleStarterClick(prompt)}
-                  className="cursor-pointer rounded-xl border border-blue-200 bg-white px-3 py-2 text-left text-xs leading-4 font-medium text-blue-900 transition-[background-color,border-color,transform] duration-150 ease-[var(--ease-out-strong)] hover:border-blue-400 hover:bg-blue-50 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
+                  className="cursor-pointer rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2 text-left text-xs leading-4 font-medium text-neutral-800 transition-colors duration-150 hover:border-neutral-300 hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {prompt}
                 </button>

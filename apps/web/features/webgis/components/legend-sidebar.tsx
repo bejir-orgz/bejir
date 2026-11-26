@@ -18,7 +18,7 @@ export function LegendSidebar({ layers, hidden }: { layers: WorkspaceData["layer
                 {layer.id === "rivers" || layer.id === "evacuation" ?
                   <div className="grid grid-cols-[36px_minmax(0,1fr)] items-center gap-3">
                     {layer.id === "rivers" ? <><span aria-hidden="true" className="h-0.5 w-full bg-[#0284c7]" /><span>Segmen sungai</span></>
-                      : <><span aria-hidden="true" className="size-2.5 justify-self-center rounded-full border border-[#2563eb] bg-white" /><span>Titik evakuasi</span></>}
+                      : <><span aria-hidden="true" className="size-2.5 justify-self-center rounded-full border-2 border-[#15803d] bg-white" /><span>Titik evakuasi (Kesehatan, Pendidikan, Ibadah, Umum)</span></>}
                   </div>
                   : layer.id === "land-cover" ? <ul className="m-0 flex list-none flex-col gap-2 p-0">
                     {Object.entries(landCoverColors).map(([label, color]) => <li key={label} className="grid grid-cols-[36px_minmax(0,1fr)] items-center gap-3"><span aria-hidden="true" className="h-2 w-full rounded-sm" style={{ backgroundColor: color }} /><span>{label}</span></li>)}

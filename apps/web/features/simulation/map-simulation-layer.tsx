@@ -4,9 +4,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { Map as LeafletMap } from "leaflet";
 import type { MultiPolygon, Polygon } from "geojson";
 import type { ThematicCollection } from "@/features/geography/thematic-geometry";
+import type { EvacuationSite } from "@/features/evacuation/types";
+import { formatStraightDistance } from "@/features/evacuation/nearby-fallback";
 import { useRegionSelection } from "@/features/regions/region-selection";
 import {
   computeSimulationStats,
+  findNearestSafeEvacuationSite,
   loadTerrainPack,
   pointInGeometry,
   rasterizeGeometryMask,
@@ -56,6 +59,9 @@ export function MapSimulationLayer({
   params,
   paused,
   selectedTarget,
+  evacuationSites,
+  safeEvacRequestNonce,
+  onSafeEvacNoteChange,
   onSelectTarget,
   onRegionResolved,
   onStatsChange,
@@ -68,6 +74,9 @@ export function MapSimulationLayer({
   params: SimulationParams;
   paused: boolean;
   selectedTarget: { regencyId: number; districtId: number | null; point: { lat: number; lng: number } | null } | null;
+  evacuationSites: EvacuationSite[];
+  safeEvacRequestNonce: number;
+  onSafeEvacNoteChange: (note: string | null) => void;
   onSelectTarget: (target: { regencyId: number; districtId: number | null; point: { lat: number; lng: number } | null }) => void;
   onRegionResolved: (region: SelectedSimRegion | null) => void;
   onStatsChange: (stats: SimulationStats | null) => void;
@@ -576,6 +585,80 @@ export function MapSimulationLayer({
       void container;
     };
   }, [map, enabled, pack, resolved, mode, params, paused]);
+
+  // Draw dashed green guide to nearest safe evacuation site when requested in 2D Klasik mode.
+  useEffect(() => {
+    if (!enabled || !safeEvacRequestNonce || !pack || !resolved) {
+      onSafeEvacNoteChange(null);
+      return;
+    }
+    if (!evacuationSites.length) {
+      onSafeEvacNoteChange("Memuat titik evakuasi untuk mencari lokasi aman terdekat...");
+      return;
+    }
+    const stats = computeSimulationStats(pack, resolved.region.raster, mode, params);
+    const origin = resolved.region.clickedPoint ?? stats.focusCenter;
+    if (!origin) return;
+
+    const match = findNearestSafeEvacuationSite(
+      pack,
+      resolved.region.raster.p10DemM,
+      mode,
+      params,
+      origin,
+      evacuationSites,
+    );
+    if (!match) {
+      onSafeEvacNoteChange("Tidak ditemukan titik evakuasi aman pada kategori aktif saat ini.");
+      return;
+    }
+
+    let cancelled = false;
+    let cleanup: (() => void) | undefined;
+
+    void import("leaflet").then((L) => {
+      if (cancelled) return;
+      const guide = L.polyline(
+        [
+          [origin.lat, origin.lng],
+          [match.latitude, match.longitude],
+        ],
+        { color: "#15803d", weight: 3, dashArray: "6 6" },
+      ).addTo(map);
+      const originMark = L.circleMarker([origin.lat, origin.lng], {
+        radius: 6.5,
+        color: "#111827",
+        weight: 2,
+        fillColor: "#ffffff",
+        fillOpacity: 1,
+      }).addTo(map);
+      const destMark = L.circleMarker([match.latitude, match.longitude], {
+        radius: 8,
+        color: "#ffffff",
+        weight: 2.5,
+        fillColor: "#15803d",
+        fillOpacity: 1,
+      })
+        .bindTooltip(match.name)
+        .addTo(map);
+
+      cleanup = () => {
+        guide.remove();
+        originMark.remove();
+        destMark.remove();
+      };
+
+      map.fitBounds(guide.getBounds(), { paddingTopLeft: [48, 72], paddingBottomRight: [48, 260], maxZoom: 15 });
+      const elevLabel = match.elevationM !== null ? ` (${match.elevationM.toLocaleString("id-ID")} mdpl)` : "";
+      const away = formatStraightDistance(match.distanceM);
+      onSafeEvacNoteChange(`Evakuasi aman terdekat: ${match.name}${elevLabel} · ${away} garis lurus, di luar zona simulasi.`);
+    });
+
+    return () => {
+      cancelled = true;
+      cleanup?.();
+    };
+  }, [map, enabled, safeEvacRequestNonce, pack, resolved, mode, params, evacuationSites, onSafeEvacNoteChange]);
 
   return null;
 }
