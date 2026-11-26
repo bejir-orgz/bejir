@@ -25,14 +25,16 @@ export function useOverview(initial: WorkspaceData["overview"], filters: Workspa
       const overview: WorkspaceData["overview"] = await response.json();
       if (!controller.signal.aborted) setResult({ key, overview });
     }).catch(() => {
-      if (!controller.signal.aborted) setResult({ key, overview: { ...initial, summary: "Ringkasan backend gagal dimuat. Pilih ulang filter untuk mencoba lagi." } });
+      if (!controller.signal.aborted) {
+        setResult({ key, overview: { ...initial, summary: "Ringkasan backend gagal dimuat. Pilih ulang filter untuk mencoba lagi." } });
+      }
     });
     return () => controller.abort();
   }, [key, initial, enabled]);
   const overview = result?.key === key ? result.overview : initial;
-  // Facilities follow the period the summary actually covers, not the one we guessed.
   const facilities = useFacilityTotals(supported ? filters.regionIds.map(Number) : [], overview.period.from, overview.period.to, enabled && supported);
   if (!facilities) return overview;
   if (facilities.error) return { ...overview, summary: overview.summary + " " + facilities.error };
-  return facilities.counts ? { ...overview, facilities: overview.facilities.map((facility) => ({ ...facility, count: facilities.counts![facility.id] })) } : overview;
+  const counts = facilities.counts;
+  return counts ? { ...overview, facilities: overview.facilities.map((facility) => ({ ...facility, count: counts[facility.id] })) } : overview;
 }

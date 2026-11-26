@@ -14,7 +14,7 @@ export type RiverScope =
 /**
  * Turn a region selection into the filter the rivers API understands.
  * Districts carry the whole selection, exclusions included, because a regency
- * is just its districts — and district filtering is the indexed path upstream.
+ * is just its districts and district filtering is the indexed path upstream.
  */
 export async function riverScope(regionIds: string[]): Promise<RiverScope> {
   if (!regionIds.length) return { kind: "all", query: "" };

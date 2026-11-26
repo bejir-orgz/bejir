@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { getCoreRowModel, getPaginationRowModel, getSortedRowModel, useReactTable, type ColumnDef, type SortingState } from "@tanstack/react-table";
-import { IconChevronLeft, IconChevronRight, IconDots } from "@tabler/icons-react";
+import { IconArrowUpRight, IconChevronLeft, IconChevronRight, IconDots } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { TableSortHeader as SortHeader } from "@/components/shared/table-sort-header";
 import { DataTable } from "@/components/shared/data-table";
+import { StatusPill } from "@/components/shared/status-pill";
 import { getPageItems } from "@/lib/pagination";
 import type { AnalysisRow, SusceptibilityClass } from "../analysis-types";
 
@@ -13,12 +15,46 @@ const numberFormatter = new Intl.NumberFormat("id-ID", { maximumFractionDigits: 
 const classOrder: (SusceptibilityClass | null)[] = [null, "Sangat Rendah", "Rendah", "Sedang", "Tinggi", "Sangat Tinggi"];
 
 const columns: ColumnDef<AnalysisRow>[] = [
-  { accessorKey: "region", header: ({ column }) => <SortHeader column={column} title="Kota/Kabupaten" /> },
-  { accessorKey: "susceptibility", header: ({ column }) => <SortHeader column={column} title="Kerawanan" />, cell: ({ row }) => row.original.susceptibility ?? "—", sortingFn: (a, b) => classOrder.indexOf(a.original.susceptibility) - classOrder.indexOf(b.original.susceptibility) },
-  { accessorKey: "population", header: ({ column }) => <SortHeader column={column} title="Penduduk" />, cell: ({ row }) => row.original.population === null ? "—" : numberFormatter.format(row.original.population) },
-  { accessorKey: "areaKm2", header: ({ column }) => <SortHeader column={column} title="Luas" />, cell: ({ row }) => row.original.areaKm2 === null ? "—" : `${numberFormatter.format(row.original.areaKm2)} km²` },
-  { accessorKey: "rivers", header: ({ column }) => <SortHeader column={column} title="Jumlah Sungai" />, cell: ({ row }) => row.original.rivers === null ? "—" : numberFormatter.format(row.original.rivers) },
-  { accessorKey: "elevationM", header: ({ column }) => <SortHeader column={column} title="Elevasi" />, cell: ({ row }) => row.original.elevationM === null ? "—" : `${numberFormatter.format(row.original.elevationM)} mdpl` },
+  {
+    accessorKey: "region",
+    header: ({ column }) => <SortHeader column={column} title="Kota/Kabupaten" />,
+    cell: ({ row }) => (
+      <Link
+        href={`/map?region=${encodeURIComponent(row.original.id)}`}
+        className="group inline-flex items-center gap-1.5 font-medium text-neutral-900 hover:text-blue-600 focus-visible:outline-2 focus-visible:outline-blue-600 rounded-sm"
+        title={`Buka ${row.original.region} pada Map Interaktif`}
+      >
+        <span>{row.original.region}</span>
+        <IconArrowUpRight className="size-3.5 shrink-0 text-neutral-400 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-blue-600" aria-hidden="true" />
+      </Link>
+    ),
+  },
+  {
+    accessorKey: "susceptibility",
+    header: ({ column }) => <SortHeader column={column} title="Kerawanan" />,
+    cell: ({ row }) => <StatusPill label={row.original.susceptibility} />,
+    sortingFn: (a, b) => classOrder.indexOf(a.original.susceptibility) - classOrder.indexOf(b.original.susceptibility),
+  },
+  {
+    accessorKey: "population",
+    header: ({ column }) => <SortHeader column={column} title="Penduduk" />,
+    cell: ({ row }) => (row.original.population === null ? "—" : <span className="tabular-nums">{numberFormatter.format(row.original.population)}</span>),
+  },
+  {
+    accessorKey: "areaKm2",
+    header: ({ column }) => <SortHeader column={column} title="Luas" />,
+    cell: ({ row }) => (row.original.areaKm2 === null ? "—" : <span className="tabular-nums">{numberFormatter.format(row.original.areaKm2)} km²</span>),
+  },
+  {
+    accessorKey: "rivers",
+    header: ({ column }) => <SortHeader column={column} title="Jumlah Sungai" />,
+    cell: ({ row }) => <span className="tabular-nums">{row.original.rivers === null ? "—" : numberFormatter.format(row.original.rivers)}</span>,
+  },
+  {
+    accessorKey: "elevationM",
+    header: ({ column }) => <SortHeader column={column} title="Elevasi" />,
+    cell: ({ row }) => (row.original.elevationM === null ? "—" : <span className="tabular-nums">{numberFormatter.format(row.original.elevationM)} mdpl</span>),
+  },
 ];
 
 export function AnalysisTable({ rows }: { rows: AnalysisRow[] }) {
@@ -27,7 +63,7 @@ export function AnalysisTable({ rows }: { rows: AnalysisRow[] }) {
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({ data: rows, columns, sortDescFirst: false, enableMultiSort: false, state: { sorting }, onSortingChange: setSorting, getCoreRowModel: getCoreRowModel(), getSortedRowModel: getSortedRowModel(), getPaginationRowModel: getPaginationRowModel(), initialState: { pagination: { pageSize: 10 } }, getRowId: (row) => row.id });
   const { pageIndex } = table.getState().pagination;
-  return <DataTable table={table} caption="Kerawanan wilayah Jawa Barat" captionClassName="sr-only" className="analysis-table [&_[data-slot=data-table-frame]]:border-0 [&_[data-slot=data-table-frame]]:rounded-none [&_[data-slot=data-table-frame]]:-mx-4 [&_[data-slot=data-table-frame]]:w-[calc(100%+32px)] [&_th:first-child]:pl-4 [&_th:last-child]:pr-4 [&_td:first-child]:pl-4 [&_td:last-child]:pr-4 [&_table]:table-fixed [&_table]:min-w-292 [&_tr]:h-16 [&_tr]:border-0 [&_thead_tr]:[border-bottom:1px_solid_#d4d4d4] [&_th]:p-[8px_0] [&_th]:text-[14px] [&_th]:leading-[20px] [&_th]:font-medium [&_th]:text-left [&_td]:p-[8px_0] [&_td]:text-[14px] [&_td]:leading-[20px] [&_td]:font-normal [&_td]:text-left [&_th]:text-[#2b7fff] [&_th]:w-[calc(100%_/_6)]" footer={<div className="analysis-table-footer -mx-4 w-[calc(100%+32px)] border-t border-neutral-300 px-4 pt-4 flex items-center justify-between gap-4 text-[14px] leading-[20px] [&_nav]:flex [&_nav]:items-center [&_nav]:gap-2 max-[700.01px]:flex-wrap max-[700.01px]:[&_nav]:gap-1">
+  return <DataTable table={table} caption="Kerawanan wilayah Jawa Barat" captionClassName="sr-only" className="analysis-table [&_[data-slot=data-table-frame]]:border-0 [&_[data-slot=data-table-frame]]:rounded-none [&_[data-slot=data-table-frame]]:-mx-4 [&_[data-slot=data-table-frame]]:w-[calc(100%+32px)] [&_th:first-child]:pl-4 [&_th:last-child]:pr-4 [&_td:first-child]:pl-4 [&_td:last-child]:pr-4 [&_table]:table-fixed [&_table]:min-w-292 [&_tr]:h-16 [&_tr]:border-0 [&_tbody_tr]:border-b [&_tbody_tr]:border-neutral-100 [&_tbody_tr:last-child]:border-0 [&_tbody_tr]:transition-colors [&_tbody_tr:hover]:bg-blue-50/45 [&_thead_tr]:[border-bottom:1px_solid_#d4d4d4] [&_th]:p-[8px_0] [&_th]:text-[14px] [&_th]:leading-[20px] [&_th]:font-medium [&_th]:text-left [&_td]:p-[8px_0] [&_td]:text-[14px] [&_td]:leading-[20px] [&_td]:font-normal [&_td]:text-left [&_th]:text-[#2b7fff] [&_th]:w-[calc(100%_/_6)]" footer={<div className="analysis-table-footer -mx-4 w-[calc(100%+32px)] border-t border-neutral-300 px-4 pt-4 flex items-center justify-between gap-4 text-[14px] leading-[20px] [&_nav]:flex [&_nav]:items-center [&_nav]:gap-2 max-[700.01px]:flex-wrap max-[700.01px]:[&_nav]:gap-1">
     <span aria-live="polite">Menampilkan {table.getRowModel().rows.length} dari {rows.length}</span>
     <nav aria-label="Halaman kerawanan wilayah">
       <Button variant="ghost" className="analysis-page-arrow h-10 min-w-10 p-2 rounded-[10px] text-[#2b7fff] text-[14px] font-normal bg-[#dbeafe] max-[700.01px]:min-w-8 max-[700.01px]:w-8 max-[700.01px]:h-8 max-[700.01px]:rounded-lg leading-[1.3333333333]" aria-label="Halaman sebelumnya" disabled={!table.getCanPreviousPage()} onClick={() => table.previousPage()}><IconChevronLeft className="size-6" /></Button>

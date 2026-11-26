@@ -4,8 +4,12 @@ import "../../lib/api/test-setup.mjs";
 const { getEvacuationSites } = await import("./api.ts");
 
 const site = (id) => ({
-  id, district_id: 545, name: id === 1 ? "<img src=x>" : null,
-  category: null, latitude: -6.6, longitude: 106.8,
+  id,
+  district_id: 545,
+  name: id === 1 ? "<img src=x>" : null,
+  category: null,
+  latitude: -6.6,
+  longitude: 106.8,
 });
 
 test("all site pages are fetched in order, including the final partial page", async () => {

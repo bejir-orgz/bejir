@@ -14,7 +14,7 @@ const googleSans = Google_Sans_Flex({
 });
 
 export const metadata: Metadata = {
-  title: { default: "SIBAJAWA — Sistem Informasi Banjir Jawa Barat", template: "%s | SIBAJAWA" },
+  title: { default: "SIBAJAWA - Sistem Informasi Banjir Jawa Barat", template: "%s | SIBAJAWA" },
   description: "Kenali riwayat banjir dan kondisi geografis Jawa Barat melalui Bejir, platform WebGIS untuk mendukung pemantauan dan mitigasi banjir.",
 };
 

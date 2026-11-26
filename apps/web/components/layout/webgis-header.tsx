@@ -13,9 +13,7 @@ export function WebgisHeader({ mapCanvas = false, onRegionSelect }: { mapCanvas?
   const pathname = usePathname();
   return (
     <header className="gis-header" data-canvas={mapCanvas}>
-      <Link className="gis-brand" href="/" aria-label="SIBAJAWA — kembali ke beranda"><Image className="gis-brand-logo" src="/images/sibajawa-mark.svg" alt="" width={40} height={40} unoptimized /><span><strong>SIBAJAWA</strong><small>Web GIS Bencana Banjir Jawa Barat</small></span></Link>
-      {/* Type and weight live in webgis-header.css, which scales them down on narrow screens.
-          Repeating them here as !important utilities overrode those media queries. */}
+      <Link className="gis-brand" href="/" aria-label="SIBAJAWA, kembali ke beranda"><Image className="gis-brand-logo" src="/images/sibajawa-mark.svg" alt="" width={40} height={40} unoptimized /><span><strong>SIBAJAWA</strong><small>Web GIS Bencana Banjir Jawa Barat</small></span></Link>
       <nav aria-label="Navigasi WebGIS">{webgisNavigation.map((item) => (
         <Button asChild variant="ghost" key={item.href} className={`gis-nav-link ${pathname === item.href ? "gis-nav-active" : ""}`}>
           <Link href={item.href} aria-current={pathname === item.href ? "page" : undefined}>{item.label}</Link>

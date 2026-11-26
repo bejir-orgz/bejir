@@ -49,7 +49,6 @@ test("initial Overview compares current and previous years without changing regi
     const url = new URL(input);
     if (!url.pathname.endsWith("/statistics")) return new Response(null, { status: 503 });
     assert.equal(url.searchParams.has("regency_id"), false);
-    // One undated probe reads by_year to find the newest recorded year; the rest are windowed.
     if (!url.searchParams.has("start_date")) {
       probes++;
       return Response.json({ summary: { total_events: 0 }, impacts: { affected_displaced: 0, houses_flooded: 0 }, by_year: [], by_regency: [] });
@@ -64,9 +63,7 @@ test("initial Overview compares current and previous years without changing regi
     assert.equal(probes, 1);
     assert.equal(statistics, 2);
     assert.equal(overview.metrics[1].value, "0 unit");
-    // An empty by_year leaves the current calendar year in place.
     assert.ok(!overview.summary.includes("tahun terakhir yang tercatat"));
-    // The period is spelled out for readers; the stored ISO strings must not leak into the sentence.
     const readable = (iso) => new Intl.DateTimeFormat("id-ID", { dateStyle: "long" }).format(new Date(`${iso}T00:00:00`));
     assert.ok(overview.summary.includes(`${readable(period.from)} s.d. ${readable(period.to)}`));
     assert.ok(!overview.summary.includes(period.from));
@@ -85,7 +82,6 @@ test("a region with nothing this year falls back to its newest recorded year", a
     if (!url.pathname.endsWith("/statistics")) return new Response(null, { status: 503 });
     const start = url.searchParams.get("start_date");
     assert.equal(url.searchParams.get("regency_id"), "11");
-    // The scope recorded events up to last year and nothing in the current one.
     if (!start) return Response.json({ summary: { total_events: 7 }, impacts: { affected_displaced: 0, houses_flooded: 0 }, by_year: [{ year: recorded - 1, total_events: 3 }, { year: recorded, total_events: 7 }], by_regency: [] });
     windows.push(start.slice(0, 4));
     return Response.json({ summary: { total_events: start.startsWith(String(recorded)) ? 7 : 3 }, impacts: { affected_displaced: 0, houses_flooded: 0 }, by_year: [], by_regency: [] });
@@ -239,7 +235,6 @@ test("malformed comparison responses do not break successful annual metrics", as
     assert.match(snapshot.errors[0], /Perbandingan/);
   } finally { globalThis.fetch = original; }
 });
-
 
 test("Overview and Analysis compare impacts in the same region and clamp leap-day comparison", async () => {
   const original = globalThis.fetch;
