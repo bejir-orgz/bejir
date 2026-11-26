@@ -122,7 +122,7 @@ export function HydroSimulationPanel({
       role="dialog"
       aria-modal="false"
       aria-labelledby="gis-sim-title"
-      className={`gis-sim-panel absolute bottom-4 left-3 right-3 z-4 mx-auto max-h-[54dvh] overflow-y-auto w-[min(580px,calc(100vw-24px))] rounded-2xl border border-neutral-300 bg-white p-4 text-neutral-900 transition-[opacity,transform,right] duration-200 ease-[var(--ease-out-strong)] starting:scale-97 starting:opacity-0 max-[999.01px]:bottom-3 max-[999.01px]:p-3.5 ${
+      className={`gis-sim-panel absolute bottom-4 left-3 right-3 z-4 mx-auto max-h-[72dvh] overflow-y-auto w-[min(580px,calc(100vw-24px))] rounded-2xl border border-neutral-300 bg-white p-3.5 text-neutral-900 transition-[opacity,transform,right] duration-200 ease-[var(--ease-out-strong)] starting:scale-97 starting:opacity-0 max-[999.01px]:bottom-3 max-[999.01px]:p-3 ${
         overviewOpen
           ? "min-[1000px]:left-16 min-[1000px]:right-[calc(var(--overview-width)+58px)]"
           : "min-[1000px]:left-16 min-[1000px]:right-16"
@@ -185,7 +185,7 @@ export function HydroSimulationPanel({
       </div>
 
       {/* Mode & Scope: compact natural-width segmented controls on one row */}
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-b border-neutral-200 pb-3">
+      <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 border-b border-neutral-200 pb-2.5">
         <div
           className="inline-flex items-center rounded-lg bg-neutral-100 p-0.5"
           role="tablist"
@@ -285,64 +285,67 @@ export function HydroSimulationPanel({
           )}
         </div>
       ) : (
-        <div className="mt-3 flex flex-col gap-3">
-          {/* Active region identity + clicked-point assessment + compact actions */}
-          <div className="flex flex-wrap items-start justify-between gap-2">
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold text-neutral-900">{selectedRegion.title}</p>
-              <p className="truncate text-xs text-neutral-600">{selectedRegion.subtitle}</p>
-              {pointAssessment && (
-                <p
-                  className={`mt-0.5 text-xs leading-4 font-medium ${
-                    pointAssessment.status === "hazard"
-                      ? mode === "flood"
-                        ? "text-[var(--accent-foreground)]"
-                        : "text-[#c2410c]"
-                      : "text-[#15803d]"
-                  }`}
-                >
-                  {pointAssessment.summary}
-                </p>
-              )}
-              {safeEvacNote && (
-                <p className="mt-0.5 text-xs leading-4 font-medium text-[#15803d]" role="status">
-                  {safeEvacNote}
-                </p>
-              )}
+        <div className="mt-2.5 flex flex-col gap-2.5">
+          {/* Active region identity + compact actions, with full-width status lines below so they never wrap narrowly */}
+          <div className="flex flex-col gap-1">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold text-neutral-900">{selectedRegion.title}</p>
+                <p className="truncate text-xs text-neutral-600">{selectedRegion.subtitle}</p>
+              </div>
+
+              <div className="flex shrink-0 items-center gap-1.5">
+                {hasEvacOrigin && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-7 gap-1.5 rounded-lg border-neutral-300 bg-white px-2.5 text-xs font-medium text-neutral-800 hover:bg-neutral-100"
+                    onClick={onFindSafeEvac}
+                  >
+                    <IconRoute className="size-3.5 text-neutral-600" aria-hidden="true" />
+                    <span>Evakuasi Aman</span>
+                  </Button>
+                )}
+                {canZoom3d && stats?.focusCenter && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-7 gap-1.5 rounded-lg border-neutral-300 bg-white px-2.5 text-xs font-medium text-neutral-800 hover:bg-neutral-100"
+                    onClick={() => {
+                      if (stats.focusCenter) onZoomClose3d(stats.focusCenter);
+                    }}
+                  >
+                    <IconBuildingSkyscraper className="size-3.5 text-neutral-600" aria-hidden="true" />
+                    <span>Lihat Dekat 3D</span>
+                  </Button>
+                )}
+              </div>
             </div>
 
-            <div className="flex shrink-0 items-center gap-1.5">
-              {hasEvacOrigin && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-7 gap-1.5 rounded-lg border-neutral-300 bg-white px-2.5 text-xs font-medium text-neutral-800 hover:bg-neutral-100"
-                  onClick={onFindSafeEvac}
-                >
-                  <IconRoute className="size-3.5 text-neutral-600" aria-hidden="true" />
-                  <span>Evakuasi Aman</span>
-                </Button>
-              )}
-              {canZoom3d && stats?.focusCenter && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-7 gap-1.5 rounded-lg border-neutral-300 bg-white px-2.5 text-xs font-medium text-neutral-800 hover:bg-neutral-100"
-                  onClick={() => {
-                    if (stats.focusCenter) onZoomClose3d(stats.focusCenter);
-                  }}
-                >
-                  <IconBuildingSkyscraper className="size-3.5 text-neutral-600" aria-hidden="true" />
-                  <span>Lihat Dekat 3D</span>
-                </Button>
-              )}
-            </div>
+            {pointAssessment && (
+              <p
+                className={`text-xs leading-4 font-medium ${
+                  pointAssessment.status === "hazard"
+                    ? mode === "flood"
+                      ? "text-[var(--accent-foreground)]"
+                      : "text-[#c2410c]"
+                    : "text-[#15803d]"
+                }`}
+              >
+                {pointAssessment.summary}
+              </p>
+            )}
+            {safeEvacNote && (
+              <p className="text-xs leading-4 font-medium text-[#15803d]" role="status">
+                {safeEvacNote}
+              </p>
+            )}
           </div>
 
           {/* One flat container split by 1px hairlines (3 balanced columns, >=12px labels, tabular figures) */}
-          <div className="grid grid-cols-3 divide-x divide-neutral-200 border-y border-neutral-200 py-2.5 max-[520px]:grid-cols-1 max-[520px]:divide-x-0 max-[520px]:divide-y">
+          <div className="grid grid-cols-3 divide-x divide-neutral-200 border-y border-neutral-200 py-2 max-[520px]:grid-cols-1 max-[520px]:divide-x-0 max-[520px]:divide-y">
             <div className="pr-3 max-[520px]:pb-2 max-[520px]:pr-0">
               <span className="block text-xs text-neutral-600">
                 {mode === "flood" ? "Estimasi genangan" : "Zona rawan lereng"}

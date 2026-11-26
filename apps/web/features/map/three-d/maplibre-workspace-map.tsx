@@ -66,6 +66,36 @@ const thematicLabels: Record<string, string> = {
 const emptyCollection: FeatureCollection = { type: "FeatureCollection", features: [] };
 const simMaskCache3d = new Map<string, RegionRasterMask>();
 
+interface ProjectedRouteOverlay {
+  lines: [number, number][][];
+  origin: [number, number];
+  dest: [number, number];
+  color: string;
+  dashed: boolean;
+  destLabel: string;
+}
+
+/** Extracts coordinate chains from GeoJSON route geometry for screen-space 3D projection above buildings. */
+function extractLineChains(geometry: Geometry): [number, number][][] {
+  if (geometry.type === "LineString") {
+    return [geometry.coordinates.map((pt) => [pt[0], pt[1]])];
+  }
+  if (geometry.type === "MultiLineString") {
+    return geometry.coordinates.map((line) => line.map((pt) => [pt[0], pt[1]]));
+  }
+  return [];
+}
+
+/** Subdivides a straight guide line so map.project() follows 3D hill curvature cleanly above rooftops. */
+function sampleGuideLine(origin: [number, number], dest: [number, number], steps = 16): [number, number][] {
+  const pts: [number, number][] = [];
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    pts.push([origin[0] + (dest[0] - origin[0]) * t, origin[1] + (dest[1] - origin[1]) * t]);
+  }
+  return pts;
+}
+
 function thematicFillColor(id: string, row: ThematicProperties, range: [number, number]): string {
   if (id === "susceptibility") {
     return row.kelas_dominan_v2 == null ? "#a3a3a3" : classColors[row.kelas_dominan_v2 - 1] ?? "#a3a3a3";
@@ -212,6 +242,15 @@ export function MapLibreWorkspaceMap({
   const mapRef = useRef<MapLibreMap | null>(null);
   const popupRef = useRef<Popup | null>(null);
   const simCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const routeOverlayRef = useRef<ProjectedRouteOverlay | null>(null);
+  const routeCasingPathRef = useRef<SVGPathElement | null>(null);
+  const routeStrokePathRef = useRef<SVGPathElement | null>(null);
+  const routeOriginCircleRef = useRef<SVGCircleElement | null>(null);
+  const routeDestGroupRef = useRef<SVGGElement | null>(null);
+  const routeDestCircleRef = useRef<SVGCircleElement | null>(null);
+  const routeDestLabelRef = useRef<SVGTextElement | null>(null);
+  const routeDestPillRef = useRef<SVGRectElement | null>(null);
+  const syncRouteOverlayRef = useRef<() => void>(() => {});
   const revealStartRef = useRef<number>(0);
   const lastRegionKeyRef = useRef<string | null>(null);
 
@@ -439,6 +478,18 @@ export function MapLibreWorkspaceMap({
             paint: { "line-color": "#1d4ed8", "line-width": 1.6, "line-opacity": 0.96 },
           });
           instance.addLayer({
+            id: MAPLIBRE_IDS.evacSitesLayer,
+            type: "circle",
+            source: MAPLIBRE_IDS.evacSitesSource,
+            paint: {
+              "circle-radius": ["interpolate", ["linear"], ["zoom"], 8, 3.5, 13, 6, 16, 8],
+              "circle-color": "#ffffff",
+              "circle-stroke-color": "#15803d",
+              "circle-stroke-width": 2,
+              "circle-opacity": 0.96,
+            },
+          });
+          instance.addLayer({
             id: MAPLIBRE_IDS.simPointLayer,
             type: "circle",
             source: MAPLIBRE_IDS.simPointSource,
@@ -474,18 +525,6 @@ export function MapLibreWorkspaceMap({
               "circle-stroke-width": 2.5,
             },
           });
-          instance.addLayer({
-            id: MAPLIBRE_IDS.evacSitesLayer,
-            type: "circle",
-            source: MAPLIBRE_IDS.evacSitesSource,
-            paint: {
-              "circle-radius": ["interpolate", ["linear"], ["zoom"], 8, 3.5, 13, 6, 16, 8],
-              "circle-color": "#ffffff",
-              "circle-stroke-color": "#15803d",
-              "circle-stroke-width": 2,
-              "circle-opacity": 0.96,
-            },
-          });
 
           instance.resize();
           const bounds: LngLatBoundsLike = [
@@ -499,12 +538,90 @@ export function MapLibreWorkspaceMap({
           setMapReady(true);
         });
 
+        const syncRouteOverlay = () => {
+          const data = routeOverlayRef.current;
+          const casingEl = routeCasingPathRef.current;
+          const strokeEl = routeStrokePathRef.current;
+          const originEl = routeOriginCircleRef.current;
+          const destGroupEl = routeDestGroupRef.current;
+          const destCircleEl = routeDestCircleRef.current;
+          const destLabelEl = routeDestLabelRef.current;
+          const destPillEl = routeDestPillRef.current;
+          if (!casingEl || !strokeEl || !originEl || !destGroupEl || !destCircleEl) return;
+
+          if (!data || !data.lines.length) {
+            casingEl.setAttribute("d", "");
+            strokeEl.setAttribute("d", "");
+            originEl.style.display = "none";
+            destGroupEl.style.display = "none";
+            return;
+          }
+
+          const isProjectable = (pt: { x: number; y: number }) =>
+            Number.isFinite(pt.x) && Number.isFinite(pt.y) && Math.abs(pt.x) < 8000 && Math.abs(pt.y) < 8000;
+
+          let d = "";
+          for (const chain of data.lines) {
+            let penDown = false;
+            for (let i = 0; i < chain.length; i++) {
+              const p = instance.project(chain[i]);
+              if (!isProjectable(p)) {
+                penDown = false;
+                continue;
+              }
+              d += `${penDown ? "L" : "M"}${p.x.toFixed(1)},${p.y.toFixed(1)}`;
+              penDown = true;
+            }
+          }
+          casingEl.setAttribute("d", d);
+          strokeEl.setAttribute("d", d);
+          strokeEl.setAttribute("stroke", data.color);
+          if (data.dashed) {
+            strokeEl.setAttribute("stroke-dasharray", "8 6");
+          } else {
+            strokeEl.removeAttribute("stroke-dasharray");
+          }
+
+          const oPt = instance.project(data.origin);
+          if (isProjectable(oPt)) {
+            originEl.style.display = "";
+            originEl.setAttribute("cx", oPt.x.toFixed(1));
+            originEl.setAttribute("cy", oPt.y.toFixed(1));
+          } else {
+            originEl.style.display = "none";
+          }
+
+          const dPt = instance.project(data.dest);
+          if (isProjectable(dPt)) {
+            destGroupEl.style.display = "";
+            destGroupEl.setAttribute("transform", `translate(${dPt.x.toFixed(1)},${dPt.y.toFixed(1)})`);
+            destCircleEl.setAttribute("fill", data.color);
+
+            if (destLabelEl && destPillEl) {
+              if (destLabelEl.textContent !== data.destLabel) {
+                destLabelEl.textContent = data.destLabel;
+              }
+              const measured = destLabelEl.getComputedTextLength();
+              const pillW = Math.min(240, Math.max(64, (measured > 0 ? measured : data.destLabel.length * 6.5) + 16));
+              destPillEl.setAttribute("x", (-pillW / 2).toFixed(1));
+              destPillEl.setAttribute("width", pillW.toFixed(1));
+            }
+          } else {
+            destGroupEl.style.display = "none";
+          }
+        };
+        syncRouteOverlayRef.current = syncRouteOverlay;
+
         const syncCamera = () => {
           if (cancelled) return;
           setZoom(instance.getZoom());
           setPitch(instance.getPitch());
           setBearing(instance.getBearing());
+          syncRouteOverlay();
         };
+        instance.on("render", syncRouteOverlay);
+        instance.on("move", syncRouteOverlay);
+        instance.on("resize", syncRouteOverlay);
         instance.on("moveend", syncCamera);
         instance.on("pitchend", syncCamera);
         instance.on("rotateend", syncCamera);
@@ -988,6 +1105,8 @@ export function MapLibreWorkspaceMap({
     const pSrc = map.getSource(MAPLIBRE_IDS.evacRoutePointsSource);
 
     const clearSafeGuide = () => {
+      routeOverlayRef.current = null;
+      syncRouteOverlayRef.current();
       if (isGeoJsonSource(rSrc)) rSrc.setData(emptyCollection);
       if (isGeoJsonSource(pSrc)) pSrc.setData(emptyCollection);
     };
@@ -1022,45 +1141,20 @@ export function MapLibreWorkspaceMap({
       return;
     }
 
-    if (map.getLayer(MAPLIBRE_IDS.evacRouteLineLayer)) {
-      map.setPaintProperty(MAPLIBRE_IDS.evacRouteLineLayer, "line-color", "#15803d");
-      map.setPaintProperty(MAPLIBRE_IDS.evacRouteLineLayer, "line-dasharray", [2, 2]);
-    }
-    if (isGeoJsonSource(rSrc)) {
-      rSrc.setData({
-        type: "FeatureCollection",
-        features: [
-          {
-            type: "Feature",
-            geometry: {
-              type: "LineString",
-              coordinates: [
-                [origin.lng, origin.lat],
-                [match.longitude, match.latitude],
-              ],
-            },
-            properties: {},
-          },
-        ],
-      });
-    }
-    if (isGeoJsonSource(pSrc)) {
-      pSrc.setData({
-        type: "FeatureCollection",
-        features: [
-          {
-            type: "Feature",
-            geometry: { type: "Point", coordinates: [origin.lng, origin.lat] },
-            properties: { role: "origin" },
-          },
-          {
-            type: "Feature",
-            geometry: { type: "Point", coordinates: [match.longitude, match.latitude] },
-            properties: { role: "dest" },
-          },
-        ],
-      });
-    }
+    // Render active safe-evacuation guide in screen-projected SVG so 3D extruded buildings never occlude it.
+    if (isGeoJsonSource(rSrc)) rSrc.setData(emptyCollection);
+    if (isGeoJsonSource(pSrc)) pSrc.setData(emptyCollection);
+    const originCoord: [number, number] = [origin.lng, origin.lat];
+    const destCoord: [number, number] = [match.longitude, match.latitude];
+    routeOverlayRef.current = {
+      lines: [sampleGuideLine(originCoord, destCoord, 16)],
+      origin: originCoord,
+      dest: destCoord,
+      color: "#15803d",
+      dashed: true,
+      destLabel: match.name.length > 28 ? `${match.name.slice(0, 27)}...` : match.name,
+    };
+    syncRouteOverlayRef.current();
 
     const minLng = Math.min(origin.lng, match.longitude);
     const maxLng = Math.max(origin.lng, match.longitude);
@@ -1243,6 +1337,8 @@ export function MapLibreWorkspaceMap({
 
     let routeController: AbortController | undefined;
     const clearRoute = () => {
+      routeOverlayRef.current = null;
+      syncRouteOverlayRef.current();
       const rSrc = map.getSource(MAPLIBRE_IDS.evacRouteSource);
       const pSrc = map.getSource(MAPLIBRE_IDS.evacRoutePointsSource);
       if (isGeoJsonSource(rSrc)) rSrc.setData(emptyCollection);
@@ -1299,41 +1395,24 @@ export function MapLibreWorkspaceMap({
             if (!route || !isGeometry(route.geometry)) {
               throw new Error("Tidak ada tujuan evakuasi yang dapat dijangkau.");
             }
-            if (map.getLayer(MAPLIBRE_IDS.evacRouteLineLayer)) {
-              map.setPaintProperty(MAPLIBRE_IDS.evacRouteLineLayer, "line-color", "#2563eb");
-              map.setPaintProperty(MAPLIBRE_IDS.evacRouteLineLayer, "line-dasharray", undefined);
-            }
-            const rSrc = map.getSource(MAPLIBRE_IDS.evacRouteSource);
-            const pSrc = map.getSource(MAPLIBRE_IDS.evacRoutePointsSource);
-            if (isGeoJsonSource(rSrc)) {
-              rSrc.setData({ type: "FeatureCollection", features: [{ type: "Feature", geometry: route.geometry, properties: {} }] });
-            }
-            if (isGeoJsonSource(pSrc)) {
-              pSrc.setData({
-                type: "FeatureCollection",
-                features: [
-                  {
-                    type: "Feature",
-                    geometry: { type: "Point", coordinates: [event.lngLat.lng, event.lngLat.lat] },
-                    properties: { role: "origin" },
-                  },
-                  {
-                    type: "Feature",
-                    geometry: {
-                      type: "Point",
-                      coordinates: [route.evacuation_site.longitude, route.evacuation_site.latitude],
-                    },
-                    properties: { role: "dest" },
-                  },
-                ],
-              });
-            }
+            const name = route.evacuation_site.name || "Titik evakuasi";
+            const chains = extractLineChains(route.geometry);
+            const originCoord: [number, number] = [event.lngLat.lng, event.lngLat.lat];
+            const destCoord: [number, number] = [route.evacuation_site.longitude, route.evacuation_site.latitude];
+            routeOverlayRef.current = {
+              lines: chains.length ? chains : [sampleGuideLine(originCoord, destCoord, 16)],
+              origin: originCoord,
+              dest: destCoord,
+              color: "#2563eb",
+              dashed: false,
+              destLabel: name.length > 28 ? `${name.slice(0, 27)}...` : name,
+            };
+            syncRouteOverlayRef.current();
             const b = boundsOfGeometry(route.geometry);
             if (b) {
               const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
               map.fitBounds(b, { padding: 64, maxZoom: 16.5, duration: reduced ? 0 : 850 });
             }
-            const name = route.evacuation_site.name || "Titik evakuasi";
             onRouteStatus({
               message: `Rute berkendara ke ${name} · ${(route.distance_m / 1000).toLocaleString("id-ID", { maximumFractionDigits: 2 })} km · ${route.duration_minutes.toLocaleString("id-ID", { maximumFractionDigits: 1 })} menit`,
             });
@@ -1348,47 +1427,18 @@ export function MapLibreWorkspaceMap({
                 onRouteStatus({ message: `${reason} Tidak ada titik evakuasi di sekitar sini.` });
                 return;
               }
-              if (map.getLayer(MAPLIBRE_IDS.evacRouteLineLayer)) {
-                map.setPaintProperty(MAPLIBRE_IDS.evacRouteLineLayer, "line-color", "#b45309");
-                map.setPaintProperty(MAPLIBRE_IDS.evacRouteLineLayer, "line-dasharray", [2, 2]);
-              }
-              const rSrc = map.getSource(MAPLIBRE_IDS.evacRouteSource);
-              const pSrc = map.getSource(MAPLIBRE_IDS.evacRoutePointsSource);
-              if (isGeoJsonSource(rSrc)) {
-                rSrc.setData({
-                  type: "FeatureCollection",
-                  features: [
-                    {
-                      type: "Feature",
-                      geometry: {
-                        type: "LineString",
-                        coordinates: [
-                          [event.lngLat.lng, event.lngLat.lat],
-                          [site.longitude, site.latitude],
-                        ],
-                      },
-                      properties: {},
-                    },
-                  ],
-                });
-              }
-              if (isGeoJsonSource(pSrc)) {
-                pSrc.setData({
-                  type: "FeatureCollection",
-                  features: [
-                    {
-                      type: "Feature",
-                      geometry: { type: "Point", coordinates: [event.lngLat.lng, event.lngLat.lat] },
-                      properties: { role: "origin" },
-                    },
-                    {
-                      type: "Feature",
-                      geometry: { type: "Point", coordinates: [site.longitude, site.latitude] },
-                      properties: { role: "dest" },
-                    },
-                  ],
-                });
-              }
+              const siteLabel = site.name || "Titik evakuasi terdekat";
+              const originCoord: [number, number] = [event.lngLat.lng, event.lngLat.lat];
+              const destCoord: [number, number] = [site.longitude, site.latitude];
+              routeOverlayRef.current = {
+                lines: [sampleGuideLine(originCoord, destCoord, 16)],
+                origin: originCoord,
+                dest: destCoord,
+                color: "#b45309",
+                dashed: true,
+                destLabel: siteLabel.length > 28 ? `${siteLabel.slice(0, 27)}...` : siteLabel,
+              };
+              syncRouteOverlayRef.current();
               const minLng = Math.min(event.lngLat.lng, site.longitude);
               const maxLng = Math.max(event.lngLat.lng, site.longitude);
               const minLat = Math.min(event.lngLat.lat, site.latitude);
@@ -1484,6 +1534,58 @@ export function MapLibreWorkspaceMap({
         aria-label="Kanvas peta 3D Jawa Barat. Seret untuk menggeser, klik kanan dan seret untuk memiringkan sudut pandang 3D."
       />
 
+      {/* Screen-projected 3D route/evacuation guide overlay so active routes and pins never clip under 3D buildings. */}
+      <svg
+        className="pointer-events-none absolute inset-0 z-1 h-full w-full overflow-visible"
+        aria-hidden="true"
+      >
+        <path
+          ref={routeCasingPathRef}
+          fill="none"
+          stroke="#ffffff"
+          strokeWidth={7}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeOpacity={0.94}
+        />
+        <path
+          ref={routeStrokePathRef}
+          fill="none"
+          stroke="#15803d"
+          strokeWidth={3.5}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <circle
+          ref={routeOriginCircleRef}
+          r={6.5}
+          fill="#ffffff"
+          stroke="#111827"
+          strokeWidth={2.5}
+          style={{ display: "none" }}
+        />
+        <g ref={routeDestGroupRef} style={{ display: "none" }}>
+          <circle ref={routeDestCircleRef} r={7.5} fill="#15803d" stroke="#ffffff" strokeWidth={2.5} />
+          <rect
+            ref={routeDestPillRef}
+            y={-32}
+            height={20}
+            rx={6}
+            fill="#ffffff"
+            stroke="#d4d4d4"
+            strokeWidth={1}
+          />
+          <text
+            ref={routeDestLabelRef}
+            y={-18}
+            textAnchor="middle"
+            fill="#171717"
+            fontSize={11}
+            fontWeight={600}
+          />
+        </g>
+      </svg>
+
       {dataStatus || !mapReady ? (
         <div
           className="gis-map-status absolute z-1 left-[calc(var(--regions-width,0px)_+_16px)] right-16 bottom-16 flex items-center flex-wrap gap-2 rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-neutral-800 [transition:left_var(--gis-slide-duration)_var(--gis-slide-easing),right_var(--gis-slide-duration)_var(--gis-slide-easing)] motion-reduce:[transition:none]"
@@ -1500,6 +1602,7 @@ export function MapLibreWorkspaceMap({
 
       {/* Unified Map View & 3D Overlay Switcher (Bottom Left) */}
       <div
+        data-sim-open={simulationOpen}
         className={`gis-3d-switcher absolute z-2 left-[calc(var(--regions-width,0px)_+_16px)] bottom-4 inline-flex items-center rounded-xl border border-neutral-200 bg-white p-1 [transition:left_var(--gis-slide-duration)_var(--gis-slide-easing)] motion-reduce:[transition:none] ${
           simulationOpen ? "max-[1279.01px]:hidden" : "max-[639.01px]:hidden"
         }`}
