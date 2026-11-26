@@ -1,6 +1,7 @@
 import type * as maplibregl from "maplibre-gl";
 import type { Map as MapLibreMap } from "maplibre-gl";
 import mlcontour from "maplibre-contour";
+import { westJavaBasemap } from "../basemap";
 
 export const OPENFREEMAP_LIBERTY_STYLE = "https://tiles.openfreemap.org/styles/liberty";
 const AWS_TERRARIUM_URL = "https://elevation-tiles-prod.s3.amazonaws.com/terrarium/{z}/{x}/{y}.png";
@@ -13,6 +14,7 @@ export const MAPLIBRE_IDS = {
   contourSource: "sibajawa-contour-source",
   satelliteSource: "sibajawa-satellite-source",
   satelliteLayer: "sibajawa-satellite-layer",
+  streetLayer: "sibajawa-osm-streets",
   hillshadeLayer: "sibajawa-hillshade-layer",
   contourLinesLayer: "sibajawa-contour-lines",
   contourLabelsLayer: "sibajawa-contour-labels",
@@ -226,6 +228,23 @@ export function installNatural3DLayers(
       firstLabelId,
     );
   }
+
+  map.addSource(MAPLIBRE_IDS.streetLayer, {
+    type: "raster",
+    tiles: [westJavaBasemap.tileUrl],
+    tileSize: 256,
+    maxzoom: westJavaBasemap.maxZoom,
+    attribution: westJavaBasemap.attribution,
+  });
+  map.addLayer(
+    {
+      id: MAPLIBRE_IDS.streetLayer,
+      type: "raster",
+      source: MAPLIBRE_IDS.streetLayer,
+      layout: { visibility: "none" },
+    },
+    MAPLIBRE_IDS.contourLinesLayer,
+  );
 
   if (!map.getLayer(MAPLIBRE_IDS.buildings3dLayer) && map.getSource("openmaptiles")) {
     map.addLayer(

@@ -18,7 +18,6 @@ import {
 } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { westJavaBasemap } from "../basemap";
-import type { MapEngineMode } from "./webgl-support";
 import {
   ensureContourProtocol,
   installNatural3DLayers,
@@ -187,9 +186,16 @@ interface DebrisParticle {
   tier: 2 | 3;
 }
 
+const defaultPitch = 32;
+const maxPitch = 68;
+const basemaps = [
+  { id: "terrain", label: "Terrain" },
+  { id: "street", label: "Peta Jalan" },
+  { id: "satellite", label: "Satelit" },
+] as const;
+
 export function MapLibreWorkspaceMap({
-  engineMode,
-  onEngineModeChange,
+  onClassicFallback,
   layerIds,
   regionIds,
   evacuationSites,
@@ -213,8 +219,7 @@ export function MapLibreWorkspaceMap({
   onRouteStatus,
   onSimStatus,
 }: {
-  engineMode: "3d-natural" | "3d-satellite";
-  onEngineModeChange: (mode: MapEngineMode) => void;
+  onClassicFallback: () => void;
   layerIds: string[];
   regionIds: string[];
   evacuationSites: EvacuationSite[];
@@ -240,6 +245,7 @@ export function MapLibreWorkspaceMap({
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
+  const libertyLayerIdsRef = useRef<string[]>([]);
   const popupRef = useRef<Popup | null>(null);
   const simCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const routeOverlayRef = useRef<ProjectedRouteOverlay | null>(null);
@@ -257,8 +263,9 @@ export function MapLibreWorkspaceMap({
   const [mapReady, setMapReady] = useState(false);
   const [mapError, setMapError] = useState(false);
   const [zoom, setZoom] = useState(8);
-  const [pitch, setPitch] = useState(32);
   const [bearing, setBearing] = useState(0);
+  const [basemap, setBasemap] = useState<(typeof basemaps)[number]["id"]>("terrain");
+  const [is3d, setIs3d] = useState(true);
   const [showContours, setShowContours] = useState(true);
   const [showBuildings3d, setShowBuildings3d] = useState(true);
 
@@ -299,9 +306,6 @@ export function MapLibreWorkspaceMap({
         if (cancelled || !containerRef.current) return;
 
         const demSource = ensureContourProtocol(maplibregl);
-        const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-        const initialPitch = reduced ? 0 : 32;
-
         const instance = new maplibregl.Map({
           container: containerRef.current,
           style: OPENFREEMAP_LIBERTY_STYLE,
@@ -309,8 +313,8 @@ export function MapLibreWorkspaceMap({
           zoom: 8.2,
           minZoom: 6,
           maxZoom: 18.5,
-          pitch: initialPitch,
-          maxPitch: 68,
+          pitch: defaultPitch,
+          maxPitch,
           bearing: 0,
           attributionControl: false,
           canvasContextAttributes: { antialias: true },
@@ -318,7 +322,7 @@ export function MapLibreWorkspaceMap({
         map = instance;
         mapRef.current = instance;
 
-        instance.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-right");
+        instance.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-left");
         popupRef.current = new maplibregl.Popup({
           closeButton: false,
           closeOnClick: false,
@@ -332,11 +336,15 @@ export function MapLibreWorkspaceMap({
 
         instance.on("load", () => {
           if (cancelled) return;
+          const libertyLayers = instance.getStyle().layers;
           const belowBuildingsId = installNatural3DLayers(instance, demSource, {
-            satellite: engineMode === "3d-satellite",
+            satellite: false,
             showContours: true,
             showBuildings3d: true,
           });
+          libertyLayerIdsRef.current = libertyLayers
+            .filter((layer) => layer.type !== "background" && instance.getLayoutProperty(layer.id, "visibility") !== "none")
+            .map(({ id }) => id);
 
           // Install Sibajawa domain sources & layers in strict Z-order.
           const addGeoSource = (id: string) => {
@@ -531,9 +539,8 @@ export function MapLibreWorkspaceMap({
             [westJavaBasemap.bounds[0][1], westJavaBasemap.bounds[0][0]],
             [westJavaBasemap.bounds[1][1], westJavaBasemap.bounds[1][0]],
           ];
-          instance.fitBounds(bounds, { padding: 28, pitch: initialPitch, duration: 0 });
+          instance.fitBounds(bounds, { padding: 28, pitch: defaultPitch, duration: 0 });
           setZoom(instance.getZoom());
-          setPitch(instance.getPitch());
           setBearing(instance.getBearing());
           setMapReady(true);
         });
@@ -615,7 +622,6 @@ export function MapLibreWorkspaceMap({
         const syncCamera = () => {
           if (cancelled) return;
           setZoom(instance.getZoom());
-          setPitch(instance.getPitch());
           setBearing(instance.getBearing());
           syncRouteOverlay();
         };
@@ -644,21 +650,25 @@ export function MapLibreWorkspaceMap({
       simCanvasRef.current = null;
       setMapReady(false);
     };
-    // MapLibre instance mounts once; satellite/contour/building visibility toggles dynamically below.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // MapLibre instance mounts once; layer visibility is updated below.
   }, []);
 
-  // 2) Toggle Satellite, Contours, and 3D Buildings visibility cleanly without reloading the WebGL style.
+  // Switch basemaps without replacing the map style or its data layers.
   useEffect(() => {
     const map = mapRef.current;
     if (!mapReady || !map) return;
-    if (map.getLayer(MAPLIBRE_IDS.satelliteLayer)) {
-      map.setLayoutProperty(
-        MAPLIBRE_IDS.satelliteLayer,
-        "visibility",
-        engineMode === "3d-satellite" ? "visible" : "none",
-      );
+    const streetVisible = basemap === "street";
+    for (const id of libertyLayerIdsRef.current) {
+      map.setLayoutProperty(id, "visibility", streetVisible ? "none" : "visible");
     }
+    map.setLayoutProperty(MAPLIBRE_IDS.streetLayer, "visibility", streetVisible ? "visible" : "none");
+    map.setLayoutProperty(MAPLIBRE_IDS.hillshadeLayer, "visibility", streetVisible ? "none" : "visible");
+    map.setLayoutProperty(MAPLIBRE_IDS.satelliteLayer, "visibility", basemap === "satellite" ? "visible" : "none");
+  }, [mapReady, basemap]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!mapReady || !map) return;
     const contourVis = showContours ? "visible" : "none";
     if (map.getLayer(MAPLIBRE_IDS.contourLinesLayer)) {
       map.setLayoutProperty(MAPLIBRE_IDS.contourLinesLayer, "visibility", contourVis);
@@ -673,7 +683,7 @@ export function MapLibreWorkspaceMap({
         showBuildings3d ? "visible" : "none",
       );
     }
-  }, [mapReady, engineMode, showContours, showBuildings3d]);
+  }, [mapReady, showContours, showBuildings3d]);
 
   // 3) Fetch 627 district collection once when thematic layers or simulation are enabled.
   useEffect(() => {
@@ -821,7 +831,7 @@ export function MapLibreWorkspaceMap({
               [minLng, minLat],
               [maxLng, maxLat],
             ],
-            { padding: 52, duration: reduced ? 0 : 800, pitch: reduced ? 0 : Math.max(36, map.getPitch()) },
+            { padding: 52, duration: reduced ? 0 : 800, pitch: Math.min(map.getMaxPitch(), Math.max(36, map.getPitch())) },
           );
         }
         onRegionStatus(undefined);
@@ -1073,7 +1083,7 @@ export function MapLibreWorkspaceMap({
           ],
           {
             padding: { top: 76, left: 52, right: 52, bottom: padBottom },
-            pitch: reduced ? 0 : 48,
+            pitch: Math.min(map.getMaxPitch(), 48),
             bearing: reduced ? 0 : -12,
             duration: reduced ? 0 : 950,
           },
@@ -1087,11 +1097,13 @@ export function MapLibreWorkspaceMap({
     const map = mapRef.current;
     if (!mapReady || !map || !focusRequest) return;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    setIs3d(true);
+    map.setMaxPitch(maxPitch);
     setShowBuildings3d(true);
     map.flyTo({
       center: [focusRequest.lng, focusRequest.lat],
       zoom: 15.2,
-      pitch: reduced ? 0 : 58,
+      pitch: 58,
       bearing: reduced ? 0 : -20,
       duration: reduced ? 0 : 1200,
     });
@@ -1170,7 +1182,7 @@ export function MapLibreWorkspaceMap({
       {
         padding: { top: 84, left: 64, right: 64, bottom: padBottom },
         maxZoom: 15.5,
-        pitch: reduced ? 0 : 45,
+        pitch: Math.min(map.getMaxPitch(), 45),
         duration: reduced ? 0 : 850,
       },
     );
@@ -1509,29 +1521,39 @@ export function MapLibreWorkspaceMap({
     onRouteStatus,
   ]);
 
+  function changePerspective(nextIs3d: boolean) {
+    const map = mapRef.current;
+    if (!mapReady || !map) return;
+    setIs3d(nextIs3d);
+    map.stop().setMaxPitch(nextIs3d ? maxPitch : 0);
+    if (nextIs3d) {
+      const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      map.easeTo({ pitch: defaultPitch, duration: reduced ? 0 : 500 });
+    }
+  }
+
   if (mapError) {
     return (
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[#e8eee6] p-4 text-center">
         <p className="text-sm font-medium text-neutral-800">Mode 3D WebGL tidak dapat dimuat pada perangkat ini.</p>
-        <Button type="button" onClick={() => onEngineModeChange("2d-classic")}>
+        <Button type="button" onClick={onClassicFallback}>
           Beralih ke Peta 2D Klasik
         </Button>
       </div>
     );
   }
 
-  const isTilted = pitch >= 18;
 
   return (
     <section
       className="gis-map absolute inset-0 overflow-hidden bg-[#dce7f0]"
-      aria-label="Peta 3D interaktif Jawa Barat dengan kontur dan bangunan"
+      aria-label="Peta interaktif Jawa Barat"
     >
       <div
         ref={containerRef}
         style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
         className="gis-maplibre-map absolute! inset-0! z-0! h-full! w-full! [font-family:inherit]!"
-        aria-label="Kanvas peta 3D Jawa Barat. Seret untuk menggeser, klik kanan dan seret untuk memiringkan sudut pandang 3D."
+        aria-label={is3d ? "Kanvas peta 3D Jawa Barat. Seret untuk menggeser, klik kanan dan seret untuk memiringkan peta." : "Kanvas peta 2D Jawa Barat. Seret untuk menggeser peta."}
       />
 
       {/* Screen-projected 3D route/evacuation guide overlay so active routes and pins never clip under 3D buildings. */}
@@ -1588,7 +1610,7 @@ export function MapLibreWorkspaceMap({
 
       {dataStatus || !mapReady ? (
         <div
-          className="gis-map-status absolute z-1 left-[calc(var(--regions-width,0px)_+_16px)] right-16 bottom-16 flex items-center flex-wrap gap-2 rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-neutral-800 [transition:left_var(--gis-slide-duration)_var(--gis-slide-easing),right_var(--gis-slide-duration)_var(--gis-slide-easing)] motion-reduce:[transition:none]"
+          className="gis-map-status absolute z-1 left-[calc(var(--regions-width,0px)_+_64px)] right-16 bottom-16 flex items-center flex-wrap gap-2 rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-neutral-800 [transition:left_var(--gis-slide-duration)_var(--gis-slide-easing),right_var(--gis-slide-duration)_var(--gis-slide-easing)] motion-reduce:[transition:none]"
           role="status"
         >
           {dataStatus?.message ?? "Memuat peta 3D Jawa Barat..."}
@@ -1600,116 +1622,7 @@ export function MapLibreWorkspaceMap({
         </div>
       ) : null}
 
-      {/* Unified Map View & 3D Overlay Switcher (Bottom Left) */}
-      <div
-        data-sim-open={simulationOpen}
-        className={`gis-3d-switcher absolute z-2 left-[calc(var(--regions-width,0px)_+_16px)] bottom-4 inline-flex items-center rounded-xl border border-neutral-200 bg-white p-1 [transition:left_var(--gis-slide-duration)_var(--gis-slide-easing)] motion-reduce:[transition:none] ${
-          simulationOpen ? "max-[1279.01px]:hidden" : "max-[639.01px]:hidden"
-        }`}
-        role="group"
-        aria-label="Mode tampilan peta dan lapisan 3D"
-      >
-        <div className="inline-flex items-center gap-0.5">
-          <button
-            type="button"
-            aria-pressed={engineMode === "3d-natural"}
-            onClick={() => onEngineModeChange("3d-natural")}
-            className={`h-7 cursor-pointer rounded-lg px-2.5 text-xs font-medium transition-colors ${
-              engineMode === "3d-natural"
-                ? "bg-[var(--gis-blue)] text-white"
-                : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
-            }`}
-          >
-            3D
-          </button>
-          <button
-            type="button"
-            aria-pressed={engineMode === "3d-satellite"}
-            onClick={() => onEngineModeChange("3d-satellite")}
-            className={`h-7 cursor-pointer rounded-lg px-2.5 text-xs font-medium transition-colors ${
-              engineMode === "3d-satellite"
-                ? "bg-[var(--gis-blue)] text-white"
-                : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
-            }`}
-          >
-            Satelit
-          </button>
-          <button
-            type="button"
-            aria-pressed={false}
-            onClick={() => onEngineModeChange("2d-classic")}
-            className="h-7 cursor-pointer rounded-lg px-2.5 text-xs font-medium text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900"
-          >
-            2D
-          </button>
-        </div>
-
-        <span className="mx-1.5 h-4 w-px bg-neutral-200" aria-hidden="true" />
-
-        <div className="inline-flex items-center gap-0.5">
-          <button
-            type="button"
-            aria-pressed={showContours}
-            onClick={() => setShowContours((prev) => !prev)}
-            className={`inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-lg px-2.5 text-xs font-medium transition-colors ${
-              showContours
-                ? "bg-neutral-100 text-neutral-900"
-                : "text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900"
-            }`}
-          >
-            <span
-              aria-hidden="true"
-              className={`size-1.5 rounded-full ${showContours ? "bg-[var(--gis-blue)]" : "bg-neutral-300"}`}
-            />
-            <span>Kontur</span>
-          </button>
-
-          <button
-            type="button"
-            aria-pressed={showBuildings3d}
-            onClick={() => setShowBuildings3d((prev) => !prev)}
-            className={`inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-lg px-2.5 text-xs font-medium transition-colors ${
-              showBuildings3d
-                ? "bg-neutral-100 text-neutral-900"
-                : "text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900"
-            }`}
-          >
-            <span
-              aria-hidden="true"
-              className={`size-1.5 rounded-full ${showBuildings3d ? "bg-[var(--gis-blue)]" : "bg-neutral-300"}`}
-            />
-            <span>Bangunan</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Camera & 3D Tilt Controls */}
-      <div
-        className="gis-map-controls absolute z-2 bottom-9 right-4 flex flex-col gap-2 text-[var(--gis-blue)] [transition:right_var(--gis-slide-duration)_var(--gis-slide-easing)] motion-reduce:[transition:none]"
-        aria-label="Kontrol kamera peta 3D"
-      >
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          aria-pressed={isTilted}
-          aria-label={isTilted ? "Ubah sudut pandang menjadi tegak 2D" : "Miringkan kamera ke sudut pandang 3D"}
-          title={isTilted ? "Sudut tegak (0°)" : "Sudut 3D (55°)"}
-          className={`h-9 w-9 rounded-xl border text-xs font-semibold transition-colors ${
-            isTilted
-              ? "border-neutral-200 bg-white text-[var(--gis-blue)] hover:bg-neutral-50"
-              : "border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900"
-          }`}
-          onClick={() => {
-            const map = mapRef.current;
-            if (!map) return;
-            const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-            map.easeTo({ pitch: isTilted ? 0 : 55, duration: reduced ? 0 : 500 });
-          }}
-        >
-          {isTilted ? "3D" : "2D"}
-        </Button>
-
+      <div className="gis-map-settings pointer-events-none absolute right-4 bottom-4 z-2 flex flex-col items-end gap-2 [transition:right_var(--gis-slide-duration)_var(--gis-slide-easing)] motion-reduce:[transition:none]">
         {Math.abs(bearing) > 2 && (
           <Button
             type="button"
@@ -1717,7 +1630,7 @@ export function MapLibreWorkspaceMap({
             size="icon-sm"
             aria-label="Reset arah kompas ke utara"
             title="Reset arah ke utara"
-            className="h-9 w-9 rounded-xl border border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50"
+            className="pointer-events-auto h-9 w-9 rounded-xl border border-neutral-200 bg-white text-neutral-700"
             onClick={() => {
               const map = mapRef.current;
               if (!map) return;
@@ -1733,53 +1646,125 @@ export function MapLibreWorkspaceMap({
           </Button>
         )}
 
-        <div className="gis-zoom-controls flex flex-col gap-1.5 rounded-xl border border-neutral-200 bg-white p-1.5">
+        <div className="gis-map-controls pointer-events-auto flex flex-col gap-2 text-[var(--gis-blue)]" role="group" aria-label="Kontrol peta">
+          <div className="gis-zoom-controls flex flex-col gap-1.5 rounded-xl border border-neutral-200 bg-white p-1.5">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              className="h-6 w-6 p-0"
+              aria-label="Perbesar peta"
+              disabled={zoom >= 18}
+              onClick={() => mapRef.current?.zoomIn()}
+            >
+              <IconPlus className="size-5" aria-hidden="true" />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              className="h-6 w-6 p-0"
+              aria-label="Perkecil peta"
+              disabled={zoom <= 6}
+              onClick={() => mapRef.current?.zoomOut()}
+            >
+              <IconMinus className="size-5" aria-hidden="true" />
+            </Button>
+          </div>
+
           <Button
             type="button"
             variant="ghost"
             size="icon-sm"
-            className="h-6 w-6 p-0"
-            aria-label="Perbesar peta"
-            disabled={zoom >= 18}
-            onClick={() => mapRef.current?.zoomIn()}
+            className="gis-reset-map h-9 w-9 rounded-xl border border-neutral-200 bg-white p-1.5 dark:hover:bg-accent"
+            aria-label="Kembali ke Jawa Barat"
+            title="Kembali ke Jawa Barat"
+            onClick={() => {
+              const map = mapRef.current;
+              if (!map) return;
+              const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+              map.fitBounds(
+                [
+                  [westJavaBasemap.bounds[0][1], westJavaBasemap.bounds[0][0]],
+                  [westJavaBasemap.bounds[1][1], westJavaBasemap.bounds[1][0]],
+                ],
+                { padding: 28, pitch: Math.min(map.getMaxPitch(), defaultPitch), bearing: 0, duration: reduced ? 0 : 750 },
+              );
+            }}
           >
-            <IconPlus className="size-5" aria-hidden="true" />
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            className="h-6 w-6 p-0"
-            aria-label="Perkecil peta"
-            disabled={zoom <= 6}
-            onClick={() => mapRef.current?.zoomOut()}
-          >
-            <IconMinus className="size-5" aria-hidden="true" />
+            <IconCurrentLocation className="size-5" aria-hidden="true" />
           </Button>
         </div>
 
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          className="gis-reset-map h-9 w-9 rounded-xl border border-neutral-200 bg-white p-1.5 hover:bg-neutral-50"
-          aria-label="Kembali ke Jawa Barat"
-          title="Kembali ke Jawa Barat"
-          onClick={() => {
-            const map = mapRef.current;
-            if (!map) return;
-            const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-            map.fitBounds(
-              [
-                [westJavaBasemap.bounds[0][1], westJavaBasemap.bounds[0][0]],
-                [westJavaBasemap.bounds[1][1], westJavaBasemap.bounds[1][0]],
-              ],
-              { padding: 28, pitch: reduced ? 0 : 32, bearing: 0, duration: reduced ? 0 : 750 },
-            );
-          }}
+        <div className="pointer-events-auto flex flex-col gap-1.5 rounded-xl border border-neutral-200 bg-white p-1.5" role="group" aria-label="Perspektif peta">
+          {[false, true].map((mode3d) => (
+            <Button
+              key={String(mode3d)}
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              aria-pressed={is3d === mode3d}
+              disabled={!mapReady}
+              onClick={() => changePerspective(mode3d)}
+              className="h-6 w-6 p-0 text-neutral-600 aria-pressed:bg-[var(--gis-blue)] aria-pressed:text-white aria-pressed:hover:bg-accent dark:aria-pressed:hover:bg-accent/50 aria-pressed:hover:text-accent-foreground"
+            >
+              {mode3d ? "3D" : "2D"}
+            </Button>
+          ))}
+        </div>
+
+        <div
+          data-sim-open={simulationOpen}
+          className={`gis-3d-switcher pointer-events-auto inline-flex items-center rounded-xl border border-neutral-200 bg-white p-1 ${
+            simulationOpen ? "max-[1279.01px]:hidden" : ""
+          }`}
+          role="group"
+          aria-label="Peta dasar dan lapisan"
         >
-          <IconCurrentLocation className="size-5" aria-hidden="true" />
-        </Button>
+          <div className="hidden items-center gap-0.5 sm:inline-flex">
+            <button
+              type="button"
+              aria-pressed={showContours}
+              onClick={() => setShowContours((prev) => !prev)}
+              className="inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-lg px-2.5 text-xs font-medium text-neutral-600 transition-colors aria-pressed:bg-neutral-100 aria-pressed:text-neutral-900 hover:bg-accent dark:hover:bg-accent/50 hover:text-accent-foreground aria-pressed:hover:bg-accent dark:aria-pressed:hover:bg-accent/50 aria-pressed:hover:text-accent-foreground"
+            >
+              <span
+                aria-hidden="true"
+                className={`size-1.5 rounded-full ${showContours ? "bg-[var(--gis-blue)]" : "bg-neutral-300"}`}
+              />
+              <span>Kontur</span>
+            </button>
+
+            <button
+              type="button"
+              aria-pressed={showBuildings3d}
+              onClick={() => setShowBuildings3d((prev) => !prev)}
+              className="inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-lg px-2.5 text-xs font-medium text-neutral-600 transition-colors aria-pressed:bg-neutral-100 aria-pressed:text-neutral-900 hover:bg-accent dark:hover:bg-accent/50 hover:text-accent-foreground aria-pressed:hover:bg-accent dark:aria-pressed:hover:bg-accent/50 aria-pressed:hover:text-accent-foreground"
+            >
+              <span
+                aria-hidden="true"
+                className={`size-1.5 rounded-full ${showBuildings3d ? "bg-[var(--gis-blue)]" : "bg-neutral-300"}`}
+              />
+              <span>Bangunan</span>
+            </button>
+          </div>
+
+          <span className="mx-1.5 hidden h-4 w-px bg-neutral-200 sm:block" aria-hidden="true" />
+
+          <div className="inline-flex items-center gap-0.5" role="group" aria-label="Peta dasar">
+            {basemaps.map(({ id, label }) => (
+              <button
+                key={id}
+                type="button"
+                aria-pressed={basemap === id}
+                onClick={() => setBasemap(id)}
+                className="h-7 cursor-pointer rounded-lg px-2.5 text-xs font-medium whitespace-nowrap text-neutral-600 transition-colors hover:bg-accent dark:hover:bg-accent/50 hover:text-accent-foreground aria-pressed:bg-[var(--gis-blue)] aria-pressed:text-white aria-pressed:hover:bg-accent dark:aria-pressed:hover:bg-accent/50 aria-pressed:hover:text-accent-foreground"
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   );

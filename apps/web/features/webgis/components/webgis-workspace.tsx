@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { OverviewButton } from "@/components/ui/overview-button";
 import dynamic from "next/dynamic";
 import { InteractiveMap } from "@/features/map/components/interactive-map";
-import { supportsWebGL, type MapEngineMode } from "@/features/map/three-d/webgl-support";
+import { supportsWebGL } from "@/features/map/three-d/webgl-support";
 import { EvacuationLayer } from "@/features/evacuation/evacuation-layer";
 import {
   ALL_EVACUATION_CATEGORIES,
@@ -80,8 +80,7 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
   const [aiOpened, setAiOpened] = useState(false);
 
   const webglAvailable = useSyncExternalStore(subscribeNoop, getWebGLSnapshot, getWebGLServerSnapshot);
-  const [preferredEngine, setPreferredEngine] = useState<MapEngineMode | null>(null);
-  const engineMode: MapEngineMode = preferredEngine ?? (webglAvailable ? "3d-natural" : "2d-classic");
+  const [useClassicMap, setUseClassicMap] = useState(false);
 
   // On-map interactive DEM/slope/building simulation state.
   const [simulationOpen, setSimulationOpen] = useState(false);
@@ -175,12 +174,10 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
 
   const handleZoomClose3d = useCallback(
     (center: { lat: number; lng: number }) => {
-      if (engineMode === "2d-classic" && webglAvailable) {
-        setPreferredEngine("3d-natural");
-      }
+      if (webglAvailable) setUseClassicMap(false);
       setFocusRequest({ lat: center.lat, lng: center.lng, nonce: Date.now() });
     },
-    [engineMode, webglAvailable],
+    [webglAvailable],
   );
 
   function handleFindSafeEvac() {
@@ -199,7 +196,7 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
         updateFilters({ regionIds: [region.id] });
         dispatch({ type: "show-overview" });
       }} />
-      <main id="gis-main" style={{ "--sidebar-width": `min(${sidebarWidth}px, 480px, calc(100vw - 48px))` } as CSSProperties} className="gis-layout [--regions-width:var(--sidebar-width)] [--overview-width:456px] relative flex-1 min-h-0 isolate [&[data-left-open=false]]:[--regions-width:0px] [&[data-left-open=true]_.gis-left-toolbar_.gis-panel-toggle[aria-expanded=false]]:[opacity:0] [&[data-left-open=true]_.gis-left-toolbar_.gis-panel-toggle[aria-expanded=false]]:pointer-events-none [&[data-overview-open=true]_.gis-overview-trigger]:[transform:translateX(-100%)] [&[data-overview-open=true]_.gis-map-controls]:right-[calc(var(--overview-width)_+_16px)] [&[data-overview-open=true]_.gis-map-status]:right-[calc(var(--overview-width)_+_64px)] [&[data-overview-open=true]_.gis-3d-switcher[data-sim-open=true]]:max-[1680px]:hidden min-[1000px]:[&[data-overview-open=true]_.gis-map_.leaflet-bottom.leaflet-right]:right-[var(--overview-width)]! min-[1000px]:[&[data-overview-open=true]_.gis-map_.maplibregl-ctrl-bottom-right]:right-[var(--overview-width)]! min-[1000px]:max-[1199.01px]:[--overview-width:380px] max-[999.01px]:[--regions-width:0px] max-[999.01px]:[--overview-width:min(456px,calc(100%_-_56px))] max-[999.01px]:[&[data-left-open=true]_.gis-overview-toggle]:hidden max-[999.01px]:[&[data-overview-open=true]_.gis-left-toolbar]:hidden" data-left-open={leftOpen} data-overview-open={overviewOpen} onKeyDown={(event) => {
+      <main id="gis-main" style={{ "--sidebar-width": `min(${sidebarWidth}px, 480px, calc(100vw - 48px))` } as CSSProperties} className="gis-layout [--regions-width:var(--sidebar-width)] [--overview-width:456px] relative flex-1 min-h-0 isolate [&[data-left-open=false]]:[--regions-width:0px] [&[data-left-open=true]_.gis-left-toolbar_.gis-panel-toggle[aria-expanded=false]]:[opacity:0] [&[data-left-open=true]_.gis-left-toolbar_.gis-panel-toggle[aria-expanded=false]]:pointer-events-none [&[data-overview-open=true]_.gis-overview-trigger]:[transform:translateX(-100%)] [&[data-overview-open=true]_.gis-map-settings]:right-[calc(var(--overview-width)_+_16px)] [&[data-overview-open=true]_.gis-map-status]:right-[calc(var(--overview-width)_+_64px)] [&[data-overview-open=true]_.gis-3d-switcher[data-sim-open=true]]:max-[1680px]:hidden min-[1000px]:[&_.gis-map_.leaflet-bottom.leaflet-left]:left-[var(--regions-width)]! min-[1000px]:[&_.gis-map_.maplibregl-ctrl-bottom-left]:left-[var(--regions-width)]! max-[999.01px]:[&[data-overview-open=true]_.gis-3d-switcher]:hidden min-[1000px]:max-[1199.01px]:[--overview-width:380px] max-[999.01px]:[--regions-width:0px] max-[999.01px]:[--overview-width:min(456px,calc(100%_-_56px))] max-[999.01px]:[&[data-left-open=true]_.gis-overview-toggle]:hidden max-[999.01px]:[&[data-overview-open=true]_.gis-left-toolbar]:hidden" data-left-open={leftOpen} data-overview-open={overviewOpen} onKeyDown={(event) => {
         if (event.key === "Escape" && !event.defaultPrevented && (simulationOpen || leftOpen || overviewOpen)) {
           event.preventDefault();
           if (simulationOpen) {
@@ -211,11 +208,10 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
         }
       }}>
         <h1 className="sr-only">Map Interaktif Jawa Barat</h1>
-        {engineMode === "2d-classic" ? (
+        {!webglAvailable || useClassicMap ? (
           <InteractiveMap
             dataStatus={activeDataStatus}
-            canSwitch3d={webglAvailable}
-            onSwitchMode={setPreferredEngine}
+            onRetryWebGL={webglAvailable ? () => setUseClassicMap(false) : undefined}
           >
             {(map) => (
               <>
@@ -245,8 +241,7 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
           </InteractiveMap>
         ) : (
           <MapLibreWorkspaceMap
-            engineMode={engineMode}
-            onEngineModeChange={setPreferredEngine}
+            onClassicFallback={() => setUseClassicMap(true)}
             layerIds={filters.layerIds}
             regionIds={filters.regionIds}
             evacuationSites={filteredEvacuationSites}

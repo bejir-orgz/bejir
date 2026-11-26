@@ -1,5 +1,3 @@
-export type MapEngineMode = "3d-natural" | "3d-satellite" | "2d-classic";
-
 let cachedWebGLSupport: boolean | null = null;
 
 /** Checks WebGL availability once on the client so devices without GPU fall back cleanly to 2D Leaflet. */
