@@ -90,3 +90,5 @@ desktop.ini
 /data/processed/web/
 
 BACA_DULU.txt
+
+**/*.dump

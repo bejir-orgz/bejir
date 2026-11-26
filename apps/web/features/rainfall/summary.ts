@@ -14,15 +14,22 @@ export function aggregateRainfall(parameters: RainfallParameter[]) {
   };
 }
 
-/** Approved mode of API classes, weighted by pixels for each selected district/month. */
+/**
+ * Approved mode of API classes, weighted by pixels for each selected district/month.
+ * Seven Bekasi districts fall outside the rainfall raster and carry no class in any year,
+ * so a district without one is skipped rather than voiding its whole regency — the same
+ * way the average column already ignores a district with no reading.
+ */
 export function rainfallClassification(parameters: readonly MonthlyRainfallParameter[]): string | null {
   const classes = new Map<number, { weight: number; label: string }>();
   for (const row of parameters) {
-    if (row.kelas_hujan == null || !row.label_hujan || row.n_piksel == null || row.n_piksel <= 0) return null;
+    if (row.kelas_hujan == null || !row.label_hujan || row.n_piksel == null || row.n_piksel <= 0) continue;
     const previous = classes.get(row.kelas_hujan);
+    // One class carrying two labels is contradictory data, not a gap: refuse it.
     if (previous && previous.label !== row.label_hujan) return null;
     classes.set(row.kelas_hujan, { weight: (previous?.weight ?? 0) + row.n_piksel, label: row.label_hujan });
   }
+  if (!classes.size) return null;
   const highest = Math.max(...[...classes.values()].map((entry) => entry.weight));
   const winners = [...classes.values()].filter((entry) => entry.weight === highest);
   return winners.length === 1 ? winners[0].label : null;

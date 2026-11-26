@@ -138,13 +138,19 @@ test("monthly API supplies years and pixel-weighted classifications with region 
   } finally { globalThis.fetch = original; }
 });
 
-test("rainfall classification preserves ties and missing metadata instead of inventing labels", () => {
+test("rainfall classification preserves ties, skips unmeasured districts and never invents labels", () => {
   const a = { year: 2024, month: 1, n_piksel: 100, kelas_hujan: 2, label_hujan: "Rendah", mean_hujan_mm: 100 };
   const b = { ...a, kelas_hujan: 3, label_hujan: "Sedang" };
-  assert.equal(rainfallClassification([a, b]), null);
-  assert.equal(rainfallClassification([a, { ...b, n_piksel: 300 }]), "Sedang");
-  assert.equal(rainfallClassification([a, { ...b, label_hujan: null }]), null);
+  assert.equal(rainfallClassification([a, b]), null, "an exact tie stays unresolved");
+  assert.equal(rainfallClassification([a, { ...b, n_piksel: 300 }]), "Sedang", "heavier class wins");
+  // A district outside the rainfall raster is a gap, not a contradiction: classify the rest.
+  assert.equal(rainfallClassification([a, { ...b, label_hujan: null }]), "Rendah");
+  assert.equal(rainfallClassification([a, { ...b, kelas_hujan: null }]), "Rendah");
+  assert.equal(rainfallClassification([a, { ...b, n_piksel: 0 }]), "Rendah");
+  // One class with two different labels is contradictory, so it still refuses.
   assert.equal(rainfallClassification([a, { ...a, label_hujan: "Other" }]), null);
+  // Nothing measured anywhere leaves no class to report.
+  assert.equal(rainfallClassification([{ ...a, kelas_hujan: null, label_hujan: null }]), null);
   assert.equal(rainfallClassification([]), null);
 });
 
