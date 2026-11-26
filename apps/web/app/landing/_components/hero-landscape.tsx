@@ -3,10 +3,26 @@ import styles from "./landing.module.css";
 
 const panorama = "/images/jabar-river-hero.webp";
 
+const heroElevationPins = [
+  { id: "hulu", badge: "01", title: "Hulu Priangan", metric: ">1.200 mdpl", slotClass: styles.heroPinLeft },
+  { id: "cekungan", badge: "02", title: "Cekungan Bandung", metric: "680 mdpl", slotClass: styles.heroPinCenter },
+  { id: "pantura", badge: "03", title: "Dataran Pantura", metric: "14 mdpl", slotClass: styles.heroPinRight },
+];
+
 export function HeroLandscape() {
   return (
     <>
       <Image src={panorama} alt="" fill sizes="100vw" unoptimized preload className={styles.heroImage} />
+
+      {/* Mid-depth 3D topographic contour strata floating above the river valley */}
+      <svg className={styles.heroContours3d} viewBox="0 0 1440 520" preserveAspectRatio="none" aria-hidden="true">
+        <g fill="none" stroke="#1d4ed8" strokeWidth="1.2">
+          <path opacity="0.18" d="M-40 385 Q190 295 430 355 T920 330 T1480 375" />
+          <path opacity="0.14" d="M-40 422 Q220 335 470 392 T980 368 T1480 412" />
+          <path opacity="0.11" d="M-40 458 Q260 378 520 426 T1040 404 T1480 448" />
+        </g>
+      </svg>
+
       <div className={styles.heroSky} aria-hidden="true">
         {[0, 1, 2].map((cloud) => (
           <svg key={cloud} className={styles.heroCloud} viewBox="0 0 320 36">
@@ -14,6 +30,7 @@ export function HeroLandscape() {
           </svg>
         ))}
       </div>
+
       <svg className={styles.heroScene} viewBox="0 0 1672 941" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
         <defs>
           <linearGradient id="hero-current-light">
@@ -31,6 +48,19 @@ export function HeroLandscape() {
           <g className={styles.riverCurrent}><path d="M455 823q174-18 386 4-201 17-386-4Zm466-18q153-13 310 5-151 14-310-5Z" /></g>
         </g>
       </svg>
+
+      {/* Foreground 3D depth elevation anchors (real West Java basin profile) */}
+      <div className={styles.heroPinsLayer} aria-hidden="true">
+        {heroElevationPins.map((pin) => (
+          <div key={pin.id} className={`${styles.heroElevationPin} ${pin.slotClass}`}>
+            <span className={styles.heroPinBadge}>{pin.badge}</span>
+            <span className={styles.heroPinText}>
+              <strong>{pin.title}</strong>
+              <small>{pin.metric}</small>
+            </span>
+          </div>
+        ))}
+      </div>
     </>
   );
 }

@@ -42,9 +42,43 @@
 }
 .heroAmbientToggle:active { transform: scale(0.97); }
 
-.heroArt { position: absolute; z-index: 0; inset: -24px 0 -100px; container-type: size; pointer-events: none; --ambient-state: paused; }
+.heroArt { position: absolute; z-index: 0; inset: -24px 0 -100px; container-type: size; pointer-events: none; --ambient-state: paused; transform-style: preserve-3d; transition: transform 260ms var(--ease-out-strong); will-change: transform; }
 .heroArt[data-ambient=running] { --ambient-state: running; }
-.heroImage { object-fit: cover; object-position: var(--hero-crop, 50%) bottom; filter: saturate(1.2) contrast(1.05); }
+.heroImage { object-fit: cover; object-position: var(--hero-crop, 50%) bottom; filter: saturate(1.16) contrast(1.04); }
+.heroContours3d { position: absolute; inset: auto 0 112px; width: 100%; height: 420px; pointer-events: none; transform: translate3d(0, 0, 26px); }
+.heroPinsLayer { position: absolute; inset: 0; pointer-events: none; transform-style: preserve-3d; }
+.heroElevationPin {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 11px 6px 7px;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  background: #fffffff2;
+  color: #172554;
+  box-shadow: 0 10px 24px #17255414;
+  transform: translate3d(0, 0, 58px);
+  animation: enter 520ms var(--ease-out-strong) both;
+}
+.heroPinLeft { left: clamp(24px, 5vw, 84px); bottom: 298px; animation-delay: 140ms; }
+.heroPinCenter { left: clamp(190px, 23vw, 350px); bottom: 162px; animation-delay: 200ms; }
+.heroPinRight { right: clamp(28px, 6vw, 108px); bottom: 274px; animation-delay: 260ms; }
+.heroPinBadge {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.heroPinText { display: flex; flex-direction: column; line-height: 1.15; text-align: left; }
+.heroPinText strong { font-size: 12px; font-weight: 600; color: #172554; }
+.heroPinText small { font-size: 11px; color: #475569; font-variant-numeric: tabular-nums; }
 .heroScene {
   position: absolute;
   left: var(--hero-crop, 50%);
@@ -153,9 +187,195 @@
 .sourceNote a:hover { text-decoration: underline; }
 .sourceNote svg { display: inline; vertical-align: middle; }
 
-.about { display: grid; grid-template-columns: 1fr 1.05fr; gap: 64px; align-items: start; }
-.about p { font-size: 16px; color: #334155; line-height: 1.8; }
-.about p + p { margin-top: 16px; }
+/* Scroll-Driven Sticky 3D Watershed Flyover (#tentang) */
+.watershedSection { padding-block: clamp(64px, 7vw, 96px); }
+.watershedHeader {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 20px 56px;
+  align-items: end;
+  margin-bottom: 36px;
+}
+.watershedEyebrow {
+  margin-bottom: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  color: #1d4ed8;
+}
+.watershedIntro { color: #475569; font-size: 15px; line-height: 1.7; }
+.watershedGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: clamp(24px, 4vw, 48px);
+  align-items: start;
+}
+.watershedStickyCol { position: sticky; top: 104px; }
+.watershedStageCard {
+  border: 1px solid #cfe0f5;
+  border-radius: 22px;
+  background: #ffffff;
+  overflow: hidden;
+}
+.watershedStageBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e2ecf7;
+  background: #ffffff;
+}
+.watershedStageLabel { font-size: 12px; font-weight: 600; color: #172554; }
+.watershedStepPills { display: inline-flex; align-items: center; gap: 4px; padding: 3px; border-radius: 10px; background: #f1f5f9; }
+.watershedStepPill {
+  min-width: 32px;
+  height: 28px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: background-color 160ms ease, color 160ms ease, transform 150ms var(--ease-out-strong);
+}
+.watershedStepPill:active { transform: scale(0.96); }
+.watershedStepPill[data-active=true] { background: #2563eb; color: #ffffff; }
+.watershedDiorama { aspect-ratio: 5 / 4; }
+
+.watershedStops { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 20px; }
+.watershedStop { min-height: 210px; display: flex; align-items: center; }
+.watershedStopButton {
+  width: 100%;
+  text-align: left;
+  padding: 24px 26px;
+  border: 1px solid #d8e5f5;
+  border-radius: 18px;
+  background: #f8fbff;
+  cursor: pointer;
+  transition: border-color 180ms ease, background-color 180ms ease, transform 160ms var(--ease-out-strong);
+}
+.watershedStopButton:active { transform: scale(0.99); }
+.watershedStop[data-active=true] .watershedStopButton {
+  border-color: #2563eb;
+  background: #ffffff;
+  box-shadow: 0 12px 28px #1725540d;
+}
+.watershedStopTag { display: inline-block; font-size: 12px; font-weight: 600; color: #1d4ed8; }
+.watershedStopButton h3 { margin-top: 8px; color: #172554; font-size: 20px; line-height: 1.28; font-weight: 600; letter-spacing: -.02em; }
+.watershedStopButton p { margin-top: 10px; color: #334155; font-size: 14px; line-height: 1.7; }
+.watershedStopButton small { display: block; margin-top: 12px; color: #475569; font-size: 12px; line-height: 1.5; }
+.watershedFooterCta { padding-top: 4px; }
+
+/* Shared 3D WebGL Diorama Viewport & Projected Overlays */
+.dioramaViewport {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 34%, #ffffff 0%, #eef5ff 56%, #ddeafb 100%);
+  user-select: none;
+  touch-action: pan-y;
+}
+.dioramaDraggable { cursor: grab; }
+.dioramaDraggable[data-dragging=true] { cursor: grabbing; }
+.dioramaCanvas { display: block; width: 100%; height: 100%; }
+.dioramaOverlaySvg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; }
+.dioramaPinsLayer { position: absolute; inset: 0; pointer-events: none; z-index: 3; }
+.dioramaPin {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  background: #fffffff2;
+  color: #172554;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 0;
+  box-shadow: 0 6px 16px #17255414;
+  transition: border-color 180ms ease, background-color 180ms ease, opacity 180ms ease, padding 180ms var(--ease-out-strong);
+  will-change: transform;
+}
+.dioramaPin[data-active=true] { z-index: 2; padding: 3px 10px 3px 4px; border-color: #2563eb; background: #ffffff; }
+.dioramaPinBadge {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  color: #1e293b;
+  font-size: 10px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.dioramaPin[data-active=true] .dioramaPinBadge { background: #2563eb; color: #ffffff; }
+.dioramaPinLabel { font-variant-numeric: tabular-nums; }
+.dioramaPin[data-active=false] .dioramaPinLabel { display: none; }
+.dioramaControlsBar {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  pointer-events: none;
+}
+.dioramaOrbitHint {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  background: #ffffffeb;
+  color: #334155;
+  font-size: 11px;
+  font-weight: 500;
+}
+.dioramaPauseBtn {
+  margin-left: auto;
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 30px;
+  padding: 4px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  background: #ffffffeb;
+  color: #1e293b;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 150ms ease, transform 150ms var(--ease-out-strong);
+}
+.dioramaPauseBtn:active { transform: scale(0.97); }
+.dioramaFallback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 100%;
+  padding: 24px;
+  text-align: center;
+  color: #172554;
+}
+.dioramaFallback p { font-size: 14px; font-weight: 600; }
+.dioramaFallback span { font-size: 12px; color: #475569; max-width: 340px; }
+
 .textLink { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; margin-top: 20px; font-size: 14px; color: #1d4ed8; font-weight: 600; }
 
 .features { max-width: none; background: #f0f6ff; border-block: 1px solid #dce8f6; }
@@ -169,18 +389,32 @@
   padding: clamp(16px, 2.5vw, 24px);
 }
 .atlasTabs {
+  position: relative;
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   padding-bottom: 18px;
   border-bottom: 1px solid #e2ecf7;
 }
+.atlasActivePill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  border-radius: 12px;
+  background: #2563eb;
+  pointer-events: none;
+  transition: transform 220ms var(--ease-out-strong), width 220ms var(--ease-out-strong), height 220ms var(--ease-out-strong);
+  will-change: transform, width;
+}
 .atlasTab {
+  position: relative;
+  z-index: 1;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  min-height: 42px;
-  padding: 8px 14px;
+  gap: 7px;
+  min-height: 40px;
+  padding: 8px 13px;
   border: 1px solid #d5e3f4;
   border-radius: 12px;
   background: #f8fbff;
@@ -188,15 +422,41 @@
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 160ms var(--ease-out-strong), color 160ms var(--ease-out-strong), border-color 160ms var(--ease-out-strong), transform 150ms var(--ease-out-strong);
+  transition: color 180ms var(--ease-out-strong), border-color 180ms var(--ease-out-strong), background-color 180ms var(--ease-out-strong), transform 150ms var(--ease-out-strong);
 }
 .atlasTab:active { transform: scale(0.97); }
 .atlasTab[data-active=true] {
-  background: #2563eb;
-  border-color: #2563eb;
+  background: transparent;
+  border-color: transparent;
   color: #ffffff;
 }
 .atlasTabIcon { display: inline-flex; align-items: center; }
+.atlasDiorama { aspect-ratio: 16 / 10; }
+.atlasFloodBar {
+  padding: 12px 14px;
+  border-top: 1px solid #e1ebf7;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.atlasFloodRow { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; color: #334155; }
+.atlasFloodRow strong { color: #172554; font-weight: 600; font-variant-numeric: tabular-nums; }
+.atlasFloodPresets { display: inline-flex; align-items: center; gap: 4px; }
+.atlasFloodPreset {
+  height: 26px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 7px;
+  background: #f1f5f9;
+  color: #334155;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+.atlasFloodPreset[data-active=true] { background: #172554; color: #ffffff; }
+.atlasFloodSlider { width: 100%; height: 6px; cursor: pointer; accent-color: #2563eb; }
 
 .atlasStage {
   display: grid;
@@ -310,6 +570,8 @@
   .coverage a:hover { border-color: #93c5fd; background: #eff6ff; color: #1d4ed8; }
   .statCard:hover { transform: translateY(-3px); border-color: #93c5fd; }
   .atlasTab:not([data-active=true]):hover { border-color: #93c5fd; background: #eff6ff; color: #1d4ed8; }
+  .watershedStop:not([data-active=true]) .watershedStopButton:hover { border-color: #93c5fd; background: #ffffff; }
+  .dioramaPauseBtn:hover { background: #ffffff; }
 }
 
 @keyframes enter { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
@@ -321,7 +583,10 @@
 }
 
 @media (max-width: 1000px) {
-  .about, .workflow, .atlasStage { grid-template-columns: 1fr; gap: 32px; }
+  .watershedHeader, .watershedGrid, .workflow, .atlasStage { grid-template-columns: 1fr; gap: 28px; }
+  .watershedStickyCol { position: relative; top: auto; }
+  .watershedStop { min-height: auto; }
+  .heroPinsLayer { display: none; }
   .statsSection .sectionHeading { grid-template-columns: 1fr; gap: 14px; }
   .statsGrid { grid-template-columns: repeat(2, 1fr); }
 }
@@ -347,6 +612,9 @@
   .statCard > strong { margin-top: 0; padding-right: 54px; font-size: clamp(32px, 9vw, 44px); }
   .atlasTabs { overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; padding-bottom: 14px; }
   .atlasTab { flex-shrink: 0; }
+  .watershedStopButton { padding: 18px; }
+  .watershedDiorama { aspect-ratio: 4 / 3; }
+  .atlasDiorama { aspect-ratio: 4 / 3; }
   .atlasLegendBox li { flex-wrap: wrap; }
   .atlasLegendBox li span:last-child { margin-left: 22px; width: 100%; text-align: left; }
   .mapFootnote { text-align: left; }
@@ -359,5 +627,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .heroContent, .heroCloud, .riverCurrent, .cloud, .ctaSection .landscape svg { animation: none !important; }
+  .heroContent, .heroCloud, .riverCurrent, .cloud, .ctaSection .landscape svg, .heroElevationPin { animation: none !important; }
+  .heroArt, .atlasActivePill { transition: none !important; }
+  .heroAmbientToggle, .dioramaPauseBtn { display: none; }
 }

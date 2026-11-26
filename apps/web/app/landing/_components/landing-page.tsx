@@ -6,6 +6,7 @@ import { SibajwaBrand } from "@/components/shared/sibajwa-brand";
 import { Button } from "@/components/ui/button";
 import { AnimatedNumber, LandingNavbar, LandingMotion, MotionArtwork, MotionDataBar, MotionProgress, MotionReveal } from "./landing-motion";
 import { InteractiveAtlasPreview, InteractiveFloodRanking } from "./interactive-atlas-preview";
+import { WatershedScrollStage } from "./watershed-scroll-stage";
 import { floodRankingSource } from "./flood-data";
 import styles from "./landing.module.css";
 
@@ -116,29 +117,20 @@ export function LandingPage() {
           </section>
         </div>
 
-        <section id="tentang" className={`${styles.section} ${styles.about}`}>
-          <MotionReveal>
-            <h2>Menghubungkan hulu hujan, kemiringan lereng, dan aliran sungai</h2>
-          </MotionReveal>
-          <MotionReveal delay={0.06}>
-            <p>Genangan di wilayah hilir jarang berdiri sendiri. Intensitas hujan di perbukitan, jarak permukiman terhadap jaringan sungai, elevasi daratan, serta perubahan tutupan lahan saling membentuk tingkat kerawanan suatu kecamatan.</p>
-            <p>SIBAJAWA menyatukan lapisan geospasial tersebut bersama tabel riwayat kejadian dan asisten pencari data agar konteks wilayah Jawa Barat dapat diperiksa dalam satu tempat.</p>
-            <Link href="/analisis" className={styles.textLink}>Buka halaman Analisis Wilayah <IconArrowUpRight size={18} aria-hidden="true" /></Link>
-          </MotionReveal>
-        </section>
+        <WatershedScrollStage />
 
         <section id="fitur" className={`${styles.section} ${styles.features}`}>
           <div className={styles.featuresInner}>
             <MotionReveal className={styles.sectionHeading}>
-              <h2>Coba bagaimana setiap layer membaca bentang alam Jawa Barat</h2>
-              <p>Ganti lapisan di bawah ini untuk melihat bagaimana curah hujan, jaringan sungai, elevasi, kelas kerawanan AHP, dan jalur evakuasi saling melengkapi di SIBAJAWA.</p>
+              <h2>Coba bagaimana setiap layer membaca bentang alam 3D Jawa Barat</h2>
+              <p>Ganti lapisan atau putar maket 3D Cekungan Bandung di bawah ini untuk melihat curah hujan, sungai, elevasi DEM, simulasi banjir, dan jalur evakuasi saling melengkapi.</p>
             </MotionReveal>
             <MotionReveal delay={0.06}>
               <InteractiveAtlasPreview />
             </MotionReveal>
             <p className={styles.mapFootnote}>
               <IconShieldCheck size={15} aria-hidden="true" />
-              Pratinjau di atas merupakan ilustrasi konsep antarmuka berbasis parameter SIBAJAWA. Peta 3D berkontur dengan bangunan 3D, simulasi edukatif DEM dan lereng, batas 627 kecamatan, serta pencarian evakuasi tersedia langsung pada halaman Map Interaktif.
+              Maket 3D di atas dibangun dari potongan raster DEM 30 m, HAND, curah hujan, dan klaster bangunan Cekungan Bandung. Eksplorasi penuh 627 kecamatan, bangunan 3D detail, dan 14.338 titik evakuasi tersedia di halaman Map Interaktif.
             </p>
           </div>
         </section>

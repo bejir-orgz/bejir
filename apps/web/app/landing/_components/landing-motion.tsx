@@ -60,23 +60,54 @@ export function MotionArtwork({ children, className, controlClassName }: { child
   const [userPaused, setUserPaused] = useState(false);
   const running = inView && pageVisible && !reduced && !userPaused;
 
+  useEffect(() => {
+    const el = ref.current;
+    const section = el?.closest("section");
+    if (!el || !section) return;
+
+    const resetTilt = () => {
+      el.style.transform = "perspective(1200px) rotateX(0deg) rotateY(0deg)";
+    };
+
+    if (!running || !window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+      resetTilt();
+      return;
+    }
+
+    const handleMove = (event: MouseEvent) => {
+      const rect = section.getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) return;
+      const nx = ((event.clientX - rect.left) / rect.width - 0.5) * 2;
+      const ny = ((event.clientY - rect.top) / rect.height - 0.5) * 2;
+      const rotX = (-ny * 2.2).toFixed(2);
+      const rotY = (nx * 3.0).toFixed(2);
+      el.style.transform = `perspective(1200px) rotateX(${rotX}deg) rotateY(${rotY}deg)`;
+    };
+
+    section.addEventListener("mousemove", handleMove, { passive: true });
+    section.addEventListener("mouseleave", resetTilt);
+    return () => {
+      section.removeEventListener("mousemove", handleMove);
+      section.removeEventListener("mouseleave", resetTilt);
+      resetTilt();
+    };
+  }, [running]);
+
   return (
     <>
       <m.div ref={ref} className={className} data-ambient={running ? "running" : "paused"} data-hero-art aria-hidden="true">
         {children}
       </m.div>
-      {!reduced && (
-        <button
-          type="button"
-          className={controlClassName}
-          aria-pressed={userPaused}
-          aria-label={userPaused ? "Putar animasi lanskap" : "Jeda animasi lanskap"}
-          onClick={() => setUserPaused((prev) => !prev)}
-        >
-          {userPaused ? <IconPlayerPlay size={14} aria-hidden="true" /> : <IconPlayerPause size={14} aria-hidden="true" />}
-          <span>{userPaused ? "Putar arus" : "Jeda arus"}</span>
-        </button>
-      )}
+      <button
+        type="button"
+        className={controlClassName}
+        aria-pressed={userPaused}
+        aria-label={userPaused ? "Putar animasi lanskap" : "Jeda animasi lanskap"}
+        onClick={() => setUserPaused((prev) => !prev)}
+      >
+        {userPaused ? <IconPlayerPlay size={14} aria-hidden="true" /> : <IconPlayerPause size={14} aria-hidden="true" />}
+        <span>{userPaused ? "Putar arus" : "Jeda arus"}</span>
+      </button>
     </>
   );
 }
@@ -100,8 +131,7 @@ export function MotionDataBar() {
 
 export function MotionProgress() {
   const { scrollYProgress } = useScroll();
-  const reduced = useReducedMotion();
-  return reduced ? null : <m.div className="pointer-events-none fixed inset-x-0 top-0 z-[60] h-[3px] origin-left bg-blue-600" style={{ scaleX: scrollYProgress }} aria-hidden="true" />;
+  return <m.div className="pointer-events-none fixed inset-x-0 top-0 z-[60] h-[3px] origin-left bg-blue-600 motion-reduce:hidden" style={{ scaleX: scrollYProgress }} aria-hidden="true" />;
 }
 
 export function AnimatedNumber({ value, delay = 0 }: { value: number; delay?: number }) {
