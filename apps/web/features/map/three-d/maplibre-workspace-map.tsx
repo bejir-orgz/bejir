@@ -1652,7 +1652,7 @@ export function MapLibreWorkspaceMap({
               type="button"
               variant="ghost"
               size="icon-sm"
-              className="h-6 w-6 p-0"
+              className="h-6 w-6 p-0 dark:hover:bg-accent"
               aria-label="Perbesar peta"
               disabled={zoom >= 18}
               onClick={() => mapRef.current?.zoomIn()}
@@ -1663,7 +1663,7 @@ export function MapLibreWorkspaceMap({
               type="button"
               variant="ghost"
               size="icon-sm"
-              className="h-6 w-6 p-0"
+              className="h-6 w-6 p-0 dark:hover:bg-accent"
               aria-label="Perkecil peta"
               disabled={zoom <= 6}
               onClick={() => mapRef.current?.zoomOut()}
@@ -1706,7 +1706,7 @@ export function MapLibreWorkspaceMap({
               aria-pressed={is3d === mode3d}
               disabled={!mapReady}
               onClick={() => changePerspective(mode3d)}
-              className="h-6 w-6 p-0 text-neutral-600 aria-pressed:bg-[var(--gis-blue)] aria-pressed:text-white aria-pressed:hover:bg-accent dark:aria-pressed:hover:bg-accent/50 aria-pressed:hover:text-accent-foreground"
+              className="h-6 w-6 p-0 text-neutral-600 dark:hover:bg-accent aria-pressed:bg-[var(--gis-blue)] aria-pressed:text-white aria-pressed:hover:bg-accent dark:aria-pressed:hover:bg-accent aria-pressed:hover:text-accent-foreground"
             >
               {mode3d ? "3D" : "2D"}
             </Button>

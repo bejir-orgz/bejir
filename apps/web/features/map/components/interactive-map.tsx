@@ -129,6 +129,7 @@ export function InteractiveMap({
             <Button
               variant="ghost"
               size="icon-sm"
+              className="dark:hover:bg-accent"
               aria-label="Perbesar peta"
               disabled={zoom >= westJavaBasemap.maxZoom}
               onClick={() => instance.current?.zoomIn()}
@@ -138,6 +139,7 @@ export function InteractiveMap({
             <Button
               variant="ghost"
               size="icon-sm"
+              className="dark:hover:bg-accent"
               aria-label="Perkecil peta"
               disabled={zoom <= westJavaBasemap.minZoom}
               onClick={() => instance.current?.zoomOut()}
