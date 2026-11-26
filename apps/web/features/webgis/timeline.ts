@@ -32,3 +32,12 @@ export function getOverviewDateRange(from: string, to: string, now = new Date())
   const year = getCurrentTimelineDate(now).slice(0, 4);
   return { from: `${year}-01-01`, to: `${year}-12-31` };
 }
+
+const overviewPeriodFormatter = new Intl.DateTimeFormat("id-ID", { dateStyle: "long" });
+
+/** Formats an ISO date range into the Indonesian label used in Overview summary text. */
+export function formatOverviewPeriodLabel(period: { from: string; to: string }) {
+  if (!period.from || !period.to) return "";
+  const formatIso = (iso: string) => overviewPeriodFormatter.format(new Date(`${iso}T00:00:00`));
+  return `${formatIso(period.from)} s.d. ${formatIso(period.to)}`;
+}

@@ -73,13 +73,13 @@ export function BejirAssistant({ defaultLayerIds }: { defaultLayerIds: readonly 
 
   return (
     <div className="gis-ai-assistant flex flex-1 flex-col min-w-0 min-h-0">
-      <div className="gis-ai-conversation pr-1 flex-1 text-[12px] leading-[16px] wrap-anywhere [&:focus-visible]:[outline:2px_solid_var(--gis-blue)] [&:focus-visible]:[outline-offset:-2px] [&:focus-visible]:rounded-lg" tabIndex={0} role="region" aria-label="Percakapan Aji">
+      <div className="gis-ai-conversation pr-1 flex-1 text-[12px] leading-[16px] wrap-anywhere [&:focus-visible]:[outline:2px_solid_var(--gis-blue)] [&:focus-visible]:[outline-offset:-2px] [&:focus-visible]:rounded-lg" tabIndex={0} role="region" aria-label="Percakapan Siba">
         {exchanges.length === 0 ? (
           <div className="mt-3 flex flex-col gap-3 rounded-2xl border border-neutral-200 bg-white p-4 text-neutral-800">
             <div>
-              <h3 className="text-sm font-semibold text-neutral-900">Tanya Aji, Asisten Geospasial SIBAJAWA</h3>
+              <h3 className="text-sm font-semibold text-neutral-900">Tanya Siba, Asisten Geospasial SIBAJAWA</h3>
               <p className="mt-1 text-xs leading-5 text-neutral-600">
-                Aji menjawab pertanyaan berdasarkan sumber data SIBAJAWA yang kamu pilih (histori banjir, curah hujan, jaringan sungai, kerawanan, dan evakuasi).
+                Siba menjawab pertanyaan berdasarkan sumber data SIBAJAWA yang kamu pilih (histori banjir, curah hujan, jaringan sungai, kerawanan, dan evakuasi).
               </p>
             </div>
 
@@ -126,8 +126,8 @@ export function BejirAssistant({ defaultLayerIds }: { defaultLayerIds: readonly 
       </div>
       <div className="gis-ai-footer after:content-[''] after:absolute after:inset-x-0 after:-bottom-4 after:h-4 after:bg-white sticky bottom-0 z-10 mt-auto flex shrink-0 flex-col gap-2 bg-white pt-2">
         <form ref={composer} className="gis-ai-composer shrink-0 p-2 [border:1px_solid_var(--gis-border)] rounded-2xl bg-[white] [&:focus-within]:border-[var(--gis-blue)] [&_textarea]:[field-sizing:content] [&_textarea]:min-h-6 [&_textarea]:h-auto [&_textarea]:max-h-24 [&_textarea]:p-0 [&_textarea]:border-0 [&_textarea]:rounded-none [&_textarea]:resize-none [&_textarea]:text-[12px] [&_textarea]:leading-[16px] [&_textarea]:bg-[white] [&_textarea:focus-visible]:[outline:none] [&_textarea::placeholder]:text-[#737373]" onSubmit={(event) => { event.preventDefault(); void submitQuestion(); }}>
-          <Label className="sr-only" htmlFor="gis-question">Tanya Aji</Label>
-          <Textarea id="gis-question" name="gis-question" className="focus-visible:ring-0" value={question} onChange={(event) => setQuestion(event.target.value)} placeholder={sourceLayerIds.length ? "Tanya Aji seputar banjir Jawa Barat..." : "Pilih sumber data di bawah lalu tanya Aji..."} rows={1} maxLength={2000} onKeyDown={(event) => {
+          <Label className="sr-only" htmlFor="gis-question">Tanya Siba</Label>
+          <Textarea id="gis-question" name="gis-question" className="focus-visible:ring-0" value={question} onChange={(event) => setQuestion(event.target.value)} placeholder={sourceLayerIds.length ? "Tanya Siba seputar banjir Jawa Barat..." : "Pilih sumber data di bawah lalu tanya Siba..."} rows={1} maxLength={2000} onKeyDown={(event) => {
             if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); void submitQuestion(); }
           }} />
           <div className="gis-ai-composer-actions flex items-center justify-between gap-2 mt-2 [&_button]:h-10 [&_button]:p-2 [&_button]:rounded-[10px] [&_button]:bg-[#e5e5e5] [&_button]:text-[#525252] [&_button:hover]:bg-[#d4d4d4] [&_.gis-ai-layer-trigger:is([data-has-sources=true],[data-state=open])]:bg-[#dbeafe] [&_.gis-ai-layer-trigger:is([data-has-sources=true],[data-state=open])]:text-[var(--gis-blue)] [&_.gis-ai-send]:w-10 [&_.gis-ai-send:not(:disabled)]:bg-[var(--gis-blue)] [&_.gis-ai-send:not(:disabled)]:text-[white]">

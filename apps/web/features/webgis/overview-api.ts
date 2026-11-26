@@ -3,13 +3,8 @@ import { subYears, format, parseISO } from "date-fns";
 import { getRiverSummary } from "../rivers/api";
 import { getFloodStatistics } from "../floods/api";
 import type { WorkspaceData } from "./types";
-import { getCurrentTimelineDate, getOverviewDateRange } from "./timeline";
+import { getCurrentTimelineDate, getOverviewDateRange, formatOverviewPeriodLabel } from "./timeline";
 import { classLabels, dominantClass, selectedHazards, weightedMean, nullableSum } from "../geography/spatial-data";
-
-/** Summary text is read by people, so the stored ISO period is spelled out. */
-const periodFormatter = new Intl.DateTimeFormat("id-ID", { dateStyle: "long" });
-// parseISO yields local midnight, so formatting without an explicit zone keeps the same day.
-const readableDate = (iso: string) => periodFormatter.format(parseISO(iso));
 
 export function emptyOverview(message = "Memuat data backend…"): WorkspaceData["overview"] {
   return {
@@ -78,7 +73,7 @@ export async function getWorkspaceOverview(regionIds: string[], from: string, to
       : Promise.resolve([]);
   const currentYear = getCurrentTimelineDate().slice(0, 4);
   const period = from || !supported ? getOverviewDateRange(from, to) : await latestRecordedPeriod(readStatistics, currentYear);
-  const scope = `${readableDate(period.from)} s.d. ${readableDate(period.to)}`;
+  const scope = formatOverviewPeriodLabel(period);
   overview.period = period;
   const olderPeriod = !from && period.from.slice(0, 4) !== currentYear;
   const previousPeriod = {

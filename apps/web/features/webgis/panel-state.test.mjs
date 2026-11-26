@@ -15,3 +15,9 @@ test("legend sidebar shares left-panel toggling and narrow-screen exclusivity", 
   assert.deepEqual(panelReducer({ left: null, overview: true }, { type: "toggle-left", panel: "legends", narrow: true }), { left: "legends", overview: false });
   assert.deepEqual(panelReducer(open, { type: "close-all" }), { left: null, overview: false });
 });
+
+test("open-left opens a left panel without toggling it closed when already open", () => {
+  assert.deepEqual(panelReducer({ left: null, overview: true }, { type: "open-left", panel: "timeline", narrow: false }), { left: "timeline", overview: true });
+  assert.deepEqual(panelReducer({ left: "timeline", overview: true }, { type: "open-left", panel: "timeline", narrow: false }), { left: "timeline", overview: true });
+  assert.deepEqual(panelReducer({ left: null, overview: true }, { type: "open-left", panel: "timeline", narrow: true }), { left: "timeline", overview: false });
+});

@@ -4,6 +4,10 @@
 @layer base {
   * { @apply border-border; }
   body { font-variation-settings: "GRAD" 0, "ROND" 0, "wdth" 100; }
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
 }
 
 :root {

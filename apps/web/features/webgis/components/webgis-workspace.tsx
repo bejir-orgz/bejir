@@ -330,11 +330,11 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
         />
         <TimelineSidebar year={data.year} hidden={panels.left !== "timeline"} filters={filters} onChange={updateFilters} />
         <LegendSidebar layers={data.layers} hidden={panels.left !== "legends"} />
-        <div className="gis-left-toolbar absolute top-4 left-0 flex flex-col gap-4 pointer-events-none [&_.gis-panel-toggle]:relative [&_.gis-panel-toggle]:z-1 [&_.gis-panel-toggle]:rounded-[0_16px_16px_0] [&_.gis-panel-toggle]:pointer-events-auto [&_.gis-panel-toggle]:[opacity:1] [&_.gis-panel-toggle]:[transform:translateX(0)] [&_.gis-panel-toggle]:[transition:transform_var(--gis-slide-duration)_var(--gis-slide-easing),opacity_120ms_ease] [&_.gis-panel-toggle[aria-expanded=true]]:z-3 [&_.gis-panel-toggle[aria-expanded=true]]:[transform:translateX(var(--sidebar-width))] [&_.gis-panel-toggle[aria-expanded=true]]:bg-[white] max-[999.01px]:gap-2 motion-reduce:[&_.gis-panel-toggle]:[transition:none]" role="group" aria-label="Alat peta">{leftTools.map(({ id, label, icon, filledIcon }) => {
+        <div className="gis-left-toolbar absolute top-4 left-0 flex flex-col gap-4 pointer-events-none [&_.gis-panel-toggle]:relative [&_.gis-panel-toggle]:z-1 [&_.gis-panel-toggle]:rounded-[0_16px_16px_0] [&_.gis-panel-toggle]:pointer-events-auto [&_.gis-panel-toggle]:[opacity:1] [&_.gis-panel-toggle]:[transform:translateX(0)] [&_.gis-panel-toggle]:[transition:transform_var(--gis-slide-duration)_var(--gis-slide-easing),opacity_120ms_ease] [&_.gis-panel-toggle[aria-expanded=true]]:z-3 [&_.gis-panel-toggle[aria-expanded=true]]:[transform:translateX(calc(var(--sidebar-width)_-_1px))] [&_.gis-panel-toggle[aria-expanded=true]]:bg-[white] max-[999.01px]:gap-2 motion-reduce:[&_.gis-panel-toggle]:[transition:none]" role="group" aria-label="Alat peta">{leftTools.map(({ id, label, icon, filledIcon }) => {
           const expanded = panels.left === id;
           const Icon = expanded ? filledIcon : icon;
           return (
-          <Button key={id} variant="ghost" size="icon" className="gis-panel-toggle z-3 w-12 h-12 p-4 bg-[white] text-[var(--gis-blue)] max-[999.01px]:w-12 max-[999.01px]:h-12 max-[999.01px]:p-3 hover:bg-white dark:hover:bg-white hover:text-[var(--gis-blue)]" title={label} inert={leftOpen && panels.left !== id} aria-label={`${panels.left === id ? "Tutup" : "Buka"} panel ${label}`} aria-expanded={panels.left === id} aria-controls={`gis-${id}-panel`} onClick={(event) => toggleLeft(id, event.currentTarget)}><Icon className={`size-6 ${expanded && id === "regions" ? "[&>path:not(:first-of-type)]:stroke-white" : ""}`} {...(expanded && id === "regions" ? { fill: "currentColor" } : {})} stroke={2} aria-hidden="true" /></Button>
+          <Button key={id} variant="ghost" size="icon" className="gis-panel-toggle z-3 w-12 h-12 p-4 bg-[white] text-[var(--gis-blue)] max-[999.01px]:w-12 max-[999.01px]:h-12 max-[999.01px]:p-3 hover:bg-white dark:hover:bg-white hover:text-[var(--gis-blue)] active:scale-100" title={label} inert={leftOpen && panels.left !== id} aria-label={`${panels.left === id ? "Tutup" : "Buka"} panel ${label}`} aria-expanded={panels.left === id} aria-controls={`gis-${id}-panel`} onClick={(event) => toggleLeft(id, event.currentTarget)}><Icon className={`size-6 ${expanded && id === "regions" ? "[&>path:not(:first-of-type)]:stroke-white" : ""}`} {...(expanded && id === "regions" ? { fill: "currentColor" } : {})} stroke={2} aria-hidden="true" /></Button>
         );
         })}</div>
         <div className="gis-overview-trigger absolute z-3 top-4 right-0 w-[var(--overview-width)] h-12 pointer-events-none [transform:translateX(0)] [transition:transform_var(--gis-slide-duration)_var(--gis-slide-easing)] max-[999.01px]:h-14 motion-reduce:[transition:none]">
@@ -344,7 +344,15 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
           <div ref={overviewPanel} className="gis-overview-scroll h-full overflow-y-auto pr-[calc(16px_-_var(--sb-size))] [scrollbar-gutter:stable]">
           <Tabs defaultValue="overview" className="gis-tabs gap-4" onValueChange={(value) => { if (value === "ai") setAiOpened(true); overviewPanel.current?.scrollTo({ top: 0 }); }}>
             <OverviewButton className="gis-panel-tabs relative before:content-[''] before:absolute before:inset-x-0 before:top-[calc(-16px_-_1px)] before:h-4 before:bg-white before:pointer-events-none after:content-[''] after:absolute after:inset-x-0 after:top-[calc(100%_+_1px)] after:h-4 after:bg-white after:pointer-events-none" />
-            <TabsContent value="overview"><OverviewPanel overview={overview} /></TabsContent>
+            <TabsContent value="overview">
+              <OverviewPanel
+                overview={overview}
+                onSelectPeriod={(period) => {
+                  updateFilters({ period: "custom", date: period.from, dateTo: period.to });
+                  dispatch({ type: "open-left", panel: "timeline", narrow });
+                }}
+              />
+            </TabsContent>
             <TabsContent value="ai" className="gis-ai-tab [&[data-state=active]]:flex [&[data-state=active]]:min-h-0 [&[data-state=inactive]]:hidden" forceMount>{aiOpened && <BejirAssistant defaultLayerIds={filters.layerIds} />}</TabsContent>
           </Tabs>
           </div>

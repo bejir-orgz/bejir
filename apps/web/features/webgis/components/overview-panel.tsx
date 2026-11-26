@@ -5,10 +5,43 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { AnimatedMetricValue } from "@/components/shared/animated-metric-value";
 import { StatusPill } from "@/components/shared/status-pill";
+import { formatOverviewPeriodLabel } from "../timeline";
 import type { WorkspaceData } from "../types";
 import { FacilityRows } from "./facility-rows";
 
-export function OverviewPanel({ overview }: { overview: WorkspaceData["overview"] }) {
+function renderSummaryWithPeriodLink(
+  summary: string,
+  period: WorkspaceData["overview"]["period"],
+  onSelectPeriod?: (period: WorkspaceData["overview"]["period"]) => void,
+) {
+  const periodLabel = formatOverviewPeriodLabel(period);
+  const index = periodLabel ? summary.indexOf(periodLabel) : -1;
+  if (index === -1 || !onSelectPeriod) return summary;
+
+  const before = summary.slice(0, index);
+  const after = summary.slice(index + periodLabel.length);
+  return (
+    <>
+      {before}
+      <button
+        type="button"
+        onClick={() => onSelectPeriod(period)}
+        className="inline cursor-pointer text-left font-medium text-blue-500 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+      >
+        {periodLabel}
+      </button>
+      {after}
+    </>
+  );
+}
+
+export function OverviewPanel({
+  overview,
+  onSelectPeriod,
+}: {
+  overview: WorkspaceData["overview"];
+  onSelectPeriod?: (period: WorkspaceData["overview"]["period"]) => void;
+}) {
   const activeScaleIndex = classLabels.findIndex((label) => label === overview.susceptibility.label);
 
   return (
@@ -27,7 +60,7 @@ export function OverviewPanel({ overview }: { overview: WorkspaceData["overview"
       </div>
       <Card className="gis-card border-0 [outline:1px_solid_var(--gis-border)] [outline-offset:-1px] p-4 rounded-2xl [&_h2]:text-[16px] [&_h2]:leading-[24px] [&_h2]:font-medium gis-summary-card min-h-51 [&_p]:mt-2 max-[999.01px]:min-h-0">
         <h2>Ringkasan Kondisi</h2>
-        <p className="text-neutral-700 leading-relaxed">{overview.summary}</p>
+        <p className="text-neutral-700 leading-relaxed">{renderSummaryWithPeriodLink(overview.summary, overview.period, onSelectPeriod)}</p>
       </Card>
       <Card className="gis-card border-0 [outline:1px_solid_var(--gis-border)] [outline-offset:-1px] p-4 rounded-2xl [&_h2]:text-[16px] [&_h2]:leading-[24px] [&_h2]:font-medium gis-risk-card min-h-63 [&_ul]:pl-[21px] [&_ul]:mt-3 [&_ul]:list-disc [&_ul]:flex [&_ul]:flex-col [&_ul]:gap-2 max-[999.01px]:min-h-0">
         <div className="gis-card-heading flex items-center justify-between gap-2">

@@ -67,7 +67,7 @@ export function RegionSidebar({ filters, onChange, hidden, onWidthChange }: {
     if (!element) return;
     // Measure offscreen too so the other panels match before Daerah is opened.
     const observer = new ResizeObserver(() => {
-      const width = Math.ceil(element.getBoundingClientRect().width);
+      const width = Math.floor(element.getBoundingClientRect().width);
       if (width > 0) onWidthChange(width);
     });
     observer.observe(element);
