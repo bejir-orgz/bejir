@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { formatOverviewPeriodLabel, getCurrentTimelineDate, getCurrentTimelinePeriod, getOverviewDateRange, getTimelineMonths } from "./timeline.ts";
+import { clampPeriodToToday, formatOverviewPeriodLabel, formatTimelinePeriodSummary, getCurrentTimelineDate, getCurrentTimelinePeriod, getOverviewDateRange, getTimelineMonths } from "./timeline.ts";
 
 test("Overview defaults to the Jakarta current year and keeps explicit dates", () => {
   assert.deepEqual(getOverviewDateRange("", "", new Date("2026-12-31T16:59:59Z")), { from: "2026-01-01", to: "2026-12-31" });
@@ -50,4 +50,15 @@ test("today follows Jakarta midnight even when the UTC day differs", () => {
 test("formatOverviewPeriodLabel formats Indonesian range labels", () => {
   assert.equal(formatOverviewPeriodLabel({ from: "2024-01-01", to: "2024-12-31" }), "1 Januari 2024 s.d. 31 Desember 2024");
   assert.equal(formatOverviewPeriodLabel({ from: "", to: "" }), "");
+});
+
+test("formatTimelinePeriodSummary formats single dates and hyphenated ranges", () => {
+  assert.equal(formatTimelinePeriodSummary({ from: "2026-01-01", to: "2026-12-31" }), "1 Januari 2026 - 31 Desember 2026");
+  assert.equal(formatTimelinePeriodSummary({ from: "2026-11-26", to: "2026-11-26" }), "26 November 2026");
+  assert.equal(formatTimelinePeriodSummary({ from: "", to: "" }), "");
+});
+
+test("clampPeriodToToday caps future end dates at today", () => {
+  assert.deepEqual(clampPeriodToToday({ from: "2026-01-01", to: "2026-12-31" }, "2026-11-26"), { from: "2026-01-01", to: "2026-11-26" });
+  assert.deepEqual(clampPeriodToToday({ from: "2024-01-01", to: "2024-12-31" }, "2026-11-26"), { from: "2024-01-01", to: "2024-12-31" });
 });

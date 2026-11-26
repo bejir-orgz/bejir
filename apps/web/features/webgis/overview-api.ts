@@ -3,7 +3,7 @@ import { subYears, format, parseISO } from "date-fns";
 import { getRiverSummary } from "../rivers/api";
 import { getFloodStatistics } from "../floods/api";
 import type { WorkspaceData } from "./types";
-import { getCurrentTimelineDate, getOverviewDateRange, formatOverviewPeriodLabel } from "./timeline";
+import { clampPeriodToToday, getCurrentTimelineDate, getOverviewDateRange, formatOverviewPeriodLabel } from "./timeline";
 import { classLabels, dominantClass, selectedHazards, weightedMean, nullableSum } from "../geography/spatial-data";
 
 export function emptyOverview(message = "Memuat data backend…"): WorkspaceData["overview"] {
@@ -71,10 +71,12 @@ export async function getWorkspaceOverview(regionIds: string[], from: string, to
           }),
         )
       : Promise.resolve([]);
-  const currentYear = getCurrentTimelineDate().slice(0, 4);
+  const today = getCurrentTimelineDate();
+  const currentYear = today.slice(0, 4);
   const period = from || !supported ? getOverviewDateRange(from, to) : await latestRecordedPeriod(readStatistics, currentYear);
-  const scope = formatOverviewPeriodLabel(period);
-  overview.period = period;
+  const displayPeriod = clampPeriodToToday(period, today);
+  const scope = formatOverviewPeriodLabel(displayPeriod);
+  overview.period = displayPeriod;
   const olderPeriod = !from && period.from.slice(0, 4) !== currentYear;
   const previousPeriod = {
     from: format(subYears(parseISO(period.from), 1), "yyyy-MM-dd"),

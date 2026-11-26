@@ -41,3 +41,17 @@ export function formatOverviewPeriodLabel(period: { from: string; to: string }) 
   const formatIso = (iso: string) => overviewPeriodFormatter.format(new Date(`${iso}T00:00:00`));
   return `${formatIso(period.from)} s.d. ${formatIso(period.to)}`;
 }
+
+/** Clamps a period's end date to today (West Java time) so future dates are not shown. */
+export function clampPeriodToToday(period: { from: string; to: string }, today = getCurrentTimelineDate()) {
+  if (!period.from || !period.to || period.to <= today) return period;
+  return { from: period.from, to: today < period.from ? period.from : today };
+}
+
+/** Formats a single date or date range for the compact time indicator bar. */
+export function formatTimelinePeriodSummary(period: { from: string; to: string }) {
+  if (!period.from) return "";
+  const formatIso = (iso: string) => overviewPeriodFormatter.format(new Date(`${iso}T00:00:00`));
+  if (!period.to || period.from === period.to) return formatIso(period.from);
+  return `${formatIso(period.from)} - ${formatIso(period.to)}`;
+}

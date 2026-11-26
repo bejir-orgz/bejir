@@ -33,6 +33,7 @@ import { TimelineSidebar } from "./timeline-sidebar";
 import { MapQuickBar } from "./map-quick-bar";
 import { HydroSimulationPanel } from "./hydro-simulation-panel";
 import { initialPanelState, panelReducer, type LeftPanel } from "../panel-state";
+import { clampPeriodToToday, formatTimelinePeriodSummary } from "../timeline";
 
 const BejirAssistant = dynamic(() => import("@/features/assistant/components/assistant").then((module) => module.BejirAssistant));
 const MapLibreWorkspaceMap = dynamic(
@@ -188,6 +189,11 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
   }
 
   const activeDataStatus = simStatus ?? regionStatus ?? routeStatus ?? riverStatus ?? thematicStatus ?? evacuation.dataStatus;
+  const rawTimePeriod = filters.date
+    ? { from: filters.date, to: filters.dateTo || filters.date }
+    : overview.period;
+  const activeTimePeriod = clampPeriodToToday(rawTimePeriod);
+  const activeTimeLabel = formatTimelinePeriodSummary(activeTimePeriod) || `Tahun ${data.year}`;
 
   return (
     <div className="webgis-screen flex flex-col [&_>_.gis-header]:shrink-0 [--gis-blue:var(--primary)] [--gis-border:var(--border)] [--gis-muted:#737373] [--gis-slide-duration:280ms] [--gis-slide-easing:cubic-bezier(.22,1,.36,1)] text-[#000] bg-[#fff] text-[14px] leading-[20px] h-dvh min-h-120 overflow-hidden [&_button:focus-visible]:[outline:2px_solid_var(--gis-blue)] [&_button:focus-visible]:[outline-offset:-2px]">
@@ -344,14 +350,37 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
           <div ref={overviewPanel} className="gis-overview-scroll h-full overflow-y-auto pr-[calc(16px_-_var(--sb-size))] [scrollbar-gutter:stable]">
           <Tabs defaultValue="overview" className="gis-tabs gap-4" onValueChange={(value) => { if (value === "ai") setAiOpened(true); overviewPanel.current?.scrollTo({ top: 0 }); }}>
             <OverviewButton className="gis-panel-tabs relative before:content-[''] before:absolute before:inset-x-0 before:top-[calc(-16px_-_1px)] before:h-4 before:bg-white before:pointer-events-none after:content-[''] after:absolute after:inset-x-0 after:top-[calc(100%_+_1px)] after:h-4 after:bg-white after:pointer-events-none" />
-            <TabsContent value="overview">
-              <OverviewPanel
-                overview={overview}
-                onSelectPeriod={(period) => {
-                  updateFilters({ period: "custom", date: period.from, dateTo: period.to });
-                  dispatch({ type: "open-left", panel: "timeline", narrow });
-                }}
-              />
+            <TabsContent value="overview" className="flex flex-col gap-4">
+              <div className="flex shrink-0 items-center gap-2 rounded-2xl border border-blue-500 bg-transparent px-3 py-1.5 text-xs text-blue-500" aria-label="Keterangan waktu aktif">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  className="size-7 shrink-0 rounded-md text-blue-500 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-50"
+                  aria-label="Atur tanggal di Timeline"
+                  title="Atur tanggal di Timeline"
+                  onClick={() => dispatch({ type: "open-left", panel: "timeline", narrow })}
+                >
+                  <IconCalendarWeek className="size-5" aria-hidden="true" />
+                </Button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (activeTimePeriod.from) {
+                      updateFilters({
+                        period: "custom",
+                        date: activeTimePeriod.from,
+                        dateTo: activeTimePeriod.to || activeTimePeriod.from,
+                      });
+                    }
+                    dispatch({ type: "open-left", panel: "timeline", narrow });
+                  }}
+                  className="min-w-0 flex-1 cursor-pointer text-left font-medium text-blue-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+                >
+                  {activeTimeLabel}
+                </button>
+              </div>
+              <OverviewPanel overview={overview} />
             </TabsContent>
             <TabsContent value="ai" className="gis-ai-tab [&[data-state=active]]:flex [&[data-state=active]]:min-h-0 [&[data-state=inactive]]:hidden" forceMount>{aiOpened && <BejirAssistant defaultLayerIds={filters.layerIds} />}</TabsContent>
           </Tabs>

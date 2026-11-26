@@ -42,8 +42,9 @@ test("Overview fatalities sum distinct regencies, compare the same period and pr
 
 test("initial Overview compares current and previous years without changing region scope", async () => {
   const original = globalThis.fetch;
-  const { getOverviewDateRange } = await import("./timeline.ts");
+  const { clampPeriodToToday, getOverviewDateRange } = await import("./timeline.ts");
   const period = getOverviewDateRange("", "");
+  const displayPeriod = clampPeriodToToday(period);
   let statistics = 0, probes = 0;
   globalThis.fetch = async (input) => {
     const url = new URL(input);
@@ -65,7 +66,7 @@ test("initial Overview compares current and previous years without changing regi
     assert.equal(overview.metrics[1].value, "0 unit");
     assert.ok(!overview.summary.includes("tahun terakhir yang tercatat"));
     const readable = (iso) => new Intl.DateTimeFormat("id-ID", { dateStyle: "long" }).format(new Date(`${iso}T00:00:00`));
-    assert.ok(overview.summary.includes(`${readable(period.from)} s.d. ${readable(period.to)}`));
+    assert.ok(overview.summary.includes(`${readable(displayPeriod.from)} s.d. ${readable(displayPeriod.to)}`));
     assert.ok(!overview.summary.includes(period.from));
     assert.ok(!overview.summary.includes("seluruh periode"));
   } finally { globalThis.fetch = original; }
