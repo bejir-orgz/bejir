@@ -32,7 +32,9 @@ To route only to one connected site, provide `evacuation_site_id`:
 
 `limit` is bounded from 1 to 10 (default 3). `travel_mode` currently supports `driving` only and uses each staging edge's `speed_kmh` through its precomputed minute `cost`. Estimated times do not account for live traffic, closures, flood depth, or real-time road conditions.
 
-The origin snapping tolerance is configured with `ROUTING_ORIGIN_SNAP_TOLERANCE_M` (default 500 m). Candidate destinations are prefiltered to at most `ROUTING_MAX_CANDIDATE_SITES` (default 500) using straight-line distance from origin to snapped site point; final ranking is always by network travel time. Increase the candidate limit where broader network searches are required.
+The origin snapping tolerance is configured with `ROUTING_ORIGIN_SNAP_TOLERANCE_M` (default 500 m). Candidate destinations are prefiltered to at most `ROUTING_MAX_CANDIDATE_SITES` (default 25) using straight-line distance from origin to snapped site point; final ranking is always by network travel time. `reachable_destinations` is therefore bounded by the candidate set. Increase the candidate limit where broader network searches are required.
+
+Routing only copies and splits the road edges inside a box around the origin and candidate sites (5 km margin, retried once with a 20 km margin when no destination is reachable). The box is applied with a spatial `&&` predicate, so the staging GIST index is used and the per-request window/split work stays proportional to the local network instead of the full province.
 
 ### Road network preparation
 
