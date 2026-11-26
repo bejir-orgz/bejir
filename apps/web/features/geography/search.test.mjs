@@ -2,7 +2,7 @@ import "../../lib/api/test-setup.mjs";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { resolve } from "node:path";
-const { getRegionSearchTree } = await import("./search.ts");
+const { findRegionMatches, getRegionSearchTree } = await import("./search.ts");
 const { filterRegionTree, toggleRegionSelection, isRegionSelected } = await import("../webgis/region-tree.ts");
 
 test("search finds unopened districts and villages with parent context using paged metadata only", async () => {
@@ -27,6 +27,9 @@ test("search finds unopened districts and villages with parent context using pag
     const village = filterRegionTree(tree, "kedung waringin");
     assert.equal(village[0].name, "Kota Bogor");
     assert.equal(village[0].children[0].children[0].id, "14/545/1001");
+    assert.deepEqual(findRegionMatches(tree, "  Kelurahan KEDUNG  WARINGIN "), [
+      { id: "14/545/1001", name: "Kedung Waringin", parents: ["Kota Bogor", "Tanah Sareal"] },
+    ]);
     assert.equal(isRegionSelected(toggleRegionSelection([], "14"), "14/545/1001"), true);
     assert.equal(filterRegionTree(tree, "Cibinong")[0].name, "Kabupaten Bogor");
     assert.deepEqual(filterRegionTree(tree, "tidak ada"), []);

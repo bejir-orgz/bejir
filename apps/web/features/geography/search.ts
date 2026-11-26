@@ -2,6 +2,36 @@ import { fetchBackend } from "../../lib/api/backend";
 import { byRegionName, getCatalog, regencyLabel } from "./catalog";
 import type { RegionNode } from "../webgis/types";
 
+export interface RegionSearchMatch {
+  id: string;
+  name: string;
+  parents: string[];
+}
+
+/** Match each region by name and return its parent labels to distinguish duplicate names. */
+export function findRegionMatches(nodes: RegionNode[], query: string): RegionSearchMatch[] {
+  const normalize = (name: string) => name.trim().replace(/\s+/g, " ").toLocaleLowerCase("id-ID");
+  const term = normalize(query);
+  if (!term) return [];
+  const villageQuery = term.replace(/^(desa|kelurahan) /, "");
+  const exact: RegionSearchMatch[] = [];
+  const partial: RegionSearchMatch[] = [];
+
+  function visit(regions: RegionNode[], parents: string[]) {
+    for (const { id, name, children } of regions) {
+      const normalized = normalize(name);
+      const matchName = parents.length === 2 ? normalized.replace(/^(desa|kelurahan) /, "") : normalized;
+      const matchTerm = parents.length === 2 ? villageQuery : term;
+      if (matchName === matchTerm) exact.push({ id, name, parents });
+      else if (matchName.includes(matchTerm)) partial.push({ id, name, parents });
+      if (children?.length) visit(children, [...parents, name]);
+    }
+  }
+
+  visit(nodes, []);
+  return [...exact, ...partial].slice(0, 30);
+}
+
 /** Search names at every level without loading map geometries or expanding 627 branches. */
 export async function getRegionSearchTree(): Promise<RegionNode[]> {
   const catalog = await getCatalog();

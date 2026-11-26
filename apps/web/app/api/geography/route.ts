@@ -1,7 +1,7 @@
 import { fetchBackend } from "@/lib/api/backend";
 import { byRegionName, getCatalog, regencyLabel } from "@/features/geography/catalog";
 import { unstable_cache } from "next/cache";
-import { getRegionSearchTree } from "@/features/geography/search";
+import { findRegionMatches, getRegionSearchTree } from "@/features/geography/search";
 import { filterRegionTree } from "@/features/webgis/region-tree";
 
 const searchTree = unstable_cache(getRegionSearchTree, ["region-search-v1", process.env.BEJIR_API_URL || "documented"], { revalidate: 3600 });
@@ -22,7 +22,10 @@ export async function GET(request: Request) {
 
   const [regencyId, districtId] = parent?.split("/") ?? [];
   try {
-    if (search) return Response.json(filterRegionTree(await searchTree(), search));
+    if (search) {
+      const tree = await searchTree();
+      return Response.json(query.get("view") === "matches" ? findRegionMatches(tree, search) : filterRegionTree(tree, search));
+    }
     let rows: GeographyRow[];
     if (!districtId) {
       const catalog = await getCatalog();
