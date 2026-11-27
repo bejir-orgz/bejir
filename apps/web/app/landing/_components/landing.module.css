@@ -42,11 +42,11 @@
 }
 .heroAmbientToggle:active { transform: scale(0.97); }
 
-.heroArt { position: absolute; z-index: 0; inset: -24px 0 -100px; container-type: size; pointer-events: none; --ambient-state: paused; transform-style: preserve-3d; transition: transform 260ms var(--ease-out-strong); will-change: transform; }
+.heroArt { position: absolute; z-index: 0; inset: -24px 0 -100px; container-type: size; pointer-events: none; --ambient-state: paused; }
 .heroArt[data-ambient=running] { --ambient-state: running; }
 .heroVectorScene { display: block; width: 100%; height: 100%; }
-.heroContours3d { position: absolute; inset: auto 0 112px; width: 100%; height: 420px; pointer-events: none; transform: translate3d(0, 0, 26px); }
-.heroPinsLayer { position: absolute; inset: 0; pointer-events: none; transform-style: preserve-3d; }
+.heroContours3d { position: absolute; inset: auto 0 112px; width: 100%; height: 420px; pointer-events: none; }
+.heroPinsLayer { position: absolute; inset: 0; pointer-events: none; }
 .heroElevationPin {
   position: absolute;
   display: inline-flex;
@@ -58,7 +58,6 @@
   background: #fffffff2;
   color: #172554;
   box-shadow: 0 10px 24px #17255414;
-  transform: translate3d(0, 0, 58px);
   animation: enter 520ms var(--ease-out-strong) both;
 }
 .heroPinLeft { left: clamp(24px, 5vw, 84px); bottom: 298px; animation-delay: 140ms; }
