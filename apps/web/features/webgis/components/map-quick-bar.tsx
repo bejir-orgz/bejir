@@ -57,13 +57,11 @@ export function MapQuickBar({
         <Button
           type="button"
           size="sm"
-          variant="ghost"
+          variant={simulationOpen ? "default" : "ghost"}
           aria-expanded={simulationOpen}
           aria-controls="gis-hydro-simulation-panel"
           className={`h-8 shrink-0 gap-1.5 rounded-xl px-3 text-xs! font-medium! transition-colors ${
-            simulationOpen
-              ? "bg-neutral-900 text-white hover:bg-neutral-800 hover:text-white"
-              : "bg-neutral-100 text-neutral-900 hover:bg-neutral-200/80 hover:text-neutral-950"
+            simulationOpen ? "" : "bg-muted text-foreground"
           }`}
           onClick={onToggleSimulation}
         >

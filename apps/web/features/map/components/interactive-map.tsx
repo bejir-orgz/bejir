@@ -22,6 +22,7 @@ export function InteractiveMap({
   const tileLayer = useRef<TileLayer | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [zoom, setZoom] = useState(7);
+  const [minZoom, setMinZoom] = useState(westJavaBasemap.minZoom);
   const [readyMap, setReadyMap] = useState<LeafletMap | null>(null);
 
   useEffect(() => {
@@ -37,6 +38,8 @@ export function InteractiveMap({
           zoomControl: false,
           minZoom: westJavaBasemap.minZoom,
           maxZoom: westJavaBasemap.maxZoom,
+          maxBounds: westJavaBasemap.panBounds,
+          maxBoundsViscosity: 1,
           attributionControl: true,
         });
         instance.current = map;
@@ -59,11 +62,24 @@ export function InteractiveMap({
         });
         tiles.addTo(map);
         map.fitBounds(westJavaBasemap.bounds, { padding: [24, 24], animate: false });
+        const leafletMap = map;
+        const updateMinZoom = () => {
+          const { x, y } = leafletMap.getSize();
+          if (x <= 48 || y <= 48) return;
+          leafletMap.setMinZoom(westJavaBasemap.minZoom);
+          const panBoxZoom = leafletMap.getBoundsZoom(westJavaBasemap.panBounds, true);
+          leafletMap.setMinZoom(panBoxZoom);
+          setMinZoom(panBoxZoom);
+        };
+        updateMinZoom();
         setZoom(map.getZoom());
         map.on("zoomend", () => {
           if (!cancelled && map) setZoom(map.getZoom());
         });
-        observer = new ResizeObserver(() => map?.invalidateSize({ pan: true, animate: false }));
+        observer = new ResizeObserver(() => {
+          leafletMap.invalidateSize({ pan: true, animate: false });
+          updateMinZoom();
+        });
         observer.observe(container.current);
       } catch {
         if (!cancelled) setStatus("error");
@@ -141,7 +157,7 @@ export function InteractiveMap({
               size="icon-sm"
               className="dark:hover:bg-accent"
               aria-label="Perkecil peta"
-              disabled={zoom <= westJavaBasemap.minZoom}
+              disabled={zoom <= minZoom}
               onClick={() => instance.current?.zoomOut()}
             >
               <IconMinus className="size-5" aria-hidden="true" />

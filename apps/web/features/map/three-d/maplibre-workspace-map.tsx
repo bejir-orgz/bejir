@@ -188,6 +188,13 @@ interface DebrisParticle {
 
 const defaultPitch = 32;
 const maxPitch = 68;
+const defaultMinZoom = 4;
+const [[south, west], [north, east]] = westJavaBasemap.bounds;
+const provinceBounds: LngLatBoundsLike = [[west, south], [east, north]];
+const [[panSouth, panWest], [panNorth, panEast]] = westJavaBasemap.panBounds;
+const panBounds: LngLatBoundsLike = [[panWest, panSouth], [panEast, panNorth]];
+const provincePadding = 28;
+const mercatorTileSize = 512;
 const basemaps = [
   { id: "terrain", label: "Terrain" },
   { id: "street", label: "Peta Jalan" },
@@ -263,6 +270,7 @@ export function MapLibreWorkspaceMap({
   const [mapReady, setMapReady] = useState(false);
   const [mapError, setMapError] = useState(false);
   const [zoom, setZoom] = useState(8);
+  const [minZoom, setMinZoom] = useState(defaultMinZoom);
   const [bearing, setBearing] = useState(0);
   const [basemap, setBasemap] = useState<(typeof basemaps)[number]["id"]>("terrain");
   const [is3d, setIs3d] = useState(true);
@@ -311,8 +319,9 @@ export function MapLibreWorkspaceMap({
           style: OPENFREEMAP_LIBERTY_STYLE,
           center: [107.62, -6.92],
           zoom: 8.2,
-          minZoom: 6,
+          minZoom: defaultMinZoom,
           maxZoom: 18.5,
+          maxBounds: panBounds,
           pitch: defaultPitch,
           maxPitch,
           bearing: 0,
@@ -321,6 +330,20 @@ export function MapLibreWorkspaceMap({
         });
         map = instance;
         mapRef.current = instance;
+        const nw = maplibregl.MercatorCoordinate.fromLngLat([panWest, panNorth]);
+        const se = maplibregl.MercatorCoordinate.fromLngLat([panEast, panSouth]);
+        const updateMinZoom = () => {
+          const { clientWidth, clientHeight } = instance.getContainer();
+          const { top = 0, right = 0, bottom = 0, left = 0 } = instance.getPadding();
+          // Keep the viewport within the pan box so the zoom-out button stops at the camera's real limit.
+          const scale = Math.max(
+            (clientWidth - left - right) / ((se.x - nw.x) * mercatorTileSize),
+            (clientHeight - top - bottom) / ((se.y - nw.y) * mercatorTileSize),
+          );
+          const panBoxZoom = Math.log2(Math.max(2 ** defaultMinZoom, scale));
+          instance.setMinZoom(panBoxZoom);
+          setMinZoom(panBoxZoom);
+        };
 
         instance.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-left");
         popupRef.current = new maplibregl.Popup({
@@ -535,11 +558,8 @@ export function MapLibreWorkspaceMap({
           });
 
           instance.resize();
-          const bounds: LngLatBoundsLike = [
-            [westJavaBasemap.bounds[0][1], westJavaBasemap.bounds[0][0]],
-            [westJavaBasemap.bounds[1][1], westJavaBasemap.bounds[1][0]],
-          ];
-          instance.fitBounds(bounds, { padding: 28, pitch: defaultPitch, duration: 0 });
+          updateMinZoom();
+          instance.fitBounds(provinceBounds, { padding: provincePadding, pitch: defaultPitch, duration: 0 });
           setZoom(instance.getZoom());
           setBearing(instance.getBearing());
           setMapReady(true);
@@ -632,7 +652,10 @@ export function MapLibreWorkspaceMap({
         instance.on("pitchend", syncCamera);
         instance.on("rotateend", syncCamera);
 
-        observer = new ResizeObserver(() => instance.resize());
+        observer = new ResizeObserver(() => {
+          instance.resize();
+          updateMinZoom();
+        });
         observer.observe(containerRef.current);
       } catch {
         if (!cancelled) setMapError(true);
@@ -1665,7 +1688,7 @@ export function MapLibreWorkspaceMap({
               size="icon-sm"
               className="h-6 w-6 p-0 dark:hover:bg-accent"
               aria-label="Perkecil peta"
-              disabled={zoom <= 6}
+              disabled={zoom <= minZoom + 0.001}
               onClick={() => mapRef.current?.zoomOut()}
             >
               <IconMinus className="size-5" aria-hidden="true" />
@@ -1684,11 +1707,8 @@ export function MapLibreWorkspaceMap({
               if (!map) return;
               const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
               map.fitBounds(
-                [
-                  [westJavaBasemap.bounds[0][1], westJavaBasemap.bounds[0][0]],
-                  [westJavaBasemap.bounds[1][1], westJavaBasemap.bounds[1][0]],
-                ],
-                { padding: 28, pitch: Math.min(map.getMaxPitch(), defaultPitch), bearing: 0, duration: reduced ? 0 : 750 },
+                provinceBounds,
+                { padding: provincePadding, pitch: Math.min(map.getMaxPitch(), defaultPitch), bearing: 0, duration: reduced ? 0 : 750 },
               );
             }}
           >
