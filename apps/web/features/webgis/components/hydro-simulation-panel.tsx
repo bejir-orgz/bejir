@@ -345,14 +345,14 @@ export function HydroSimulationPanel({
 
           {mode === "flood" ? (
             <div className="flex flex-col gap-3 rounded-xl border border-border p-3">
-              <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex flex-col gap-2">
                 <label htmlFor="gis-sim-water" className="text-sm font-medium">
                   Kenaikan muka air:{" "}
                   <strong className="font-semibold text-neutral-900 tabular-nums">
                     +{params.waterRiseM.toLocaleString("id-ID", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} m
                   </strong>
                 </label>
-                <div className="flex flex-wrap items-center gap-1" role="group" aria-label="Preset kenaikan muka air">
+                <div className="grid w-full grid-cols-3 gap-2" role="group" aria-label="Preset kenaikan muka air">
                   {floodPresets.map((preset) => {
                     const active = Math.abs(params.waterRiseM - preset.value) < 0.05;
                     return (
@@ -360,6 +360,7 @@ export function HydroSimulationPanel({
                         key={preset.value}
                         type="button"
                         size="sm"
+                        className="w-full"
                         variant={active ? "default" : "outline"}
                         aria-pressed={active}
                         onClick={() => onParamsChange({ waterRiseM: preset.value })}
@@ -415,20 +416,28 @@ export function HydroSimulationPanel({
                 onChange={(event) => onParamsChange({ triggerRainMmDay: Number(event.target.value) })}
                 className="h-5 w-full cursor-pointer accent-primary"
               />
-              <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Ambang kemiringan lereng">
-                <span className="text-xs text-neutral-600">Ambang lereng {params.criticalSlopeDeg}°</span>
-                {slopeThresholds.map(({ label, value }) => (
-                  <Button
-                    key={value}
-                    type="button"
-                    size="sm"
-                    variant={params.criticalSlopeDeg === value ? "default" : "outline"}
-                    aria-pressed={params.criticalSlopeDeg === value}
-                    onClick={() => onParamsChange({ criticalSlopeDeg: value })}
-                  >
-                    {label}
-                  </Button>
-                ))}
+              <div className="flex flex-col gap-2" role="group" aria-label="Ambang kemiringan lereng">
+                <span className="text-sm font-medium">
+                  Ambang lereng:{" "}
+                  <strong className="font-semibold text-neutral-900 tabular-nums">
+                    {params.criticalSlopeDeg}°
+                  </strong>
+                </span>
+                <div className="grid grid-cols-3 gap-2">
+                  {slopeThresholds.map(({ label, value }) => (
+                    <Button
+                      key={value}
+                      type="button"
+                      size="sm"
+                      className="w-full"
+                      variant={params.criticalSlopeDeg === value ? "default" : "outline"}
+                      aria-pressed={params.criticalSlopeDeg === value}
+                      onClick={() => onParamsChange({ criticalSlopeDeg: value })}
+                    >
+                      {label}
+                    </Button>
+                  ))}
+                </div>
               </div>
               <div className="flex flex-wrap items-center gap-4 text-xs text-neutral-600">
                 <span className="inline-flex items-center gap-1.5">
