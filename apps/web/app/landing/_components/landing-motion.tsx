@@ -1,9 +1,24 @@
 "use client";
 
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
-import { animate, domAnimation, LazyMotion, MotionConfig, useInView, useReducedMotion, useScroll } from "framer-motion";
+import {
+  animate,
+  domAnimation,
+  LazyMotion,
+  MotionConfig,
+  useInView,
+  useMotionValue,
+  useMotionValueEvent,
+  useReducedMotion,
+  useScroll,
+  useSpring,
+  useTransform,
+} from "framer-motion";
 import * as m from "framer-motion/m";
-import { IconPlayerPause, IconPlayerPlay } from "@tabler/icons-react";
+import { IconArrowDown, IconPlayerPause, IconPlayerPlay } from "@tabler/icons-react";
+import { HeroLandscape } from "./hero-landscape";
+import { HERO_WEATHER_PHASES, getHeroWeatherPhaseIndex } from "./hero-weather";
+import styles from "./landing.module.css";
 
 const formatter = new Intl.NumberFormat("id-ID");
 
@@ -17,10 +32,19 @@ function getServerVisible() { return true; }
 
 function subscribeScroll(callback: () => void) {
   window.addEventListener("scroll", callback, { passive: true });
-  return () => window.removeEventListener("scroll", callback);
+  window.addEventListener("resize", callback, { passive: true });
+  return () => {
+    window.removeEventListener("scroll", callback);
+    window.removeEventListener("resize", callback);
+  };
 }
 
-function getNavbarFloating() { return window.scrollY > 64; }
+function getNavbarFloating() {
+  const track = document.getElementById("jelajahi");
+  if (!track) return window.scrollY > 64;
+  const stickyHeight = track.firstElementChild?.getBoundingClientRect().height ?? window.innerHeight;
+  return track.getBoundingClientRect().bottom < stickyHeight - 64;
+}
 function getNavbarServerSnapshot() { return false; }
 
 export function LandingNavbar({ children, className }: { children: ReactNode; className: string }) {
@@ -52,30 +76,140 @@ export function MotionReveal({ children, className, as = "div", delay = 0 }: { c
   );
 }
 
-export function MotionArtwork({ children, className, controlClassName }: { children: ReactNode; className?: string; controlClassName?: string }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { amount: 0.05 });
+export function HeroWeatherStage({ children }: { children: ReactNode }) {
+  const trackRef = useRef<HTMLElement>(null);
+  const artRef = useRef<HTMLDivElement>(null);
+  const inView = useInView(artRef, { amount: 0.05 });
   const pageVisible = useSyncExternalStore(subscribeVisibility, getPageVisible, getServerVisible);
   const reduced = useReducedMotion();
   const [userPaused, setUserPaused] = useState(false);
+  const [phaseIndex, setPhaseIndex] = useState(0);
+  const [cueDismissed, setCueDismissed] = useState(false);
+
+  const { scrollYProgress } = useScroll({
+    target: trackRef,
+    offset: ["start start", "end end"],
+  });
+  const smoothScroll = useSpring(scrollYProgress, {
+    stiffness: 170,
+    damping: 28,
+    mass: 0.35,
+  });
+  const manualProgress = useMotionValue(0);
+  const activeProgress = reduced ? manualProgress : smoothScroll;
+  const shoreTransform = useTransform(
+    activeProgress,
+    [0.15, 0.95],
+    ["translateY(8px)", "translateY(-4px)"],
+  );
+  const scrollCueOpacity = useTransform(activeProgress, [0, 0.14], [1, 0]);
+  const scrollCueTransform = useTransform(activeProgress, [0, 0.14], ["translateY(0px)", "translateY(8px)"]);
+
+  useMotionValueEvent(activeProgress, "change", (latest) => {
+    const next = getHeroWeatherPhaseIndex(latest);
+    setPhaseIndex((prev) => (prev === next ? prev : next));
+    const dismissed = latest > 0.14;
+    setCueDismissed((prev) => (prev === dismissed ? prev : dismissed));
+  });
+
   const running = inView && pageVisible && !reduced && !userPaused;
+  const activePhase = HERO_WEATHER_PHASES[phaseIndex] ?? HERO_WEATHER_PHASES[0];
+
+  const selectPhase = (index: number) => {
+    const targetPhase = HERO_WEATHER_PHASES[index];
+    if (!targetPhase) return;
+    if (reduced) {
+      manualProgress.set(targetPhase.scrollTarget);
+      setPhaseIndex(index);
+      return;
+    }
+    const track = trackRef.current;
+    if (!track) return;
+    const rect = track.getBoundingClientRect();
+    const trackTop = window.scrollY + rect.top;
+    const maxScroll = Math.max(1, track.offsetHeight - window.innerHeight);
+    window.scrollTo({
+      top: trackTop + maxScroll * targetPhase.scrollTarget,
+      behavior: "smooth",
+    });
+  };
 
   return (
-    <>
-      <m.div ref={ref} className={className} data-ambient={running ? "running" : "paused"} data-hero-art aria-hidden="true">
+    <section
+      ref={trackRef}
+      id="jelajahi"
+      className={styles.heroScrollTrack}
+      data-weather-phase={activePhase.id}
+    >
+      <div className={styles.heroSticky}>
+        <m.div
+          ref={artRef}
+          className={styles.heroArt}
+          data-ambient={running ? "running" : "paused"}
+          data-hero-art
+          aria-hidden="true"
+        >
+          <HeroLandscape progress={activeProgress} />
+        </m.div>
+
         {children}
-      </m.div>
-      <button
-        type="button"
-        className={controlClassName}
-        aria-pressed={userPaused}
-        aria-label={userPaused ? "Putar animasi lanskap" : "Jeda animasi lanskap"}
-        onClick={() => setUserPaused((prev) => !prev)}
-      >
-        {userPaused ? <IconPlayerPlay size={14} aria-hidden="true" /> : <IconPlayerPause size={14} aria-hidden="true" />}
-        <span>{userPaused ? "Putar arus" : "Jeda arus"}</span>
-      </button>
-    </>
+
+        <div className={styles.heroControlsCluster} data-ambient={running ? "running" : "paused"}>
+          <m.button
+            type="button"
+            className={styles.heroScrollCue}
+            data-dismissed={cueDismissed}
+            style={{ opacity: scrollCueOpacity, transform: scrollCueTransform }}
+            tabIndex={cueDismissed ? -1 : 0}
+            aria-hidden={cueDismissed}
+            aria-label="Gulir untuk melihat hujan dan air pasang"
+            onClick={() => selectPhase(1)}
+          >
+            <IconArrowDown size={14} className={styles.heroScrollCueIcon} aria-hidden="true" />
+            <span>Gulir untuk hujan &amp; pasang</span>
+          </m.button>
+
+          <div className={styles.heroControlsRight}>
+            <div className={styles.heroPhaseNav} role="group" aria-label="Tahap cuaca dan tinggi air ilustrasi">
+              {HERO_WEATHER_PHASES.map((phase, idx) => (
+                <button
+                  key={phase.id}
+                  type="button"
+                  className={styles.heroPhaseBtn}
+                  data-active={phaseIndex === idx}
+                  aria-pressed={phaseIndex === idx}
+                  onClick={() => selectPhase(idx)}
+                >
+                  {phase.label}
+                </button>
+              ))}
+            </div>
+
+            <button
+              type="button"
+              className={styles.heroAmbientToggle}
+              aria-pressed={userPaused}
+              aria-label={userPaused ? "Putar animasi lanskap" : "Jeda animasi lanskap"}
+              onClick={() => setUserPaused((prev) => !prev)}
+            >
+              {userPaused ? <IconPlayerPlay size={14} aria-hidden="true" /> : <IconPlayerPause size={14} aria-hidden="true" />}
+              <span>{userPaused ? "Putar arus" : "Jeda arus"}</span>
+            </button>
+          </div>
+        </div>
+
+        <m.svg
+          className={styles.heroShore}
+          viewBox="0 0 1440 120"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+          style={{ transform: shoreTransform }}
+        >
+          <path d="M0 60C220 118 390 18 680 65S1180 110 1440 42V120H0Z" fill="#bde6ff" />
+          <path d="M0 82C220 125 420 48 710 85S1190 105 1440 65V120H0Z" fill="#eaf4ff" />
+        </m.svg>
+      </div>
+    </section>
   );
 }
 

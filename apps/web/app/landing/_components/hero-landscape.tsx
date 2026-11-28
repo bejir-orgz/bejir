@@ -1,15 +1,49 @@
+"use client";
+
+import { useTransform, type MotionValue } from "framer-motion";
+import * as m from "framer-motion/m";
 import styles from "./landing.module.css";
 
-const heroElevationPins = [
-  { id: "hulu", badge: "01", title: "Hulu Priangan", metric: ">1.200 mdpl", slotClass: styles.heroPinLeft },
-  { id: "cekungan", badge: "02", title: "Cekungan Bandung", metric: "680 mdpl", slotClass: styles.heroPinCenter },
-  { id: "pantura", badge: "03", title: "Dataran Pantura", metric: "14 mdpl", slotClass: styles.heroPinRight },
-];
+export function HeroLandscape({ progress }: { progress: MotionValue<number> }) {
+  // Sequence 1 (0 -> 0.4): Cerah / Normal
+  // Sequence 2 (0.4 -> 1.0): Hujan & Pasang (rain + rising river combined)
+  const sunGlowOpacity = useTransform(progress, [0, 0.38], [0.95, 0]);
+  const daylightLifeOpacity = useTransform(progress, [0.06, 0.36], [1, 0]);
+  const stormTintOpacity = useTransform(progress, [0.08, 0.72], [0, 1]);
+  const stormCloudsOpacity = useTransform(progress, [0.08, 0.65], [0, 1]);
+  const valleyMistOpacity = useTransform(progress, [0, 0.7], [0.34, 0.95]);
+  const windowGlowOpacity = useTransform(progress, [0.2, 0.55], [0, 1]);
 
-export function HeroLandscape() {
+  const rainLightOpacity = useTransform(progress, [0.12, 0.45], [0, 0.76]);
+  const rainMidOpacity = useTransform(progress, [0.2, 0.58], [0, 0.92]);
+  const rainHeavyOpacity = useTransform(progress, [0.28, 0.68], [0, 1]);
+
+  // River rises continuously alongside the storm from calm low water (+18px) to high-water pasang (-34px)
+  const riverTransform = useTransform(
+    progress,
+    [0.12, 0.92],
+    ["translateY(18px)", "translateY(-34px)"],
+  );
+  const floodWaterTintOpacity = useTransform(progress, [0.25, 0.9], [0, 0.42]);
+  const currentIntensityOpacity = useTransform(progress, [0.1, 0.85], [0.78, 1]);
+
+  // High-water submersion wash and foam wakes rise over the stationary riverbed boulders
+  const submersionOpacity = useTransform(progress, [0.32, 0.9], [0, 0.78]);
+  const submersionTransform = useTransform(
+    progress,
+    [0.25, 0.94],
+    ["translateY(28px)", "translateY(-30px)"],
+  );
+  const foamOpacity = useTransform(progress, [0.15, 0.85], [0.22, 0.96]);
+  const foamTransform = useTransform(
+    progress,
+    [0.15, 0.94],
+    ["translateY(14px)", "translateY(-24px)"],
+  );
+
   return (
     <>
-      {/* Layered animated West Java river valley SVG (Hujan & Pasang state) */}
+      {/* Layered animated West Java river valley SVG (Cerah -> Hujan & Pasang) */}
       <svg
         className={styles.heroVectorScene}
         viewBox="0 0 1600 900"
@@ -17,19 +51,31 @@ export function HeroLandscape() {
         aria-hidden="true"
       >
         <defs>
-          {/* Sky gradient */}
+          {/* Bright normal morning sky gradient */}
           <linearGradient id="hero-sky-grad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#dcedff" />
-            <stop offset="46%" stopColor="#ebf5ff" />
+            <stop offset="0%" stopColor="#cde6ff" />
+            <stop offset="46%" stopColor="#e7f3ff" />
             <stop offset="82%" stopColor="#f5faff" />
             <stop offset="100%" stopColor="#ffffff" />
+          </linearGradient>
+
+          {/* Soft daytime sun glow & diagonal light shafts that fade as storm clouds roll in */}
+          <radialGradient id="hero-sun-glow" cx="76%" cy="20%" r="32%">
+            <stop offset="0%" stopColor="#fff9db" stopOpacity="0.68" />
+            <stop offset="48%" stopColor="#fffef4" stopOpacity="0.28" />
+            <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+          </radialGradient>
+          <linearGradient id="hero-sun-beam" x1="0.8" y1="0" x2="0.2" y2="1">
+            <stop offset="0%" stopColor="#fffbe6" stopOpacity="0.34" />
+            <stop offset="55%" stopColor="#ffffff" stopOpacity="0.14" />
+            <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
           </linearGradient>
 
           {/* Rainy atmosphere tint: lighter at top for hero copy contrast, deeper toward the valley */}
           <linearGradient id="hero-storm-tint" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="#2f4f85" stopOpacity="0.16" />
-            <stop offset="36%" stopColor="#2f4f85" stopOpacity="0.28" />
-            <stop offset="100%" stopColor="#2f4f85" stopOpacity="0.44" />
+            <stop offset="36%" stopColor="#2f4f85" stopOpacity="0.3" />
+            <stop offset="100%" stopColor="#243f70" stopOpacity="0.48" />
           </linearGradient>
 
           {/* Distant horizon mountains */}
@@ -92,12 +138,23 @@ export function HeroLandscape() {
             <stop offset="100%" stopColor="#6eaf4a" />
           </linearGradient>
 
+          {/* Shallow alluvial riverbank exposed during normal water level */}
+          <linearGradient id="hero-riverbed-bank" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#8dbce0" />
+            <stop offset="100%" stopColor="#4b89c4" />
+          </linearGradient>
+
           {/* River water depth & bank reflections */}
           <linearGradient id="hero-river-base" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="#c4f3ff" />
             <stop offset="18%" stopColor="#7fd8ff" />
             <stop offset="55%" stopColor="#45b8fd" />
             <stop offset="100%" stopColor="#2692e8" />
+          </linearGradient>
+          <linearGradient id="hero-river-surge" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#70c4f5" />
+            <stop offset="42%" stopColor="#2c8ae0" />
+            <stop offset="100%" stopColor="#165eb3" />
           </linearGradient>
           <linearGradient id="hero-bank-reflect-l" x1="0" y1="0" x2="1" y2="0">
             <stop offset="0%" stopColor="#1966c4" stopOpacity="0.48" />
@@ -129,60 +186,100 @@ export function HeroLandscape() {
           </linearGradient>
 
           <clipPath id="hero-vector-river-clip">
-            <path d="M0,652 L615,652 Q760,648 965,654 L1600,664 L1600,900 L0,900 Z" />
+            <path d="M0,652 L615,652 Q760,648 965,654 L1600,664 L1600,980 L0,980 Z" />
           </clipPath>
         </defs>
 
-        {/* 1. SKY & RAINY ATMOSPHERE */}
+        {/* 1. SKY & WEATHER ATMOSPHERE */}
         <g>
           <rect width="1600" height="900" fill="url(#hero-sky-grad)" />
-          <rect width="1600" height="900" fill="url(#hero-storm-tint)" />
-          <path d="M1040,460 Q1095,388 1175,402 Q1235,328 1335,342 Q1405,252 1505,258 Q1555,190 1605,198 L1605,515 L1010,515 Z" fill="#ffffff" opacity="0.7" />
-          <path d="M1115,465 Q1185,412 1275,418 Q1355,348 1455,356 Q1530,295 1605,302 L1605,515 L1090,515 Z" fill="#dbeafe" opacity="0.55" />
-          <path d="M105,104 Q265,126 445,152 Q285,146 118,122 Z" fill="#ffffff" opacity="0.58" />
-          <path d="M1070,322 Q1210,308 1350,298 Q1235,322 1085,332 Z" fill="#ffffff" opacity="0.54" />
+          <m.g style={{ opacity: sunGlowOpacity }}>
+            <rect className={styles.heroSunPulse} width="1600" height="900" fill="url(#hero-sun-glow)" />
+            <polygon className={styles.heroSunBeamA} points="1180,0 1340,0 1020,640 830,640" fill="url(#hero-sun-beam)" />
+            <polygon className={styles.heroSunBeamB} points="1400,0 1565,0 1300,610 1120,610" fill="url(#hero-sun-beam)" />
+          </m.g>
+          <m.rect width="1600" height="900" fill="url(#hero-storm-tint)" style={{ opacity: stormTintOpacity }} />
+
+          {/* Calm daytime cumulus clouds with subtle horizontal breathing */}
+          <g className={styles.heroCloudBankDrift}>
+            <path d="M1040,460 Q1095,388 1175,402 Q1235,328 1335,342 Q1405,252 1505,258 Q1555,190 1605,198 L1605,515 L1010,515 Z" fill="#ffffff" opacity="0.78" />
+            <path d="M1115,465 Q1185,412 1275,418 Q1355,348 1455,356 Q1530,295 1605,302 L1605,515 L1090,515 Z" fill="#dbeafe" opacity="0.58" />
+          </g>
+          <path d="M105,104 Q265,126 445,152 Q285,146 118,122 Z" fill="#ffffff" opacity="0.65" />
+          <path d="M1070,322 Q1210,308 1350,298 Q1235,322 1085,332 Z" fill="#ffffff" opacity="0.6" />
+
+          {/* Overcast storm cloud bank fading in during rain phase */}
+          <m.g style={{ opacity: stormCloudsOpacity }}>
+            <path d="M-20,175 Q95,125 215,150 Q310,96 440,126 Q535,102 640,148 Q510,182 350,184 Q160,186 -20,175 Z" fill="#9fb8db" opacity="0.52" />
+            <path d="M980,465 Q1065,375 1165,392 Q1240,312 1350,330 Q1425,244 1525,254 Q1570,192 1610,198 L1610,515 L970,515 Z" fill="#89a8d4" opacity="0.52" />
+            <path d="M1090,468 Q1175,405 1275,412 Q1365,342 1468,352 Q1538,295 1610,304 L1610,515 L1075,515 Z" fill="#6d90c2" opacity="0.45" />
+          </m.g>
         </g>
 
         {/* 2. DRIFTING CLOUDS */}
         <g>
-          <g className={styles.heroSvgCloudA} opacity="0.86">
+          <g className={styles.heroSvgCloudA} opacity="0.88">
             <path d="M0,152 C38,140 72,140 98,131 C118,123 144,116 176,120 C202,123 224,132 248,138 C278,141 312,147 340,158 C275,162 222,159 180,162 C130,165 64,162 0,152 Z" fill="#f8fbff" />
             <path d="M28,154 C96,158 175,158 310,156 C250,163 140,166 28,154 Z" fill="#cbdcf2" opacity="0.72" />
+            <m.path d="M14,152 C92,158 188,160 326,156 C262,165 138,168 14,152 Z" fill="#7c9bc7" style={{ opacity: stormCloudsOpacity }} />
           </g>
-          <g className={styles.heroSvgCloudB} opacity="0.74">
+          <g className={styles.heroSvgCloudB} opacity="0.76">
             <path d="M0,248 C30,238 60,236 86,228 C108,220 132,216 160,222 C184,226 204,234 228,240 C252,243 278,248 300,256 C235,259 182,256 135,258 C88,260 40,256 0,248 Z" fill="#f1f7ff" />
             <path d="M22,250 C92,254 180,254 282,254 C218,260 118,261 22,250 Z" fill="#c7dbf2" opacity="0.68" />
+            <m.path d="M12,249 C88,255 184,256 290,254 C224,262 118,263 12,249 Z" fill="#7c9bc7" style={{ opacity: stormCloudsOpacity }} />
           </g>
-          <g className={styles.heroSvgCloudC} opacity="0.62">
+          <g className={styles.heroSvgCloudC} opacity="0.64">
             <path d="M0,336 C36,326 70,325 98,318 C122,312 150,310 178,317 C206,324 240,330 272,340 C204,342 148,340 96,342 C56,343 26,341 0,336 Z" fill="#eff6ff" />
           </g>
         </g>
 
         {/* 3. DISTANT VALLEY MOUNTAINS & DRIFTING MIST */}
         <g>
-          <path d="M470,565 L598,468 Q622,452 648,468 L735,512 L826,478 Q846,470 866,480 L948,516 L1052,452 Q1074,440 1098,452 L1195,502 L1195,665 L470,665 Z" fill="url(#hero-far-mtn-1)" />
-          <path d="M528,595 L664,506 Q684,494 706,506 L790,542 L898,498 Q918,490 938,500 L1035,548 L1158,510 L1158,665 L528,665 Z" fill="url(#hero-far-mtn-2)" />
-          <rect className={styles.heroValleyMist} x="520" y="535" width="560" height="110" fill="url(#hero-mist-grad)" />
+          <path d="M470,565 L598,468 Q622,452 648,468 L735,512 L826,478 Q846,470 866,480 L948,516 L1052,452 Q1074,440 1098,452 L1195,502 L1195,695 L470,695 Z" fill="url(#hero-far-mtn-1)" />
+          <path d="M528,595 L664,506 Q684,494 706,506 L790,542 L898,498 Q918,490 938,500 L1035,548 L1158,510 L1158,695 L528,695 Z" fill="url(#hero-far-mtn-2)" />
+          <m.g style={{ opacity: valleyMistOpacity }}>
+            <rect className={styles.heroValleyMist} x="520" y="535" width="560" height="110" fill="url(#hero-mist-grad)" />
+            <rect className={styles.heroValleyMistB} x="460" y="560" width="640" height="96" fill="url(#hero-mist-grad)" opacity="0.7" />
+          </m.g>
+
+          {/* Gliding valley birds in calm daylight sky (clear of centered hero copy, fade out in storm) */}
+          <m.g style={{ opacity: daylightLifeOpacity }} fill="none" stroke="#234a85" strokeLinecap="round" strokeLinejoin="round">
+            <g className={styles.heroBirdGlideA}>
+              <g transform="translate(1110, 326)">
+                <path className={styles.heroBirdFlapA} d="M-11,2 Q-5,-5 0,0 Q5,-5 11,2" strokeWidth="2.1" />
+              </g>
+            </g>
+            <g className={styles.heroBirdGlideB}>
+              <g transform="translate(1164, 304)">
+                <path className={styles.heroBirdFlapB} d="M-9,1.5 Q-4,-4 0,0 Q4,-4 9,1.5" strokeWidth="1.8" />
+              </g>
+            </g>
+            <g className={styles.heroBirdGlideC}>
+              <g transform="translate(260, 238)">
+                <path className={styles.heroBirdFlapC} d="M-8,1.5 Q-3.5,-3.5 0,0 Q3.5,-3.5 8,1.5" strokeWidth="1.7" opacity="0.82" />
+              </g>
+            </g>
+          </m.g>
         </g>
 
         {/* 4. LEFT PRIANGAN VOLCANO & SCULPTED RIDGES */}
         <g>
-          <path d="M-20,378 L142,262 Q160,252 178,262 L236,288 L376,396 L565,500 L745,592 L745,665 L-20,665 Z" fill="url(#hero-volcano-lit)" />
+          <path d="M-20,378 L142,262 Q160,252 178,262 L236,288 L376,396 L565,500 L745,592 L745,695 L-20,695 Z" fill="url(#hero-volcano-lit)" />
           <path d="M160,256 L130,328 L88,365 L144,344 L172,386 L202,340 L256,368 L236,288 Z" fill="url(#hero-volcano-shade)" opacity="0.72" />
           <path d="M160,256 L112,310 L56,348 L128,324 Z" fill="#9ac9ff" opacity="0.58" />
           <path d="M160,256 L192,314 L268,354 L236,288 Z" fill="#3a76e0" opacity="0.45" />
           <path d="M236,288 L286,356 L362,402 L376,396 Z" fill="#2b63cf" opacity="0.38" />
-          <path d="M-20,394 Q55,398 118,422 Q178,434 228,448 Q288,412 365,420 Q422,426 485,468 Q575,522 695,586 Q768,618 848,648 L-20,665 Z" fill="url(#hero-left-ridge)" />
+          <path d="M-20,394 Q55,398 118,422 Q178,434 228,448 Q288,412 365,420 Q422,426 485,468 Q575,522 695,586 Q768,618 848,648 L848,695 L-20,695 Z" fill="url(#hero-left-ridge)" />
           <path d="M228,448 Q288,412 365,420 Q422,426 485,468 Q418,438 358,432 Q292,426 228,448 Z" fill="#68a6ff" opacity="0.55" />
-          <path d="M-20,454 Q48,460 112,480 Q188,502 268,530 Q355,556 442,582 Q528,608 618,632 L735,656 L-20,665 Z" fill="url(#hero-left-foothill)" />
+          <path d="M-20,454 Q48,460 112,480 Q188,502 268,530 Q355,556 442,582 Q528,608 618,632 L735,656 L735,695 L-20,695 Z" fill="url(#hero-left-foothill)" />
           <path d="M62,466 C74,446 98,446 108,464 C122,452 146,456 154,474 C168,464 192,470 200,488 C218,478 242,486 250,506 C268,496 292,504 300,522 C318,514 342,522 350,538 C368,532 392,540 400,556 C418,550 442,558 450,572 C470,568 492,576 502,590 C522,586 544,594 554,608 L554,630 L62,530 Z" fill="#1b489c" />
         </g>
 
         {/* 5. RIGHT HILLS & LAYERED CANOPY */}
         <g>
-          <path d="M895,648 Q1005,554 1138,486 Q1285,406 1462,354 Q1535,334 1620,340 L1620,670 L895,670 Z" fill="url(#hero-right-hill-back)" />
+          <path d="M895,648 Q1005,554 1138,486 Q1285,406 1462,354 Q1535,334 1620,340 L1620,695 L895,695 Z" fill="url(#hero-right-hill-back)" />
           <path d="M1110,498 C1122,480 1144,476 1156,488 C1168,468 1192,462 1206,474 C1218,452 1246,446 1262,458 C1278,434 1308,426 1326,438 C1344,412 1378,402 1398,414 C1418,386 1456,374 1480,388 L1480,450 L1110,540 Z" fill="#5e9ef7" />
-          <path d="M935,652 Q1068,578 1222,516 Q1380,452 1620,402 L1620,672 L935,672 Z" fill="url(#hero-right-hill-front)" />
+          <path d="M935,652 Q1068,578 1222,516 Q1380,452 1620,402 L1620,695 L935,695 Z" fill="url(#hero-right-hill-front)" />
           <path d="M1040,596 Q1165,536 1315,482 Q1448,434 1605,406 Q1455,448 1322,494 Q1174,548 1040,596 Z" fill="#77b3ff" opacity="0.45" />
         </g>
 
@@ -205,7 +302,7 @@ export function HeroLandscape() {
           <path d="M0,604 Q216,612 432,640 L432,652 Q216,626 0,618 Z" fill="#215575" />
 
           <path d="M0,614 Q248,620 495,646 L628,658 L0,662 Z" fill="#82bc4b" />
-          <path d="M0,634 Q252,638 498,654 L634,662 L0,666 Z" fill="#18426e" />
+          <path d="M0,634 Q252,638 498,654 L634,662 L634,695 L0,695 Z" fill="#18426e" />
 
           <g className={styles.heroPalmLeftSway}>
             <path d="M86,518 Q80,470 68,434" stroke="#163c78" strokeWidth="4.5" fill="none" strokeLinecap="round" />
@@ -228,7 +325,7 @@ export function HeroLandscape() {
           </g>
         </g>
 
-        {/* 7. RIGHT RIVERBANK VILLAGE (WARM LIT WINDOWS FOR RAINY MOOD) */}
+        {/* 7. RIGHT RIVERBANK VILLAGE (DAYTIME GLASS -> WARM LIT WINDOWS ON RAIN) */}
         <g>
           <g>
             <path d="M1035,622 C1042,588 1076,574 1102,590 C1118,572 1152,578 1162,606 L1162,632 L1035,632 Z" fill="#1c4f7d" />
@@ -252,10 +349,11 @@ export function HeroLandscape() {
             <path d="M1387,488 C1364,464 1370,444 1388,434 C1382,452 1384,470 1387,488 Z" fill="#2d64a6" opacity="0.7" />
           </g>
 
-          <path d="M958,648 Q1125,612 1320,600 L1600,592 L1600,668 L948,668 Z" fill="url(#hero-village-grass)" />
+          <path d="M958,648 Q1125,612 1320,600 L1600,592 L1600,680 L948,680 Z" fill="url(#hero-village-grass)" />
           <path d="M975,650 Q1140,618 1330,608 L1600,600 L1600,614 L1330,620 Q1140,630 975,656 Z" fill="#c7eb78" opacity="0.75" />
 
-          <path d="M1002,662 Q1182,634 1376,624 L1600,618 L1600,680 L972,680 Z" fill="#325080" />
+          {/* Stone embankment extended cleanly down to y=700 so low-water normal state has zero gap */}
+          <path d="M1002,662 Q1182,634 1376,624 L1600,618 L1600,700 L972,700 Z" fill="#325080" />
           <path d="M1002,662 Q1182,634 1376,624 L1600,618 L1600,628 L1376,634 Q1182,644 1002,670 Z" fill="#1d345c" opacity="0.75" />
           <g fill="#46689e" opacity="0.65">
             <polygon points="1072,662 1126,654 1128,664 1074,672" />
@@ -269,6 +367,12 @@ export function HeroLandscape() {
             <polygon points="1322,651 1396,646 1398,656 1324,661" />
           </g>
 
+          {/* Gentle morning hearth wisps rising behind village roofs in Cerah */}
+          <m.g style={{ opacity: daylightLifeOpacity }} fill="none" stroke="#ffffff" strokeLinecap="round">
+            <path className={styles.heroVillageWispA} d="M1134,580 Q1128,566 1138,554 Q1146,542 1139,530" strokeWidth="3.2" />
+            <path className={styles.heroVillageWispB} d="M1422,538 Q1416,522 1427,510 Q1436,496 1429,482" strokeWidth="3.8" />
+          </m.g>
+
           {/* House 1 */}
           <g transform="translate(1096, 576)">
             <ellipse cx="36" cy="63" rx="34" ry="4" fill="#4f8539" opacity="0.55" />
@@ -278,8 +382,12 @@ export function HeroLandscape() {
             <polygon points="0,30 27,6 54,30" fill="#214482" />
             <polygon points="27,6 68,28 54,30" fill="#132a57" />
             <path d="M0,30 L27,6 L54,30" fill="none" stroke="#3662ab" strokeWidth="1.5" />
-            <rect x="15" y="38" width="9" height="11" rx="1" fill="#fde047" />
-            <rect x="29" y="38" width="9" height="11" rx="1" fill="#fde047" />
+            <rect x="15" y="38" width="9" height="11" rx="1" fill="#6b90be" />
+            <rect x="29" y="38" width="9" height="11" rx="1" fill="#6b90be" />
+            <m.g style={{ opacity: windowGlowOpacity }}>
+              <rect x="15" y="38" width="9" height="11" rx="1" fill="#fde047" />
+              <rect x="29" y="38" width="9" height="11" rx="1" fill="#fde047" />
+            </m.g>
             <rect x="14" y="49" width="11" height="2" fill="#89a9d4" />
             <rect x="28" y="49" width="11" height="2" fill="#89a9d4" />
           </g>
@@ -292,8 +400,12 @@ export function HeroLandscape() {
             <rect x="8" y="26" width="52" height="6" fill="#94b5de" opacity="0.65" />
             <polygon points="0,28 28,4 54,28" fill="#1f427d" />
             <polygon points="28,4 65,26 54,28" fill="#122854" />
-            <rect x="16" y="36" width="8" height="10" rx="1" fill="#fde047" />
-            <rect x="29" y="36" width="8" height="10" rx="1" fill="#fde047" />
+            <rect x="16" y="36" width="8" height="10" rx="1" fill="#6b90be" />
+            <rect x="29" y="36" width="8" height="10" rx="1" fill="#6b90be" />
+            <m.g style={{ opacity: windowGlowOpacity }}>
+              <rect x="16" y="36" width="8" height="10" rx="1" fill="#fde047" />
+              <rect x="29" y="36" width="8" height="10" rx="1" fill="#fde047" />
+            </m.g>
           </g>
 
           {/* House 3 */}
@@ -310,25 +422,40 @@ export function HeroLandscape() {
             <rect x="10" y="55" width="4" height="31" fill="#dceafa" />
             <rect x="96" y="55" width="4" height="31" fill="#c4dbf5" />
             <rect x="57" y="57" width="15" height="29" rx="1" fill="#1d3c73" />
-            <rect x="60" y="60" width="9" height="10" fill="#fde047" opacity="0.85" />
-            <rect x="32" y="60" width="14" height="13" rx="1" fill="#fde047" />
-            <rect x="80" y="60" width="13" height="13" rx="1" fill="#fde047" />
-            <rect x="112" y="58" width="13" height="13" rx="1" fill="#facc15" />
+            <rect x="60" y="60" width="9" height="10" fill="#6b90be" />
+            <rect x="32" y="60" width="14" height="13" rx="1" fill="#6b90be" />
+            <rect x="80" y="60" width="13" height="13" rx="1" fill="#6b90be" />
+            <rect x="112" y="58" width="13" height="13" rx="1" fill="#597fae" />
+            <m.g style={{ opacity: windowGlowOpacity }}>
+              <rect x="60" y="60" width="9" height="10" fill="#fde047" opacity="0.88" />
+              <rect x="32" y="60" width="14" height="13" rx="1" fill="#fde047" />
+              <rect x="80" y="60" width="13" height="13" rx="1" fill="#fde047" />
+              <rect x="112" y="58" width="13" height="13" rx="1" fill="#facc15" />
+            </m.g>
             <rect x="30" y="73" width="18" height="2" fill="#89a9d4" />
             <rect x="78" y="73" width="17" height="2" fill="#89a9d4" />
           </g>
         </g>
 
-        {/* 8A. HIGH-WATER RIVER SURFACE (PASANG LEVEL) */}
-        <g transform="translate(0, -22)">
-          <path d="M0,652 L615,652 Q760,648 965,654 L1600,664 L1600,930 L0,930 Z" fill="url(#hero-river-base)" />
-          <path d="M0,652 L540,652 Q420,730 330,930 L0,930 Z" fill="url(#hero-bank-reflect-l)" />
-          <path d="M1040,654 L1600,664 L1600,930 L1200,930 Q1180,750 1040,654 Z" fill="url(#hero-bank-reflect-r)" />
+        {/* Shallow riverbed / bank base visible beneath the calm waterline */}
+        <path d="M0,654 Q460,650 820,654 Q1220,658 1600,668 L1600,900 L0,900 Z" fill="url(#hero-riverbed-bank)" />
+
+        {/* 8A. RISING RIVER SURFACE (CALM NORMAL -> HIGH-WATER PASANG) */}
+        <m.g style={{ transform: riverTransform }}>
+          <path d="M0,652 L615,652 Q760,648 965,654 L1600,664 L1600,980 L0,980 Z" fill="url(#hero-river-base)" />
+          <m.path
+            d="M0,652 L615,652 Q760,648 965,654 L1600,664 L1600,980 L0,980 Z"
+            fill="url(#hero-river-surge)"
+            style={{ opacity: floodWaterTintOpacity }}
+          />
+          <path d="M0,652 L540,652 Q420,730 330,980 L0,980 Z" fill="url(#hero-bank-reflect-l)" />
+          <path d="M1040,654 L1600,664 L1600,980 L1200,980 Q1180,750 1040,654 Z" fill="url(#hero-bank-reflect-r)" />
           <path d="M620,654 Q760,650 930,656 Q840,674 680,676 Q510,678 440,694 Q670,698 920,696 Q1100,694 1140,710 Q890,716 640,722 Q450,726 420,746 Q680,748 940,756 Q1160,762 1190,786 Q870,790 610,806 Q460,816 520,842 Q760,836 1050,860 L960,886 Q670,866 430,874 Q320,836 470,804 Q720,782 990,774 Q740,762 490,758 Q330,748 450,722 Q670,708 910,702 Q660,696 420,692 Q470,670 620,654 Z" fill="#b4eeff" opacity="0.52" />
           <path d="M520,660 Q765,653 1020,662 Q780,672 520,660 Z" fill="#e6fbff" opacity="0.9" />
 
-          <g clipPath="url(#hero-vector-river-clip)">
+          <m.g clipPath="url(#hero-vector-river-clip)" style={{ opacity: currentIntensityOpacity }}>
             <g className={styles.heroRiverCurrentA}>
+              <path d="M180,686 Q430,676 680,686 Q430,694 180,686 Z" fill="url(#hero-current-grad)" opacity="0.82" />
               <path d="M260,716 Q490,704 720,716 Q490,726 260,716 Z" fill="url(#hero-current-grad)" />
               <path d="M840,732 Q1080,718 1310,732 Q1080,742 840,732 Z" fill="url(#hero-current-grad)" />
             </g>
@@ -340,8 +467,19 @@ export function HeroLandscape() {
               <path d="M270,846 Q650,822 1030,848 Q650,868 270,846 Z" fill="url(#hero-current-grad)" />
               <path d="M980,872 Q1280,852 1550,874 Q1280,888 980,872 Z" fill="url(#hero-current-grad)" />
             </g>
-          </g>
-        </g>
+          </m.g>
+
+          {/* Sunlit specular water glints sparkling on calm daylight river */}
+          <m.g clipPath="url(#hero-vector-river-clip)" style={{ opacity: daylightLifeOpacity }} fill="#ffffff">
+            <path className={styles.heroWaterGlintA} d="M472,724 L476,727 L472,730 L468,727 Z" />
+            <path className={styles.heroWaterGlintB} d="M624,698 L629,701 L624,704 L619,701 Z" />
+            <path className={styles.heroWaterGlintC} d="M756,738 L762,741 L756,744 L750,741 Z" />
+            <path className={styles.heroWaterGlintA} d="M904,708 L909,711 L904,714 L899,711 Z" />
+            <path className={styles.heroWaterGlintB} d="M1032,754 L1038,757 L1032,760 L1026,757 Z" />
+            <path className={styles.heroWaterGlintC} d="M1152,718 L1157,721 L1152,724 L1147,721 Z" />
+            <path className={styles.heroWaterGlintA} d="M674,782 L680,785 L674,788 L668,785 Z" />
+          </m.g>
+        </m.g>
 
         {/* 8B. ANCHORED RIVER BOULDERS (STATIONARY IN RIVERBED) */}
         <g>
@@ -368,16 +506,25 @@ export function HeroLandscape() {
           <polygon points="1432,716 1496,704 1528,720 1456,730" fill="#3a5994" opacity="0.6" />
         </g>
 
-        {/* 8C. HIGH-WATER SUBMERSION WASH & FOAM WAKES AROUND FIXED ROCKS */}
+        {/* 8C. BOULDER RIPPLES, HIGH-WATER SUBMERSION WASH & RISING FOAM WAKES */}
         <g>
-          <path d="M0,702 Q420,692 840,700 Q1240,704 1600,722 L1600,900 L0,900 Z" fill="url(#hero-river-base)" opacity="0.62" />
-          <g transform="translate(0, -16)">
+          {/* Expanding concentric ripples around exposed rocks during calm daylight flow */}
+          <m.g style={{ opacity: daylightLifeOpacity }} fill="none" stroke="#ebfcff" strokeWidth="2">
+            <ellipse className={styles.heroBoulderRippleA} cx="348" cy="728" rx="84" ry="11" />
+            <ellipse className={styles.heroBoulderRippleB} cx="556" cy="708" rx="40" ry="5.5" />
+            <ellipse className={styles.heroBoulderRippleC} cx="1224" cy="734" rx="54" ry="7.5" />
+          </m.g>
+          <m.g style={{ opacity: submersionOpacity, transform: submersionTransform }}>
+            <path d="M0,702 Q420,692 840,700 Q1240,704 1600,722 L1600,980 L0,980 Z" fill="url(#hero-river-base)" />
+            <path d="M0,704 Q420,695 840,703 Q1240,707 1600,724" fill="none" stroke="#e6fbff" strokeWidth="3" opacity="0.72" />
+          </m.g>
+          <m.g style={{ opacity: foamOpacity, transform: foamTransform }}>
             <path className={styles.heroRiverFoam} d="M242,724 Q285,714 352,718 Q412,720 446,728 Q396,736 346,734 Q284,734 242,724 Z" fill="#ebfcff" opacity="0.88" />
             <ellipse className={styles.heroRiverFoam} cx="556" cy="706" rx="44" ry="5.5" fill="#ebfcff" opacity="0.8" />
             <ellipse className={styles.heroRiverFoam} cx="1102" cy="716" rx="50" ry="6.5" fill="#ebfcff" opacity="0.8" />
             <ellipse className={styles.heroRiverFoam} cx="1222" cy="732" rx="60" ry="7.5" fill="#ebfcff" opacity="0.85" />
             <path className={styles.heroRiverFoam} d="M1340,758 Q1425,746 1515,754 Q1570,760 1605,772 Q1530,780 1445,774 Q1380,770 1340,758 Z" fill="#ebfcff" opacity="0.88" />
-          </g>
+          </m.g>
         </g>
 
         {/* 9. FOREGROUND FRAMING BOTANICALS */}
@@ -432,35 +579,41 @@ export function HeroLandscape() {
           </g>
         </g>
 
-        {/* 10. ANIMATED RAINFALL */}
+        {/* 10. STAGGERED SCROLL-DRIVEN RAINFALL (HIDDEN AT NORMAL/CERAH) */}
         <g stroke="#dbeafe" strokeWidth="1.8" strokeLinecap="round">
-          <g className={styles.heroRainDropA}>
-            <line x1="180" y1="60" x2="155" y2="145" />
-            <line x1="420" y1="120" x2="395" y2="205" />
-            <line x1="680" y1="40" x2="655" y2="125" />
-            <line x1="940" y1="110" x2="915" y2="195" />
-            <line x1="1220" y1="70" x2="1195" y2="155" />
-            <line x1="1440" y1="140" x2="1415" y2="225" />
-            <line x1="300" y1="360" x2="275" y2="445" />
-            <line x1="820" y1="340" x2="795" y2="425" />
-            <line x1="1310" y1="380" x2="1285" y2="465" />
-          </g>
-          <g className={styles.heroRainDropB} opacity="0.72">
-            <line x1="260" y1="180" x2="238" y2="255" />
-            <line x1="540" y1="80" x2="518" y2="155" />
-            <line x1="790" y1="190" x2="768" y2="265" />
-            <line x1="1080" y1="60" x2="1058" y2="135" />
-            <line x1="1360" y1="210" x2="1338" y2="285" />
-            <line x1="610" y1="410" x2="588" y2="485" />
-            <line x1="1040" y1="430" x2="1018" y2="505" />
-          </g>
-          <g className={styles.heroRainDropC} opacity="0.52">
-            <line x1="120" y1="280" x2="98" y2="355" />
-            <line x1="460" y1="290" x2="438" y2="365" />
-            <line x1="900" y1="250" x2="878" y2="325" />
-            <line x1="1180" y1="300" x2="1158" y2="375" />
-            <line x1="1490" y1="320" x2="1468" y2="395" />
-          </g>
+          <m.g style={{ opacity: rainHeavyOpacity }}>
+            <g className={styles.heroRainDropA}>
+              <line x1="180" y1="60" x2="155" y2="145" />
+              <line x1="420" y1="120" x2="395" y2="205" />
+              <line x1="680" y1="40" x2="655" y2="125" />
+              <line x1="940" y1="110" x2="915" y2="195" />
+              <line x1="1220" y1="70" x2="1195" y2="155" />
+              <line x1="1440" y1="140" x2="1415" y2="225" />
+              <line x1="300" y1="360" x2="275" y2="445" />
+              <line x1="820" y1="340" x2="795" y2="425" />
+              <line x1="1310" y1="380" x2="1285" y2="465" />
+            </g>
+          </m.g>
+          <m.g style={{ opacity: rainMidOpacity }}>
+            <g className={styles.heroRainDropB}>
+              <line x1="260" y1="180" x2="238" y2="255" />
+              <line x1="540" y1="80" x2="518" y2="155" />
+              <line x1="790" y1="190" x2="768" y2="265" />
+              <line x1="1080" y1="60" x2="1058" y2="135" />
+              <line x1="1360" y1="210" x2="1338" y2="285" />
+              <line x1="610" y1="410" x2="588" y2="485" />
+              <line x1="1040" y1="430" x2="1018" y2="505" />
+            </g>
+          </m.g>
+          <m.g style={{ opacity: rainLightOpacity }}>
+            <g className={styles.heroRainDropC}>
+              <line x1="120" y1="280" x2="98" y2="355" />
+              <line x1="460" y1="290" x2="438" y2="365" />
+              <line x1="900" y1="250" x2="878" y2="325" />
+              <line x1="1180" y1="300" x2="1158" y2="375" />
+              <line x1="1490" y1="320" x2="1468" y2="395" />
+            </g>
+          </m.g>
         </g>
       </svg>
 
@@ -472,19 +625,6 @@ export function HeroLandscape() {
           <path opacity="0.11" d="M-40 458 Q260 378 520 426 T1040 404 T1480 448" />
         </g>
       </svg>
-
-      {/* Foreground 3D depth elevation anchors (real West Java basin profile) */}
-      <div className={styles.heroPinsLayer} aria-hidden="true">
-        {heroElevationPins.map((pin) => (
-          <div key={pin.id} className={`${styles.heroElevationPin} ${pin.slotClass}`}>
-            <span className={styles.heroPinBadge}>{pin.badge}</span>
-            <span className={styles.heroPinText}>
-              <strong>{pin.title}</strong>
-              <small>{pin.metric}</small>
-            </span>
-          </div>
-        ))}
-      </div>
     </>
   );
 }

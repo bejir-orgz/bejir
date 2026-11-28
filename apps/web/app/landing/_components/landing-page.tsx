@@ -1,10 +1,9 @@
 import Link from "next/link";
-import { HeroLandscape } from "./hero-landscape";
 import { IconArrowDown, IconArrowUpRight, IconCloudRain, IconLayersIntersect, IconMap2, IconRoute, IconShieldCheck } from "@tabler/icons-react";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SibajwaBrand } from "@/components/shared/sibajwa-brand";
 import { Button } from "@/components/ui/button";
-import { AnimatedNumber, LandingNavbar, LandingMotion, MotionArtwork, MotionDataBar, MotionProgress, MotionReveal } from "./landing-motion";
+import { AnimatedNumber, HeroWeatherStage, LandingNavbar, LandingMotion, MotionDataBar, MotionProgress, MotionReveal } from "./landing-motion";
 import { InteractiveAtlasPreview, InteractiveFloodRanking } from "./interactive-atlas-preview";
 import { WatershedScrollStage } from "./watershed-scroll-stage";
 import { floodRankingSource } from "./flood-data";
@@ -48,11 +47,7 @@ export function LandingPage() {
       <a href="#main-content" className="skip-link">Lewati ke konten</a>
       <LandingNavbar className={styles.navbar}><SiteHeader /></LandingNavbar>
       <main id="main-content">
-        <section className={styles.hero} id="jelajahi">
-          <MotionArtwork className={styles.heroArt} controlClassName={styles.heroAmbientToggle}>
-            <HeroLandscape />
-          </MotionArtwork>
-
+        <HeroWeatherStage>
           <div className={styles.heroContent}>
             <h1>Kenali banjir.<br />Pahami <span>wilayahmu.</span></h1>
             <p className={styles.heroDescription}>Jawa Barat berulang kali mengalami banjir dari cekungan tengah hingga pantura. Mulai dari peta interaktif, telusuri sungainya, dan pahami risiko di setiap kecamatan.</p>
@@ -68,9 +63,7 @@ export function LandingPage() {
               </span>
             </a>
           </div>
-
-          <svg className={styles.heroShore} viewBox="0 0 1440 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0 60C220 118 390 18 680 65S1180 110 1440 42V120H0Z" fill="#bde6ff" /><path d="M0 82C220 125 420 48 710 85S1190 105 1440 65V120H0Z" fill="#eaf4ff" /></svg>
-        </section>
+        </HeroWeatherStage>
 
         <div className={styles.riverContinuation}>
           <MotionReveal className={styles.regionSummary}>
