@@ -386,7 +386,7 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
             </div>
           </div>
         </div>
-        <div className="pointer-events-none absolute inset-x-4 top-18 bottom-9 z-2 [&_.gis-left]:pointer-events-auto [&_.gis-left]:rounded-2xl [&_.gis-left]:border [&_.gis-left]:border-border">
+        <div className="pointer-events-none absolute inset-x-4 top-18 bottom-[62px] z-2 [&_.gis-left]:pointer-events-auto [&_.gis-left]:rounded-2xl [&_.gis-left]:border [&_.gis-left]:border-border">
           <RegionSidebar onWidthChange={setSidebarWidth} hidden={simulationOpen || panels.left !== "regions"} filters={filters} onChange={updateFilters} />
           <TimelineSidebar year={data.year} hidden={simulationOpen || panels.left !== "timeline"} filters={filters} onChange={updateFilters} />
           <LegendSidebar layers={data.layers} hidden={simulationOpen || panels.left !== "legends"} />
