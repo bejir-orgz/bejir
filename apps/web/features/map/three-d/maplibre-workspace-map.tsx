@@ -18,6 +18,7 @@ import {
 } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { westJavaBasemap } from "../basemap";
+import { westJavaBoundary, westJavaBoundaryColor, westJavaBoundaryWidth } from "../west-java-boundary";
 import {
   ensureContourProtocol,
   installNatural3DLayers,
@@ -490,6 +491,19 @@ export function MapLibreWorkspaceMap({
           );
 
           // Upper overlay layers (above 3D buildings so outlines, evacuation routes, and pins remain crisp).
+          instance.addSource("west-java-boundary", { type: "geojson", data: westJavaBoundary });
+          instance.addLayer({
+            id: "west-java-boundary",
+            type: "line",
+            source: "west-java-boundary",
+            layout: { "line-join": "round" },
+            paint: {
+              "line-color": westJavaBoundaryColor,
+              "line-width": westJavaBoundaryWidth,
+              "line-dasharray": [2.4, 1.6],
+              "line-opacity": 0.85,
+            },
+          });
           instance.addLayer({
             id: MAPLIBRE_IDS.boundaryLineLayer,
             type: "line",

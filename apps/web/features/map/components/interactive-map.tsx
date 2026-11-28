@@ -5,6 +5,7 @@ import type { Map as LeafletMap, TileLayer } from "leaflet";
 import { IconCurrentLocation, IconMinus, IconPlus } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { westJavaBasemap } from "../basemap";
+import { westJavaBoundary, westJavaBoundaryColor, westJavaBoundaryWidth } from "../west-java-boundary";
 import "leaflet/dist/leaflet.css";
 
 /** Owns map lifecycle; domain layers are composed by the workspace. */
@@ -61,6 +62,9 @@ export function InteractiveMap({
           if (!cancelled) setStatus("ready");
         });
         tiles.addTo(map);
+        L.geoJSON(westJavaBoundary, {
+          style: { color: westJavaBoundaryColor, weight: westJavaBoundaryWidth, dashArray: "6 4", opacity: 0.85, fill: false, interactive: false },
+        }).addTo(map);
         map.fitBounds(westJavaBasemap.bounds, { padding: [24, 24], animate: false });
         const leafletMap = map;
         const updateMinZoom = () => {
