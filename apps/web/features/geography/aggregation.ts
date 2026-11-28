@@ -10,7 +10,7 @@ export function nullableSum(values: (number | null | undefined)[]): number | nul
   return values.reduce<number>((sum, value) => sum + (value ?? 0), 0);
 }
 
-export function weightedMean<Field extends "mean_elevasi_m" | "mean_hujan_mm">(rows: (Pick<DistrictParameters, "n_piksel"> & Record<Field, number | null>)[], field: Field): number | null {
+export function weightedMean<Field extends "mean_elevasi_m" | "mean_hujan_mm" | "mean_hand_m" | "mean_slope_pct" | "pct_rawan_v2">(rows: (Pick<DistrictParameters, "n_piksel"> & Partial<Record<Field, number | null>>)[], field: Field): number | null {
   if (!rows.length || rows.some((row) => row[field] == null || !Number.isFinite(row[field]) || !Number.isSafeInteger(row.n_piksel) || row.n_piksel! <= 0)) return null;
   const weight = rows.reduce((sum, row) => sum + row.n_piksel!, 0);
   return rows.reduce((sum, row) => sum + row[field]! * row.n_piksel!, 0) / weight;

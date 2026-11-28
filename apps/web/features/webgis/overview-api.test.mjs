@@ -160,7 +160,7 @@ test("district spatial facts keep their source scale and don't substitute for un
   globalThis.fetch = async (input) => {
     if (input.includes("geography/catalog")) return Response.json({ regencies: [{ id: 14, name: "Kota Bogor" }], districts: [{ id: 545, name: "Tanah Sareal", regency_id: 14 }] });
     assert.match(input, /district-hazards$/);
-    return Response.json([{ district_id: 545, n_piksel: 100, kelas_dominan_v2: 4, landcover_dominan: "Pemukiman", mean_elevasi_m: 265, mean_hujan_mm: 3000 }]);
+    return Response.json([{ district_id: 545, n_piksel: 100, kelas_dominan_v2: 4, landcover_dominan: "Pemukiman", mean_elevasi_m: 265, mean_hujan_mm: 3000, pct_rawan_v2: 63.4, mean_hand_m: 11, mean_slope_pct: 4.2 }]);
   };
   try {
     const result = await getWorkspaceOverview(["14/545"], "", "");
@@ -168,8 +168,33 @@ test("district spatial facts keep their source scale and don't substitute for un
     assert.equal(result.elevation, "265 meter");
     assert.deepEqual(result.landCover, ["Pemukiman"]);
     assert.equal(result.metrics[2].value, "—");
-    assert.ok(result.susceptibility.notes.some((note) => /Periode belum tersedia/.test(note)));
+    assert.equal(result.susceptibility.label, "Tinggi");
+    assert.match(result.susceptibility.notes.join(" "), /63,4%.*11 m.*4,2%/);
   } finally { globalThis.fetch = originalFetch; }
+});
+
+test("overview describes each susceptibility level and omits unavailable local evidence", async (t) => {
+  let classification = null;
+  t.mock.method(globalThis, "fetch", async (input) => {
+    if (input.includes("geography/catalog")) return Response.json({ regencies: [{ id: 14, name: "Kota Bogor" }], districts: [{ id: 545, name: "Tanah Sareal", regency_id: 14 }] });
+    if (input.includes("district-hazards")) return Response.json([{ district_id: 545, n_piksel: 100, kelas_dominan_v2: classification }]);
+    return new Response(null, { status: 503 });
+  });
+  const explanations = new Set();
+  const levels = ["Sangat Rendah", "Rendah", "Sedang", "Tinggi", "Sangat Tinggi"];
+  for (const [index, label] of levels.entries()) {
+    classification = index + 1;
+    const { susceptibility } = await getWorkspaceOverview(["14/545"], "", "");
+    assert.equal(susceptibility.label, label);
+    assert.equal(susceptibility.notes.length, 1);
+    assert.doesNotMatch(susceptibility.notes[0], /\b(?:n_piksel|modus|API)\b/i);
+    explanations.add(susceptibility.notes[0]);
+  }
+  assert.equal(explanations.size, 5);
+  classification = null;
+  const { susceptibility } = await getWorkspaceOverview(["14/545"], "", "");
+  assert.equal(susceptibility.label, "—");
+  assert.match(susceptibility.notes[0], /belum dapat ditentukan/);
 });
 
 test("analysis combines scoped counts and keeps impacts distinct from unique population", async () => {

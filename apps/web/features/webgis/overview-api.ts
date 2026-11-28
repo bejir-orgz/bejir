@@ -18,12 +18,7 @@ export function emptyOverview(message = "Memuat data backend…"): WorkspaceData
     susceptibility: {
       label: "—",
       colors: ["#3CFF00", "#E1FF00", "#FFD000", "#FF6A00", "#FF0000"],
-      notes: [
-        "Kelas 1 s.d. 5 menyatakan Sangat Rendah hingga Sangat Tinggi.",
-        "Kelas wilayah memakai modus kelas dominan kecamatan berbobot n_piksel.",
-        "Fasilitas menghitung akumulasi kerusakan historis dan dapat mencakup fasilitas yang sama berulang kali.",
-        "Periode spasial belum tersedia.",
-      ],
+      notes: ["Memuat informasi kerawanan banjir…"],
     },
     facilities: [
       { id: "health", label: "Fasilitas Kesehatan", count: null },
@@ -39,6 +34,14 @@ export function emptyOverview(message = "Memuat data backend…"): WorkspaceData
 }
 
 type Period = { from: string; to: string };
+
+const susceptibilityMeaning = [
+  "Kondisi wilayah umumnya kurang mendukung terbentuknya genangan. Bagian yang rendah masih bisa tergenang saat hujan deras.",
+  "Wilayah ini umumnya kurang rentan, tetapi genangan masih bisa terbentuk di lokasi yang rendah atau datar.",
+  "Potensi genangan perlu diperhatikan, terutama di bagian wilayah yang rendah atau datar saat hujan deras.",
+  "Wilayah ini lebih rentan tergenang saat hujan deras, terutama di bagian yang rendah atau datar.",
+  "Wilayah ini termasuk yang paling rentan terhadap genangan. Bagian yang rendah perlu mendapat perhatian lebih saat hujan deras.",
+];
 
 /** by_year honours the date filter, so the newest recorded year needs one undated read. */
 async function latestRecordedPeriod(read: (range?: Period) => Promise<{ by_year: { year: number }[] }[]>, currentYear: string): Promise<Period> {
@@ -139,18 +142,27 @@ export async function getWorkspaceOverview(regionIds: string[], from: string, to
   if (previousResult.status === "rejected") overview.summary += " Perbandingan tahun sebelumnya gagal dimuat.";
   if (spatialResult.status === "rejected") overview.summary += " Parameter spasial gagal dimuat.";
   const classification = dominantClass(records);
-  overview.susceptibility.label = classification === null ? "—" : classLabels[classification - 1];
+  if (classification === null) {
+    overview.susceptibility.notes = ["Kerawanan banjir untuk wilayah ini belum dapat ditentukan dari data yang tersedia."];
+  } else {
+    overview.susceptibility.label = classLabels[classification - 1];
+    const notes = [susceptibilityMeaning[classification - 1]];
+    const formatValue = (value: number) => value.toLocaleString("id-ID", { maximumFractionDigits: 1 });
+    const proneArea = weightedMean(records, "pct_rawan_v2");
+    if (proneArea !== null && proneArea >= 0 && proneArea <= 100) {
+      notes.push(`Hasil pemetaan menunjukkan sekitar ${formatValue(proneArea)}% dari area yang dinilai termasuk area rawan banjir.`);
+    }
+    const heightAboveDrainage = weightedMean(records, "mean_hand_m");
+    const slope = weightedMean(records, "mean_slope_pct");
+    if (heightAboveDrainage !== null && heightAboveDrainage >= 0 && slope !== null && slope >= 0) {
+      notes.push(`Tanah rata-rata berada ${formatValue(heightAboveDrainage)} m di atas jalur aliran air, dengan kemiringan rata-rata ${formatValue(slope)}%. Air lebih mudah terkumpul di bagian yang rendah dan datar.`);
+    }
+    overview.susceptibility.notes = notes;
+  }
   const cover = [...new Set(records.map((row) => row.landcover_dominan).filter((value): value is string => Boolean(value)))];
   overview.landCover = cover.length ? cover.sort((a, b) => a.localeCompare(b, "id-ID")) : ["—"];
   const elevation = weightedMean(records, "mean_elevasi_m");
   if (elevation !== null) overview.elevation = elevation.toLocaleString("id-ID", { maximumFractionDigits: 1 }) + " meter";
-  const rainfall = records.length === 1 ? records[0].mean_hujan_mm : null;
-  if (rainfall != null) {
-    overview.susceptibility.notes.push(`Parameter rata-rata hujan kecamatan ${rainfall.toLocaleString("id-ID", { maximumFractionDigits: 1 })} mm. Periode belum tersedia.`);
-  } else if (records.some((row) => row.mean_hujan_mm == null)) {
-    overview.susceptibility.notes.push(`${records.filter((row) => row.mean_hujan_mm == null).length} kecamatan memiliki parameter hujan kosong.`);
-  }
-  overview.susceptibility.notes.push("Jumlah sungai menghitung rekaman segmen API yang berpotongan dengan wilayah, bukan sungai bernama unik. Segmen lintas kecamatan dihitung satu kali dalam cakupan pilihan.");
   if (riversResult.status === "rejected") overview.errors?.push("Ringkasan sungai gagal dimuat.");
   return overview;
 }
