@@ -271,24 +271,46 @@
 .heroFact small { display: flex; align-items: center; gap: 5px; margin-top: 5px; color: #475569; font-size: 11px; }
 
 .heroShore { position: absolute; z-index: 3; bottom: -1px; left: 0; width: 100%; height: 110px; pointer-events: none; }
-.riverContinuation { position: relative; padding: 0 24px; background: linear-gradient(180deg, #eaf4ff, #f5f9ff 65%, #fff); }
+.riverContinuation { position: relative; padding: 0 24px clamp(44px, 5vw, 72px); background: linear-gradient(180deg, #eaf4ff, #f5f9ff 65%, #fff); }
 
 .regionSummary {
   position: relative;
   z-index: 4;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.55fr);
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.3fr);
   gap: clamp(28px, 5vw, 56px);
+  align-items: center;
   max-width: 1112px;
   margin: -3px auto 0;
-  padding: clamp(24px, 4vw, 44px);
+  padding: clamp(24px, 4vw, 40px);
   border: 1px solid #cfe1f7;
   border-radius: 22px;
   background: #ffffff;
 }
 .regionSummary h2 { font-size: clamp(24px, 2.8vw, 34px); line-height: 1.15; letter-spacing: -.03em; }
-.regionSummaryHeading p { margin-top: 12px; color: #475569; font-size: 14px; line-height: 1.65; }
-.regionSummaryHeading a { display: inline-flex; align-items: center; gap: 5px; margin-top: 14px; color: #1d4ed8; font-size: 13px; font-weight: 500; text-decoration: underline; text-underline-offset: 3px; }
+.regionSummaryHeading > p { margin-top: 12px; color: #475569; font-size: 14px; line-height: 1.65; }
+
+.summaryMetrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 22px;
+  padding-top: 20px;
+  border-top: 1px solid #e2ecf7;
+}
+.summaryMetricItem { display: flex; flex-direction: column-reverse; gap: 4px; }
+.summaryMetricItem dd {
+  margin: 0;
+  color: #172554;
+  font-size: clamp(22px, 2.3vw, 28px);
+  font-weight: 600;
+  line-height: 1.05;
+  letter-spacing: -.04em;
+  font-variant-numeric: tabular-nums;
+}
+.summaryMetricItem dt { color: #475569; font-size: 12px; line-height: 1.35; }
+.summarySource { margin-top: 18px; color: #64748b; font-size: 12px; line-height: 1.6; }
+.summarySource a { display: inline-flex; align-items: center; gap: 3px; color: #1d4ed8; font-weight: 500; text-decoration: underline; text-underline-offset: 3px; }
 
 .regionList { list-style: none; margin: 0; padding: 0; }
 .regionList li { border-bottom: 1px solid #e2ecf7; }
@@ -315,83 +337,79 @@
 .regionBar > div { height: 100%; border-radius: inherit; }
 .regionBar span { display: block; height: 100%; border-radius: inherit; background: #2563eb; }
 
-.coverage { max-width: 1112px; margin: auto; padding: 32px 0; text-align: center; border-bottom: 1px solid #dce8f5; }
-.coverage > p { font-size: 13px; font-weight: 500; color: #475569; }
-.coverage > div { display: flex; justify-content: center; flex-wrap: wrap; gap: 12px 24px; margin-top: 14px; }
-.coverage a { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 8px 14px; border: 1px solid #dbe7f5; border-radius: 999px; background: #ffffff; color: #1e3a5f; font-size: 14px; font-weight: 500; transition: border-color 150ms ease, color 150ms ease, background-color 150ms ease, transform 150ms var(--ease-out-strong); }
-.coverage a:active { transform: scale(0.97); }
-.coverage svg { width: 19px; height: 19px; stroke-width: 1.75; color: #2563eb; }
+.section { max-width: 1160px; margin: auto; padding: clamp(56px, 6.5vw, 88px) 24px; scroll-margin-top: 30px; }
+.sectionHeading { max-width: 1112px; margin: 0 auto 32px; text-align: left; }
+.sectionHeading > p { margin-top: 12px; max-width: 580px; color: #475569; font-size: 15px; line-height: 1.7; }
+.cardIcon { display: inline-flex; justify-content: center; align-items: center; flex-shrink: 0; width: 42px; height: 42px; color: #2563eb; border: 1px solid #bfdbfe; border-radius: 12px; background: #eff6ff; }
 
-.section { max-width: 1160px; margin: auto; padding: clamp(64px, 7vw, 96px) 24px; scroll-margin-top: 30px; }
-.sectionHeading { max-width: 1112px; margin: 0 auto 36px; text-align: left; }
-.sectionHeading > p { margin-top: 14px; max-width: 620px; color: #475569; font-size: 15px; line-height: 1.7; }
-
-.riverContinuation .statsSection { max-width: 1112px; padding: 56px 0 64px; }
-.statsSection .sectionHeading { display: grid; grid-template-columns: 1.15fr 1fr; align-items: end; gap: 20px 56px; }
-.statsSection .sectionHeading > p { margin: 0; }
-.statsGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
-.statCard { padding: 28px; border: 1px solid #d5e4f5; border-radius: 18px; background: #ffffff; transition: transform 180ms var(--ease-out-strong), border-color 180ms ease; }
-.cardIcon { display: inline-flex; justify-content: center; align-items: center; flex-shrink: 0; width: 44px; height: 44px; color: #2563eb; border: 1px solid #dbeafe; border-radius: 12px; background: #eff6ff; }
-.statCard > strong { display: block; color: #172554; font-size: clamp(36px, 4vw, 50px); font-weight: 600; line-height: 1; letter-spacing: -.05em; font-variant-numeric: tabular-nums; margin-top: 26px; }
-.statCard h3 { margin-top: 12px; color: #172554; font-size: 16px; font-weight: 600; }
-.statCard > p { color: #475569; font-size: 14px; margin-top: 6px; line-height: 1.65; }
-.statLine { height: 4px; margin-top: 24px; background: #dbeafe; border-radius: 10px; overflow: hidden; }
-.statLine span { display: block; width: 100%; height: 100%; background: #2563eb; }
-.sourceNote { margin: 22px auto 0; text-align: center; font-size: 12px; color: #475569; line-height: 1.7; }
-.sourceNote a { display: inline; color: #1d4ed8; font-weight: 500; text-underline-offset: 3px; }
-.sourceNote a:hover { text-decoration: underline; }
-.sourceNote svg { display: inline; vertical-align: middle; }
-
-/* Scroll-Driven Sticky 3D Watershed Flyover (#tentang) */
-.watershedSection { padding-block: clamp(64px, 7vw, 96px); }
+/* Pinned Full-Section 3D Panduan Cara Pakai (#cara-kerja) */
+.watershedTrack {
+  position: relative;
+  height: clamp(2200px, 280vh, 2700px);
+  scroll-margin-top: 0 !important;
+}
+.watershedStickyFrame {
+  position: sticky;
+  top: 0;
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  padding: 96px 24px 24px;
+}
+.watershedInner {
+  max-width: 1112px;
+  width: 100%;
+  margin: 0 auto;
+}
 .watershedHeader {
   display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
-  gap: 20px 56px;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: 12px 48px;
   align-items: end;
-  margin-bottom: 36px;
+  margin-bottom: 20px;
 }
+.watershedHeader h2 { font-size: clamp(26px, 2.8vw, 36px); }
 .watershedEyebrow {
-  margin-bottom: 10px;
+  margin-bottom: 6px;
   font-size: 12px;
   font-weight: 600;
   letter-spacing: .04em;
   color: #1d4ed8;
 }
-.watershedIntro { color: #475569; font-size: 15px; line-height: 1.7; }
+.watershedIntro { color: #475569; font-size: 14.5px; line-height: 1.6; }
 .watershedGrid {
   display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
-  gap: clamp(24px, 4vw, 48px);
-  align-items: start;
+  grid-template-columns: minmax(0, 1.22fr) minmax(0, 1fr);
+  gap: clamp(24px, 3.6vw, 42px);
+  align-items: stretch;
 }
-.watershedStickyCol { position: sticky; top: 104px; }
+.watershedStageCol { min-width: 0; display: flex; }
 .watershedStageCard {
+  width: 100%;
   border: 1px solid #cfe0f5;
   border-radius: 22px;
   background: #ffffff;
   overflow: hidden;
 }
-.watershedStageBar {
-  display: flex;
+.watershedStepPills {
+  pointer-events: auto;
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 12px 16px;
-  border-bottom: 1px solid #e2ecf7;
-  background: #ffffff;
+  gap: 3px;
+  padding: 3px;
+  border: 1px solid #cbdcf2;
+  border-radius: 999px;
+  background: #fffffff2;
 }
-.watershedStageLabel { font-size: 12px; font-weight: 600; color: #172554; }
-.watershedStepPills { display: inline-flex; align-items: center; gap: 4px; padding: 3px; border-radius: 10px; background: #f1f5f9; }
 .watershedStepPill {
-  min-width: 32px;
-  height: 28px;
+  min-width: 28px;
+  height: 26px;
   padding: 0 8px;
   border: 0;
-  border-radius: 8px;
+  border-radius: 999px;
   background: transparent;
   color: #475569;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   cursor: pointer;
@@ -399,31 +417,384 @@
 }
 .watershedStepPill:active { transform: scale(0.96); }
 .watershedStepPill[data-active=true] { background: #2563eb; color: #ffffff; }
-.watershedDiorama { aspect-ratio: 5 / 4; }
 
-.watershedStops { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 20px; }
-.watershedStop { min-height: 210px; display: flex; align-items: center; }
+.watershedStops {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+}
+.watershedStop { display: flex; }
 .watershedStopButton {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
   width: 100%;
   text-align: left;
-  padding: 24px 26px;
-  border: 1px solid #d8e5f5;
-  border-radius: 18px;
+  padding: 13px 16px;
+  border: 1px solid #dce7f5;
+  border-radius: 16px;
   background: #f8fbff;
   cursor: pointer;
-  transition: border-color 180ms ease, background-color 180ms ease, transform 160ms var(--ease-out-strong);
+  transition: border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease, transform 160ms var(--ease-out-strong);
 }
 .watershedStopButton:active { transform: scale(0.99); }
 .watershedStop[data-active=true] .watershedStopButton {
   border-color: #2563eb;
   background: #ffffff;
-  box-shadow: 0 12px 28px #1725540d;
+  box-shadow: 0 10px 24px #1725540a;
 }
-.watershedStopTag { display: inline-block; font-size: 12px; font-weight: 600; color: #1d4ed8; }
-.watershedStopButton h3 { margin-top: 8px; color: #172554; font-size: 20px; line-height: 1.28; font-weight: 600; letter-spacing: -.02em; }
-.watershedStopButton p { margin-top: 10px; color: #334155; font-size: 14px; line-height: 1.7; }
-.watershedStopButton small { display: block; margin-top: 12px; color: #475569; font-size: 12px; line-height: 1.5; }
-.watershedFooterCta { padding-top: 4px; }
+.watershedStopNum {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: #e7f0fd;
+  color: #1d4ed8;
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  transition: background-color 180ms ease, color 180ms ease;
+}
+.watershedStop[data-active=true] .watershedStopNum { background: #2563eb; color: #ffffff; }
+.watershedStopButton h3 { color: #172554; font-size: 15.5px; line-height: 1.25; font-weight: 600; letter-spacing: -.02em; }
+.watershedStopButton p { margin-top: 4px; color: #475569; font-size: 13px; line-height: 1.5; }
+.watershedFooterCta { padding-top: 2px; }
+.watershedFooterCta .textLink { min-height: 36px; margin-top: 0; }
+
+/* Realistic Miniature SIBAJAWA WebGIS 3D Tutorial Stage */
+.tutorialViewport {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: clamp(360px, calc(100svh - 260px), 465px);
+  background: #f4f8fd;
+  overflow: hidden;
+  --tutorial-state: paused;
+}
+.tutorialViewport[data-ambient=running] { --tutorial-state: running; }
+.tutorialTopBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 40px;
+  padding: 5px 12px;
+  border-bottom: 1px solid #e2ecf7;
+  background: #ffffff;
+  font-size: 11px;
+  color: #334155;
+  flex-shrink: 0;
+}
+.tutorialBrandPill {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+.tutorialBrandLogo {
+  display: block;
+  width: auto;
+  height: 20px;
+}
+.tutorialRouteTabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.tutorialRouteTabs span {
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 500;
+  color: #64748b;
+}
+.tutorialRouteTabs span[data-active=true] {
+  background: #2563eb;
+  color: #ffffff;
+  font-weight: 600;
+}
+.tutorialMapArea {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.tutorialDioramaFill { width: 100%; height: 100%; }
+
+.tutorialMapHudTop {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  pointer-events: none;
+}
+.tutorialToolPills {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+}
+.tutorialToolPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 9px;
+  border: 1px solid #93c5fd;
+  border-radius: 999px;
+  background: #fffffff5;
+  color: #1d4ed8;
+  font-size: 10.5px;
+  font-weight: 600;
+  transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease;
+}
+.tutorialToolPill[data-active=true] {
+  border-color: #2563eb;
+  background: #2563eb;
+  color: #ffffff;
+}
+.tutorialDrawerToggle {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border: 1px solid #93c5fd;
+  border-radius: 8px;
+  background: #fffffff5;
+  color: #1d4ed8;
+}
+.tutorialDrawerToggle[data-active=true] {
+  border-color: #2563eb;
+  background: #2563eb;
+  color: #ffffff;
+}
+.tutorialBlueIcon { color: #2563eb; flex-shrink: 0; }
+
+.tutorialSearchCard, .tutorialSimCard, .tutorialEvacCard {
+  position: absolute;
+  left: 12px;
+  bottom: 46px;
+  z-index: 4;
+  width: min(226px, calc(100% - 24px));
+  padding: 10px 12px;
+  border: 1px solid #93c5fd;
+  border-radius: 14px;
+  background: #fffffff5;
+  box-shadow: 0 10px 24px #17255414;
+}
+.tutorialSearchInput {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border: 1px solid #2563eb;
+  border-radius: 999px;
+  background: #f8fbff;
+  font-size: 11px;
+  font-weight: 600;
+  color: #172554;
+}
+.tutorialCaret {
+  width: 1.5px;
+  height: 12px;
+  background: #2563eb;
+  animation: tutorialBlink 1s steps(2) infinite;
+  animation-play-state: var(--tutorial-state);
+}
+.tutorialSearchHit {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 7px;
+  padding: 6px 9px;
+  border-radius: 10px;
+  background: #eff6ff;
+}
+.tutorialSearchHit strong { font-size: 11px; font-weight: 600; color: #172554; }
+.tutorialSearchHit span { font-size: 10px; color: #475569; font-variant-numeric: tabular-nums; }
+
+.tutorialSimHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #334155;
+}
+.tutorialSimHead strong { color: #2563eb; font-weight: 700; font-variant-numeric: tabular-nums; }
+.tutorialSimRange {
+  display: block;
+  width: 100%;
+  height: 6px;
+  margin: 8px 0 6px;
+  cursor: pointer;
+  accent-color: #2563eb;
+}
+.tutorialSimCard small { display: block; font-size: 10px; color: #64748b; }
+
+.tutorialEvacCard { display: flex; flex-direction: column; gap: 6px; }
+.tutorialEvacRow { display: flex; align-items: center; gap: 7px; font-size: 11px; color: #334155; }
+.tutorialEvacRow strong { color: #172554; font-weight: 600; font-variant-numeric: tabular-nums; }
+.tutorialEvacDotDanger, .tutorialEvacDotSafe {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+.tutorialEvacDotDanger { background: #fee2e2; color: #dc2626; }
+.tutorialEvacDotSafe { background: #dcfce7; color: #15803d; }
+.tutorialEvacBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.tutorialAjiDrawer {
+  position: absolute;
+  top: 44px;
+  right: 10px;
+  bottom: 46px;
+  z-index: 4;
+  width: min(230px, calc(100% - 20px));
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 10px;
+  border: 1px solid #93c5fd;
+  border-radius: 14px;
+  background: #fffffff7;
+  box-shadow: 0 10px 24px #17255414;
+}
+.tutorialSegment {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 3px;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  background: #eff6ff;
+}
+.tutorialSegment span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 22px;
+  border-radius: 7px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #475569;
+}
+.tutorialSegment span[data-active=true] { background: #2563eb; color: #ffffff; }
+.tutorialChatQ {
+  padding: 7px 9px;
+  border-radius: 10px;
+  background: #eff6ff;
+  color: #172554;
+  font-size: 10.5px;
+  line-height: 1.4;
+  font-weight: 500;
+}
+.tutorialChatA {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 9px;
+  border: 1px solid #e2ecf7;
+  border-radius: 10px;
+  background: #ffffff;
+}
+.tutorialChatA p { font-size: 10.5px; line-height: 1.45; color: #334155; }
+.tutorialSourceChips { display: flex; flex-wrap: wrap; gap: 4px; }
+.tutorialSourceChips span {
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 9.5px;
+  font-weight: 600;
+}
+
+.tutorialBottomBar {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  pointer-events: none;
+}
+.tutorialBottomRight {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.tutorialModeChip {
+  padding: 4px 9px;
+  border: 1px solid #bfdbfe;
+  border-radius: 999px;
+  background: #fffffff2;
+  color: #1d4ed8;
+  font-size: 10.5px;
+  font-weight: 600;
+}
+.tutorialStepCaption {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  background: #ffffffeb;
+  color: #334155;
+  font-size: 11px;
+  font-weight: 500;
+}
+.tutorialPauseBtn {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 28px;
+  padding: 4px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  background: #ffffffeb;
+  color: #1e293b;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 150ms ease, transform 150ms var(--ease-out-strong);
+}
+.tutorialPauseBtn:active { transform: scale(0.97); }
+
+@keyframes tutorialBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
 
 /* Shared 3D WebGL Diorama Viewport & Projected Overlays */
 .dioramaViewport {
@@ -531,186 +902,84 @@
 .dioramaFallback p { font-size: 14px; font-weight: 600; }
 .dioramaFallback span { font-size: 12px; color: #475569; max-width: 340px; }
 
-.textLink { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; margin-top: 20px; font-size: 14px; color: #1d4ed8; font-weight: 600; }
+.textLink { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; margin-top: 4px; font-size: 14px; color: #1d4ed8; font-weight: 600; }
 
-.features { max-width: none; background: #f0f6ff; border-block: 1px solid #dce8f6; }
+/* Streamlined Workspace Showcase (#fitur — seamless blend into CTA & footer) */
+.features {
+  max-width: none;
+  background: linear-gradient(180deg, #ffffff 0%, #f4f8ff 16%, #f4f8ff 72%, #ffffff 100%);
+}
 .featuresInner { max-width: 1112px; margin: 0 auto; }
 
-/* Interactive Atlas Preview Workbench */
-.atlasWorkbench {
-  border: 1px solid #cfe0f5;
-  border-radius: 22px;
-  background: #ffffff;
-  padding: clamp(16px, 2.5vw, 24px);
+.workspaceGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: 20px;
+  align-items: stretch;
 }
-.atlasTabs {
-  position: relative;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding-bottom: 18px;
-  border-bottom: 1px solid #e2ecf7;
-}
-.atlasActivePill {
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 0;
-  border-radius: 12px;
-  background: #2563eb;
-  pointer-events: none;
-  transition: transform 220ms var(--ease-out-strong), width 220ms var(--ease-out-strong), height 220ms var(--ease-out-strong);
-  will-change: transform, width;
-}
-.atlasTab {
-  position: relative;
-  z-index: 1;
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  min-height: 40px;
-  padding: 8px 13px;
-  border: 1px solid #d5e3f4;
-  border-radius: 12px;
-  background: #f8fbff;
-  color: #334155;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: color 180ms var(--ease-out-strong), border-color 180ms var(--ease-out-strong), background-color 180ms var(--ease-out-strong), transform 150ms var(--ease-out-strong);
-}
-.atlasTab:active { transform: scale(0.97); }
-.atlasTab[data-active=true] {
-  background: transparent;
-  border-color: transparent;
-  color: #ffffff;
-}
-.atlasTabIcon { display: inline-flex; align-items: center; }
-.atlasDiorama { aspect-ratio: 16 / 10; }
-.atlasFloodBar {
-  padding: 12px 14px;
-  border-top: 1px solid #e1ebf7;
-  background: #ffffff;
+.workspaceLead {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-}
-.atlasFloodRow { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; color: #334155; }
-.atlasFloodRow strong { color: #172554; font-weight: 600; font-variant-numeric: tabular-nums; }
-.atlasFloodPresets { display: inline-flex; align-items: center; gap: 4px; }
-.atlasFloodPreset {
-  height: 26px;
-  padding: 0 9px;
-  border: 0;
-  border-radius: 7px;
-  background: #f1f5f9;
-  color: #334155;
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 150ms ease, color 150ms ease;
-}
-.atlasFloodPreset[data-active=true] { background: #172554; color: #ffffff; }
-.atlasFloodSlider { width: 100%; height: 6px; cursor: pointer; accent-color: #2563eb; }
-
-.atlasStage {
-  display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
-  gap: clamp(20px, 3vw, 32px);
-  padding-top: 20px;
-  align-items: center;
-}
-.atlasCanvasWrap {
-  border: 1px solid #d8e5f5;
-  border-radius: 16px;
-  overflow: hidden;
-  background: #f4f8fd;
-}
-.atlasCanvasBar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 10px 14px;
-  border-bottom: 1px solid #e1ebf7;
+  padding: clamp(24px, 3vw, 34px);
+  border: 1px solid #93c5fd;
+  border-radius: 22px;
   background: #ffffff;
 }
-.atlasTag {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: #334155;
-  font-size: 12px;
-  font-weight: 500;
-}
-.atlasPauseBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  min-height: 30px;
-  padding: 4px 10px;
-  border: 1px solid #cbd5e1;
+.workspaceLead h3 { margin-top: 20px; color: #172554; font-size: clamp(22px, 2.4vw, 28px); line-height: 1.2; font-weight: 600; letter-spacing: -.03em; }
+.workspaceLead > p { margin-top: 10px; color: #475569; font-size: 14.5px; line-height: 1.65; }
+.workspacePills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+.workspacePills span {
+  padding: 5px 12px;
+  border: 1px solid #bfdbfe;
   border-radius: 999px;
-  background: #f8fafc;
-  color: #1e293b;
-  font-size: 11px;
-  font-weight: 500;
-  cursor: pointer;
-}
-.atlasSvg { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; }
-
-.atlasDetails { display: flex; flex-direction: column; gap: 12px; }
-.atlasScopeBadge {
-  width: fit-content;
-  padding: 4px 10px;
-  border-radius: 8px;
-  background: #eff6ff;
+  background: #f8fbff;
   color: #1d4ed8;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
 }
-.atlasDetails h3 { color: #172554; font-size: 22px; line-height: 1.25; font-weight: 600; letter-spacing: -.025em; }
-.atlasDetails > p { color: #475569; font-size: 14px; line-height: 1.7; }
-.atlasLegendBox {
-  margin-top: 4px;
-  padding: 14px 16px;
-  border: 1px solid #e2ecf7;
-  border-radius: 14px;
-  background: #f8fbff;
+.workspaceLeadAction { margin-top: auto; padding-top: 24px; }
+.workspaceLeadAction a { border-radius: 999px; padding-inline: 22px; }
+
+.workspaceCompanions { display: flex; flex-direction: column; gap: 14px; }
+.workspaceCard {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 22px;
+  border: 1px solid #d5e4f5;
+  border-radius: 18px;
+  background: #ffffff;
+  transition: border-color 170ms ease, transform 160ms var(--ease-out-strong);
 }
-.atlasLegendBox h4 { color: #1e3a5f; font-size: 12px; font-weight: 600; margin-bottom: 10px; }
-.atlasLegendBox ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
-.atlasLegendBox li { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #475569; }
-.atlasLegendBox li strong { color: #172554; font-weight: 600; }
-.atlasLegendBox li span:last-child { margin-left: auto; text-align: right; }
-.atlasSwatch { width: 14px; height: 14px; border-radius: 4px; flex-shrink: 0; border: 1px solid #0000001a; }
-.atlasCtaRow { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin-top: 6px; }
-.atlasSecondaryLink { display: inline-flex; align-items: center; gap: 5px; min-height: 40px; color: #1d4ed8; font-size: 13px; font-weight: 600; }
-
-.mapFootnote { display: flex; align-items: start; justify-content: center; gap: 8px; max-width: 780px; margin: 20px auto 0; color: #475569; font-size: 12px; line-height: 1.65; text-align: center; }
-.mapFootnote svg { flex-shrink: 0; margin-top: 3px; color: #2563eb; }
-
-.workflow { display: grid; grid-template-columns: 1fr 1.1fr; align-items: center; gap: 64px; }
-.workflow > div > p { max-width: 380px; margin-top: 16px; font-size: 15px; color: #475569; line-height: 1.75; }
-.workflow ol { list-style: none; margin: 0; padding: 8px 24px; border: 1px solid #d5e4f5; border-radius: 20px; background: #f8fbff; }
-.workflow li { display: flex; gap: 18px; padding: 24px 0; border-bottom: 1px solid #e2ecf7; }
-.workflow li:last-child { border: 0; }
-.workflow li > span { flex-shrink: 0; display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid #bfdbfe; border-radius: 10px; background: #eff6ff; color: #1d4ed8; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
-.workflow h3 { margin: 2px 0 6px; color: #172554; font-size: 17px; font-weight: 600; }
-.workflow li p { font-size: 14px; color: #475569; line-height: 1.65; }
+.workspaceCard:active { transform: scale(0.99); }
+.workspaceCardIcon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border: 1px solid #dbeafe;
+  border-radius: 12px;
+  background: #eff6ff;
+  color: #2563eb;
+}
+.workspaceCardBody { min-width: 0; flex: 1; }
+.workspaceCardBody h3 { color: #172554; font-size: 16px; font-weight: 600; line-height: 1.3; }
+.workspaceCardBody p { margin-top: 4px; color: #475569; font-size: 13.5px; line-height: 1.55; }
+.workspaceCardArrow { flex-shrink: 0; color: #64748b; transition: color 150ms ease, transform 160ms var(--ease-out-strong); }
 
 .landscape { position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; background: linear-gradient(#fff 10%, #fff0 60%, #eff6ff); }
 .landscape svg { position: absolute; bottom: 0; width: 100%; height: 520px; }
 .cloud { position: absolute; top: 13%; left: -6%; width: 250px; height: 80px; border-radius: 50%; background: radial-gradient(ellipse, #dbeafe99, #eff6ff88 45%, transparent 70%); filter: blur(15px); animation: cloudDrift 14s ease-in-out infinite alternate; }
 .cloud:nth-child(2) { left: auto; right: -3%; top: 20%; width: 300px; animation-delay: -7s; }
 
-.ctaSection { position: relative; isolation: isolate; padding: 32px 24px 148px; }
+.ctaSection { position: relative; isolation: isolate; padding: clamp(56px, 6vw, 88px) 24px 132px; }
 .ctaSection .landscape { bottom: -160px; }
 .ctaSection .landscape svg { bottom: -28px; height: 538px; }
 .ctaSection .cloud { display: none; }
-.ctaCard { max-width: 720px; margin: auto; padding: 44px; border: 1px solid #d5e4f5; border-radius: 24px; background: #ffffff; text-align: left; }
-.ctaCard h2 { font-size: clamp(26px, 3.1vw, 38px); }
-.ctaCard > p { margin: 14px 0 26px; color: #475569; font-size: 15px; line-height: 1.7; }
+.ctaCard { max-width: 720px; margin: auto; padding: 40px; border: 1px solid #d5e4f5; border-radius: 24px; background: #ffffff; text-align: left; }
+.ctaCard h2 { font-size: clamp(26px, 3.1vw, 36px); }
+.ctaCard > p { margin: 12px 0 24px; color: #475569; font-size: 15px; line-height: 1.65; }
 .ctaActions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 .ctaSecondaryBtn { padding-inline: 20px; background: #ffffff; }
 
@@ -725,11 +994,10 @@
   .heroAmbientToggle:hover { background: #ffffff; }
   .regionLink:hover { background: #f4f8ff; }
   .regionLink:hover .regionJump { opacity: 1; transform: translateX(0); }
-  .coverage a:hover { border-color: #93c5fd; background: #eff6ff; color: #1d4ed8; }
-  .statCard:hover { transform: translateY(-3px); border-color: #93c5fd; }
-  .atlasTab:not([data-active=true]):hover { border-color: #93c5fd; background: #eff6ff; color: #1d4ed8; }
   .watershedStop:not([data-active=true]) .watershedStopButton:hover { border-color: #93c5fd; background: #ffffff; }
-  .dioramaPauseBtn:hover { background: #ffffff; }
+  .tutorialPauseBtn:hover, .dioramaPauseBtn:hover { background: #ffffff; }
+  .workspaceCard:hover { border-color: #2563eb; transform: translateY(-2px); }
+  .workspaceCard:hover .workspaceCardArrow { color: #2563eb; transform: translate(2px, -2px); }
 }
 
 @keyframes enter { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
@@ -741,11 +1009,11 @@
 }
 
 @media (max-width: 1000px) {
-  .watershedHeader, .watershedGrid, .workflow, .atlasStage { grid-template-columns: 1fr; gap: 28px; }
-  .watershedStickyCol { position: relative; top: auto; }
-  .watershedStop { min-height: auto; }
-  .statsSection .sectionHeading { grid-template-columns: 1fr; gap: 14px; }
-  .statsGrid { grid-template-columns: repeat(2, 1fr); }
+  .regionSummary, .watershedHeader, .watershedGrid, .workspaceGrid { grid-template-columns: 1fr; gap: 24px; }
+  .watershedTrack { height: auto; scroll-margin-top: 96px !important; }
+  .watershedStickyFrame { position: relative; top: auto; min-height: auto; display: block; padding: 56px 24px; }
+  .watershedStops { gap: 12px; }
+  .tutorialViewport { height: auto; min-height: 360px; aspect-ratio: 4 / 3; }
 }
 
 @media (max-width: 760px) {
@@ -761,37 +1029,28 @@
   .heroPhaseBtn { min-height: 36px; padding: 6px 10px; font-size: 11px; }
   .heroAmbientToggle { min-height: 42px; padding: 6px 11px; font-size: 11px; }
   .heroShore { height: 88px; }
-  .riverContinuation { padding-inline: 16px; }
-  .regionSummary { grid-template-columns: minmax(0, 1fr); gap: 20px; padding: 22px 18px; border-radius: 18px; }
-  .coverage { padding-block: 24px; }
-  .coverage > div { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-  .coverage a { justify-content: center; font-size: 12px; padding-inline: 10px; }
-  .section { padding: 56px 20px; }
-  .riverContinuation .statsSection { padding-block: 42px 32px; }
-  .statsGrid { grid-template-columns: 1fr; gap: 14px; }
-  .statCard { position: relative; padding: 22px; }
-  .statCard > .cardIcon { position: absolute; top: 22px; right: 22px; }
-  .statCard > strong { margin-top: 0; padding-right: 54px; font-size: clamp(32px, 9vw, 44px); }
-  .atlasTabs { overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; padding-bottom: 14px; }
-  .atlasTab { flex-shrink: 0; }
-  .watershedStopButton { padding: 18px; }
-  .watershedDiorama { aspect-ratio: 4 / 3; }
-  .atlasDiorama { aspect-ratio: 4 / 3; }
-  .atlasLegendBox li { flex-wrap: wrap; }
-  .atlasLegendBox li span:last-child { margin-left: 22px; width: 100%; text-align: left; }
-  .mapFootnote { text-align: left; }
-  .workflow ol { padding-inline: 16px; }
-  .workflow li { gap: 12px; padding-block: 20px; }
-  .ctaSection { padding: 24px 16px 110px; }
+  .riverContinuation { padding: 0 16px 36px; }
+  .regionSummary { gap: 20px; padding: 22px 18px; border-radius: 18px; }
+  .summaryMetrics { gap: 10px; }
+  .section { padding: 48px 20px; }
+  .watershedStepPill { min-width: 26px; padding: 0 6px; }
+  .watershedStopButton { padding: 16px; }
+  .tutorialViewport { aspect-ratio: 4 / 3; min-height: 290px; }
+  .tutorialRouteTabs, .tutorialModeChip { display: none; }
+  .tutorialToolPills { flex-wrap: nowrap; gap: 4px; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+  .tutorialToolPill { flex-shrink: 0; gap: 3px; padding: 3px 6px; font-size: 9px; }
+  .tutorialAjiDrawer { top: 40px; width: min(212px, calc(100% - 20px)); }
+  .workspaceCard { padding: 16px 18px; }
+  .ctaSection { padding: 24px 16px 104px; }
   .ctaCard { padding: 28px 22px; }
   .footer { gap: 12px; padding: 18px 22px; border-radius: 24px; }
   .footer > a:last-child { flex-basis: 100%; margin-left: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .heroScrollTrack { height: auto; }
-  .heroSticky { position: relative; }
-  .heroContent, .heroSunPulse, .heroSunBeamA, .heroSunBeamB, .heroCloudBankDrift, .heroSvgCloudA, .heroSvgCloudB, .heroSvgCloudC, .heroValleyMist, .heroValleyMistB, .heroBirdGlideA, .heroBirdGlideB, .heroBirdGlideC, .heroBirdFlapA, .heroBirdFlapB, .heroBirdFlapC, .heroVillageWispA, .heroVillageWispB, .heroBambooSway, .heroBushLeftSway, .heroBananaSway, .heroPalmRightSway, .heroPalmLeftSway, .heroRiverCurrentA, .heroRiverCurrentB, .heroRiverCurrentC, .heroWaterGlintA, .heroWaterGlintB, .heroWaterGlintC, .heroBoulderRippleA, .heroBoulderRippleB, .heroBoulderRippleC, .heroRiverFoam, .heroRainDropA, .heroRainDropB, .heroRainDropC, .heroScrollCueIcon, .cloud, .ctaSection .landscape svg { animation: none !important; }
-  .heroArt, .atlasActivePill { transition: none !important; }
-  .heroAmbientToggle, .heroScrollCue, .dioramaPauseBtn { display: none; }
+  .heroScrollTrack, .watershedTrack { height: auto; }
+  .heroSticky, .watershedStickyFrame { position: relative; min-height: auto; }
+  .heroContent, .heroSunPulse, .heroSunBeamA, .heroSunBeamB, .heroCloudBankDrift, .heroSvgCloudA, .heroSvgCloudB, .heroSvgCloudC, .heroValleyMist, .heroValleyMistB, .heroBirdGlideA, .heroBirdGlideB, .heroBirdGlideC, .heroBirdFlapA, .heroBirdFlapB, .heroBirdFlapC, .heroVillageWispA, .heroVillageWispB, .heroBambooSway, .heroBushLeftSway, .heroBananaSway, .heroPalmRightSway, .heroPalmLeftSway, .heroRiverCurrentA, .heroRiverCurrentB, .heroRiverCurrentC, .heroWaterGlintA, .heroWaterGlintB, .heroWaterGlintC, .heroBoulderRippleA, .heroBoulderRippleB, .heroBoulderRippleC, .heroRiverFoam, .heroRainDropA, .heroRainDropB, .heroRainDropC, .heroScrollCueIcon, .tutorialCaret, .cloud, .ctaSection .landscape svg { animation: none !important; }
+  .heroArt { transition: none !important; }
+  .heroAmbientToggle, .heroScrollCue, .tutorialPauseBtn, .dioramaPauseBtn { display: none; }
 }

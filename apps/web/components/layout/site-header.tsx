@@ -10,9 +10,9 @@ import { Button } from "@/components/ui/button";
 import styles from "./site-header.module.css";
 
 const navigation = [
-  { href: "#tentang", label: "Tentang SIBAJAWA" },
+  { href: "#fakta-banjir", label: "Data" },
+  { href: "#cara-kerja", label: "Cara pakai" },
   { href: "#fitur", label: "Fitur" },
-  { href: "#cara-kerja", label: "Cara kerja" },
 ];
 
 function subscribeToHash(callback: () => void) {

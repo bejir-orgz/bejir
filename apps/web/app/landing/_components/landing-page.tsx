@@ -1,26 +1,51 @@
 import Link from "next/link";
-import { IconArrowDown, IconArrowUpRight, IconCloudRain, IconLayersIntersect, IconMap2, IconRoute, IconShieldCheck } from "@tabler/icons-react";
+import {
+  IconArrowDown,
+  IconArrowUpRight,
+  IconChartBar,
+  IconCloudRain,
+  IconHistory,
+  IconMap2,
+} from "@tabler/icons-react";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SibajwaBrand } from "@/components/shared/sibajwa-brand";
 import { Button } from "@/components/ui/button";
-import { AnimatedNumber, HeroWeatherStage, LandingNavbar, LandingMotion, MotionDataBar, MotionProgress, MotionReveal } from "./landing-motion";
-import { InteractiveAtlasPreview, InteractiveFloodRanking } from "./interactive-atlas-preview";
+import { AnimatedNumber, HeroWeatherStage, LandingNavbar, LandingMotion, MotionProgress, MotionReveal } from "./landing-motion";
+import { InteractiveFloodRanking } from "./flood-ranking-list";
 import { WatershedScrollStage } from "./watershed-scroll-stage";
 import { floodRankingSource } from "./flood-data";
 import styles from "./landing.module.css";
 
-const steps = [
-  { title: "Pilih wilayah pada peta 3D berkontur", text: "Cari kabupaten, kota, atau kecamatan untuk melihat batas administrasi, kontur elevasi, bangunan 3D, dan periode pengamatan." },
-  { title: "Bandingkan layer hidrologi & simulasi DEM", text: "Nyalakan curah hujan, jaringan sungai, kerawanan, atau jalankan simulasi edukatif banjir DEM dan longsor lereng langsung di atas peta." },
-  { title: "Cari titik evakuasi aman & baca sumbernya", text: "Klik titik di peta untuk mencari rute atau titik evakuasi aman terdekat serta pelajari catatan metode di panel ringkasan." },
-];
-
 const floodSource = "https://bnpb.go.id/storage/app/media/Buletin%20Info%20Bencana/Buku%20Data%20Bencana%202024/20250613_Buku%20Data%202024.pdf#page=142";
-const floodStats = [
-  { value: 143, label: "kejadian banjir tercatat", detail: "Sepanjang Januari s.d. Desember 2024 di Jawa Barat", icon: IconCloudRain },
-  { value: 483117, label: "jiwa mengungsi & terdampak", detail: "Akumulasi warga terdampak dalam catatan BNPB 2024", icon: IconShieldCheck },
-  { value: 115820, label: "unit rumah terendam", detail: "Dampak permukiman akibat kejadian banjir selama 2024", icon: IconMap2 },
-];
+
+const impactMetrics = [
+  { value: 143, label: "kejadian banjir" },
+  { value: 483117, label: "warga terdampak" },
+  { value: 115820, label: "rumah terendam" },
+] as const;
+
+const mapToolPills = ["Daerah", "Timeline", "Legenda", "Simulasi", "Layer", "2D / 3D"] as const;
+
+const companionModules = [
+  {
+    href: "/histori-banjir",
+    title: "Histori Banjir",
+    text: "Tren kejadian bulanan, dampak rumah, dan tabel riwayat per kabupaten/kota.",
+    icon: IconHistory,
+  },
+  {
+    href: "/curah-hujan",
+    title: "Curah Hujan",
+    text: "Grafik intensitas hujan bulanan dan klasifikasi tahunan 27 wilayah Jawa Barat.",
+    icon: IconCloudRain,
+  },
+  {
+    href: "/analisis",
+    title: "Analisis Wilayah",
+    text: "Peringkat kelas kerawanan AHP 5 parameter serta daftar fasilitas terdampak.",
+    icon: IconChartBar,
+  },
+] as const;
 
 function Landscape() {
   return (
@@ -65,93 +90,83 @@ export function LandingPage() {
           </div>
         </HeroWeatherStage>
 
-        <div className={styles.riverContinuation}>
+        <section id="fakta-banjir" className={styles.riverContinuation} aria-label="Catatan dampak banjir Jawa Barat 2024">
           <MotionReveal className={styles.regionSummary}>
             <div className={styles.regionSummaryHeading}>
-              <h2>5 daerah dengan kejadian banjir terbanyak</h2>
-              <p>Pilih salah satu wilayah untuk langsung membuka batas administrasi dan ringkasannya pada Map Interaktif. Data catatan Januari s.d. Desember 2024.</p>
-              <a href={floodRankingSource} target="_blank" rel="noreferrer">
-                BNPB · Buku Data Bencana 2024, Tabel L5, hlm. 128 sampai 129 <IconArrowUpRight size={14} aria-hidden="true" />
-              </a>
+              <h2>Catatan banjir Jawa Barat 2024</h2>
+              <p>Pilih salah satu dari 5 kabupaten dengan kejadian terbanyak untuk langsung membuka batas wilayah dan ringkasannya di Map Interaktif.</p>
+
+              <dl className={styles.summaryMetrics}>
+                {impactMetrics.map(({ value, label }, i) => (
+                  <div key={label} className={styles.summaryMetricItem}>
+                    <dt>{label}</dt>
+                    <dd><AnimatedNumber value={value} delay={i * 0.06} /></dd>
+                  </div>
+                ))}
+              </dl>
+
+              <p className={styles.summarySource}>
+                Data historis Januari s.d. Desember 2024, bukan peringatan bencana aktif.{" "}
+                <a href={floodRankingSource} target="_blank" rel="noreferrer">
+                  Sumber: BNPB 2024 <IconArrowUpRight size={13} aria-hidden="true" />
+                </a>
+              </p>
             </div>
             <InteractiveFloodRanking />
           </MotionReveal>
-
-          <section className={styles.coverage} aria-label="Cakupan informasi">
-            <p>Empat dimensi data geospasial yang terhubung dalam satu ruang kerja</p>
-            <div>
-              <Link href="/histori-banjir"><IconMap2 aria-hidden="true" />Riwayat banjir</Link>
-              <Link href="/curah-hujan"><IconCloudRain aria-hidden="true" />Curah hujan</Link>
-              <Link href="/analisis"><IconLayersIntersect aria-hidden="true" />Kerawanan & medan</Link>
-              <Link href="/map"><IconRoute aria-hidden="true" />Rute evakuasi</Link>
-            </div>
-          </section>
-
-          <section id="fakta-banjir" className={`${styles.section} ${styles.statsSection}`}>
-            <MotionReveal className={styles.sectionHeading}>
-              <h2>Skala dampak banjir Jawa Barat sepanjang 2024</h2>
-              <p>Ratusan ribu warga terdampak dalam satu tahun kalender. Data terbuka yang mudah dibaca membantu warga, peneliti, dan pemerintah daerah mengenali pola kerentanan lebih dini.</p>
-            </MotionReveal>
-            <div className={styles.statsGrid}>
-              {floodStats.map(({ value, label, detail, icon: Icon }, i) => (
-                <MotionReveal as="article" className={styles.statCard} key={label} delay={i * 0.07}>
-                  <span className={styles.cardIcon}><Icon size={22} aria-hidden="true" /></span>
-                  <strong><AnimatedNumber value={value} delay={i * 0.07} /></strong>
-                  <h3>{label}</h3>
-                  <p>{detail}</p>
-                  <div className={styles.statLine} aria-hidden="true"><MotionDataBar /></div>
-                </MotionReveal>
-              ))}
-            </div>
-            <p className={styles.sourceNote}>
-              Data historis Januari s.d. Desember 2024, bukan peringatan bencana aktif saat ini.<br />
-              <a href={floodSource} target="_blank" rel="noreferrer">Sumber: BNPB · Data Bencana Indonesia 2024 · Tabel L4, hlm. 124 <IconArrowUpRight size={12} aria-hidden="true" /></a>
-            </p>
-          </section>
-        </div>
+        </section>
 
         <WatershedScrollStage />
 
         <section id="fitur" className={`${styles.section} ${styles.features}`}>
           <div className={styles.featuresInner}>
             <MotionReveal className={styles.sectionHeading}>
-              <h2>Coba bagaimana setiap layer membaca bentang alam 3D Jawa Barat</h2>
-              <p>Ganti lapisan atau putar maket 3D Cekungan Bandung di bawah ini untuk melihat curah hujan, sungai, elevasi DEM, simulasi banjir, dan jalur evakuasi saling melengkapi.</p>
+              <h2>Empat ruang kerja dalam satu WebGIS</h2>
+              <p>Semua data wilayah, peta 3D, histori banjir, dan curah hujan saling terhubung sehingga kamu bisa langsung mengecek kecamatan yang kamu kenal.</p>
             </MotionReveal>
-            <MotionReveal delay={0.06}>
-              <InteractiveAtlasPreview />
-            </MotionReveal>
-            <p className={styles.mapFootnote}>
-              <IconShieldCheck size={15} aria-hidden="true" />
-              Maket 3D di atas dibangun dari potongan raster DEM 30 m, HAND, curah hujan, dan klaster bangunan Cekungan Bandung. Eksplorasi penuh 627 kecamatan, bangunan 3D detail, dan 14.338 titik evakuasi tersedia di halaman Map Interaktif.
-            </p>
-          </div>
-        </section>
 
-        <section id="cara-kerja" className={`${styles.section} ${styles.workflow}`}>
-          <MotionReveal>
-            <h2>Mulai eksplorasi dari tempat yang kamu kenal</h2>
-            <p>Dirancang agar mudah dijelajahi baik untuk mengecek satu kecamatan maupun membandingkan tren antarkabupaten.</p>
-            <Link href="/map" className={styles.textLink}>Buka Map Interaktif sekarang <IconArrowUpRight size={18} aria-hidden="true" /></Link>
-          </MotionReveal>
-          <ol>
-            {steps.map((step, i) => (
-              <MotionReveal as="li" key={step.title} delay={i * 0.06}>
-                <span aria-hidden="true">{i + 1}</span>
-                <div>
-                  <h3>{step.title}</h3>
-                  <p>{step.text}</p>
+            <div className={styles.workspaceGrid}>
+              <MotionReveal as="article" className={styles.workspaceLead}>
+                <span className={styles.cardIcon}><IconMap2 size={22} aria-hidden="true" /></span>
+                <h3>Map Interaktif 3D</h3>
+                <p>
+                  Telusuri 627 kecamatan di atas kontur 3D dan bangunan 3D, nyalakan layer kerawanan, uji simulasi genangan DEM, atau cari rute ke 14.338 titik evakuasi aman.
+                </p>
+                <div className={styles.workspacePills} aria-label="Pintasan alat di Map Interaktif">
+                  {mapToolPills.map((pill) => (
+                    <span key={pill}>{pill}</span>
+                  ))}
+                </div>
+                <div className={styles.workspaceLeadAction}>
+                  <Button asChild size="lg">
+                    <Link href="/map">Buka Map Interaktif <IconArrowUpRight aria-hidden="true" /></Link>
+                  </Button>
                 </div>
               </MotionReveal>
-            ))}
-          </ol>
+
+              <div className={styles.workspaceCompanions}>
+                {companionModules.map(({ href, title, text, icon: Icon }, i) => (
+                  <MotionReveal as="article" key={href} delay={i * 0.05}>
+                    <Link href={href} className={styles.workspaceCard}>
+                      <span className={styles.workspaceCardIcon}><Icon size={20} aria-hidden="true" /></span>
+                      <div className={styles.workspaceCardBody}>
+                        <h3>{title}</h3>
+                        <p>{text}</p>
+                      </div>
+                      <IconArrowUpRight size={18} className={styles.workspaceCardArrow} aria-hidden="true" />
+                    </Link>
+                  </MotionReveal>
+                ))}
+              </div>
+            </div>
+          </div>
         </section>
 
         <section className={styles.ctaSection}>
           <Landscape />
           <MotionReveal className={styles.ctaCard}>
-            <h2>Siap menelusuri peta banjir dan kondisi geografis Jawa Barat?</h2>
-            <p>Buka peta interaktif, periksa statistik curah hujan, atau telusuri histori banjir tahunan per kabupaten dan kota.</p>
+            <h2>Siap menelusuri peta banjir Jawa Barat?</h2>
+            <p>Buka peta interaktif 3D, periksa statistik curah hujan, atau telusuri histori banjir tahunan per kabupaten dan kota.</p>
             <div className={styles.ctaActions}>
               <Button asChild size="lg"><Link href="/map">Buka Map Interaktif <IconArrowUpRight aria-hidden="true" /></Link></Button>
               <Button asChild variant="outline" size="lg" className={styles.ctaSecondaryBtn}><Link href="/histori-banjir">Lihat Histori Banjir</Link></Button>

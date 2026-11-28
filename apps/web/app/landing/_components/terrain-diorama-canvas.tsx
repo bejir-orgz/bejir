@@ -56,6 +56,8 @@ export function TerrainDioramaCanvas({
   pins,
   showEvacRoute,
   allowDragOrbit = false,
+  externalPaused = false,
+  hideControls = false,
   ariaLabel,
   className,
 }: {
@@ -65,6 +67,8 @@ export function TerrainDioramaCanvas({
   pins: DioramaCalloutPin[];
   showEvacRoute?: boolean;
   allowDragOrbit?: boolean;
+  externalPaused?: boolean;
+  hideControls?: boolean;
   ariaLabel: string;
   className?: string;
 }) {
@@ -88,7 +92,7 @@ export function TerrainDioramaCanvas({
     waterRiseM,
     showEvacRoute: Boolean(showEvacRoute),
     pins,
-    paused: Boolean(paused || reduced),
+    paused: Boolean(paused || externalPaused || reduced),
   });
 
   useEffect(() => {
@@ -98,9 +102,9 @@ export function TerrainDioramaCanvas({
       waterRiseM,
       showEvacRoute: Boolean(showEvacRoute),
       pins,
-      paused: Boolean(paused || reduced),
+      paused: Boolean(paused || externalPaused || reduced),
     };
-  }, [mode, targetPose, waterRiseM, showEvacRoute, pins, paused, reduced]);
+  }, [mode, targetPose, waterRiseM, showEvacRoute, pins, paused, externalPaused, reduced]);
 
   useEffect(() => {
     let active = true;
@@ -293,7 +297,7 @@ export function TerrainDioramaCanvas({
   // Wake renderer cleanly whenever mode, camera pose, water level, or pause state changes.
   useEffect(() => {
     wrapRef.current?.dispatchEvent(new CustomEvent("diorama-sync"));
-  }, [mode, targetPose, waterRiseM, showEvacRoute, paused, reduced]);
+  }, [mode, targetPose, waterRiseM, showEvacRoute, paused, externalPaused, reduced]);
 
   const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
     if (!allowDragOrbit || event.button !== 0) return;
@@ -381,24 +385,26 @@ export function TerrainDioramaCanvas({
         ))}
       </div>
 
-      <div className={styles.dioramaControlsBar}>
-        {allowDragOrbit && (
-          <span className={styles.dioramaOrbitHint}>
-            <IconRotate360 size={13} aria-hidden="true" />
-            Geser untuk putar 3D
-          </span>
-        )}
-        <button
-          type="button"
-          className={styles.dioramaPauseBtn}
-          aria-pressed={paused}
-          aria-label={paused ? "Putar animasi maket 3D" : "Jeda animasi maket 3D"}
-          onClick={() => setPaused((prev) => !prev)}
-        >
-          {paused ? <IconPlayerPlay size={13} aria-hidden="true" /> : <IconPlayerPause size={13} aria-hidden="true" />}
-          <span>{paused ? "Putar 3D" : "Jeda 3D"}</span>
-        </button>
-      </div>
+      {!hideControls && (
+        <div className={styles.dioramaControlsBar}>
+          {allowDragOrbit && (
+            <span className={styles.dioramaOrbitHint}>
+              <IconRotate360 size={13} aria-hidden="true" />
+              Geser untuk putar 3D
+            </span>
+          )}
+          <button
+            type="button"
+            className={styles.dioramaPauseBtn}
+            aria-pressed={paused}
+            aria-label={paused ? "Putar animasi maket 3D" : "Jeda animasi maket 3D"}
+            onClick={() => setPaused((prev) => !prev)}
+          >
+            {paused ? <IconPlayerPlay size={13} aria-hidden="true" /> : <IconPlayerPause size={13} aria-hidden="true" />}
+            <span>{paused ? "Putar 3D" : "Jeda 3D"}</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 }
