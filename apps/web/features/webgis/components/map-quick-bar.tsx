@@ -1,73 +1,100 @@
 "use client";
 
-import { IconRipple } from "@tabler/icons-react";
+import { IconAdjustmentsHorizontal } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { EVACUATION_CATEGORIES, type EvacuationCategoryId } from "@/features/evacuation/nearby-fallback";
 import { toggleSelection } from "../region-tree";
 import type { WorkspaceData, WorkspaceFilters } from "../types";
 
 export function MapQuickBar({
   layers,
   selectedLayerIds,
-  overviewOpen,
-  simulationOpen,
-  onToggleSimulation,
+  evacuationCategories,
+  onEvacuationCategoriesChange,
   onChange,
 }: {
   layers: WorkspaceData["layers"];
   selectedLayerIds: string[];
-  overviewOpen: boolean;
-  simulationOpen: boolean;
-  onToggleSimulation: () => void;
+  evacuationCategories: readonly EvacuationCategoryId[];
+  onEvacuationCategoriesChange: (categories: EvacuationCategoryId[]) => void;
   onChange: (patch: Partial<WorkspaceFilters>) => void;
 }) {
   return (
     <div
-      className={`gis-quick-bar pointer-events-none absolute top-4 left-16 z-2 flex justify-center transition-[right] duration-280 ease-[var(--gis-slide-easing)] max-[999.01px]:top-3 max-[999.01px]:left-15 max-[999.01px]:right-16 ${
-        overviewOpen ? "right-16 min-[1000px]:right-[calc(var(--overview-width)+16px)]" : "right-16"
-      }`}
+      className="gis-quick-bar flex min-w-0 max-w-full"
       role="region"
-      aria-label="Pintasan layer peta dan simulasi"
+      aria-label="Pilihan layer peta"
     >
-      <div className="pointer-events-auto flex max-w-full items-center rounded-2xl border border-neutral-200 bg-white p-1">
+      <div className="pointer-events-auto flex h-12 max-w-full items-center rounded-r-2xl border border-l-0 border-border bg-card pr-1 pl-5">
         <div className="flex min-w-0 items-center gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {layers.map((layer) => {
             const active = selectedLayerIds.includes(layer.id);
             return (
-              <Button
-                key={layer.id}
-                type="button"
-                size="sm"
-                variant="ghost"
-                aria-pressed={active}
-                className={`h-8 shrink-0 rounded-xl px-3 text-xs! font-medium! transition-colors ${
-                  active
-                    ? "bg-[var(--gis-blue)] text-white hover:bg-[#1d6ef0] hover:text-white"
-                    : "bg-transparent text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900"
-                }`}
-                onClick={() => onChange({ layerIds: toggleSelection(selectedLayerIds, layer.id) })}
-              >
-                <span>{layer.label}</span>
-              </Button>
+              <div key={layer.id} className="flex shrink-0 items-center gap-1">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={active ? "default" : "ghost"}
+                  aria-pressed={active}
+                  className="h-9 rounded-xl px-3 text-sm! font-medium!"
+                  onClick={() => onChange({ layerIds: toggleSelection(selectedLayerIds, layer.id) })}
+                >
+                  {layer.label}
+                </Button>
+                {layer.id === "evacuation" && active && (
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button type="button" variant="ghost" size="icon-sm" title="Filter kategori titik evakuasi" aria-label="Filter kategori titik evakuasi">
+                        <IconAdjustmentsHorizontal className="size-5" aria-hidden="true" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent align="start" className="flex flex-col gap-3 rounded-2xl" aria-labelledby="gis-evacuation-category-title">
+                      <h2 id="gis-evacuation-category-title" className="text-sm font-medium">Kategori titik evakuasi</h2>
+                      <div className="flex flex-wrap gap-2">
+                        {EVACUATION_CATEGORIES.map(({ id, label }) => {
+                          const selected = evacuationCategories.includes(id);
+                          return (
+                            <Button
+                              key={id}
+                              type="button"
+                              size="sm"
+                              variant={selected ? "default" : "outline"}
+                              aria-pressed={selected}
+                              onClick={() => onEvacuationCategoriesChange(
+                                selected ? evacuationCategories.filter((category) => category !== id) : [...evacuationCategories, id],
+                              )}
+                            >
+                              {label}
+                            </Button>
+                          );
+                        })}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                )}
+              </div>
             );
           })}
         </div>
-
-        <span className="mx-1 h-4 w-px shrink-0 bg-neutral-200" aria-hidden="true" />
-
-        <Button
-          type="button"
-          size="sm"
-          variant={simulationOpen ? "default" : "ghost"}
-          aria-expanded={simulationOpen}
-          aria-controls="gis-hydro-simulation-panel"
-          className={`h-8 shrink-0 gap-1.5 rounded-xl px-3 text-xs! font-medium! transition-colors ${
-            simulationOpen ? "" : "bg-muted text-foreground"
-          }`}
-          onClick={onToggleSimulation}
-        >
-          <IconRipple className="size-3.5" aria-hidden="true" />
-          <span>Simulasi</span>
-        </Button>
+        {selectedLayerIds.length > 0 && (
+          <Button
+            type="button"
+            variant="link"
+            size="sm"
+            className="ml-1 text-red-500 no-underline hover:text-red-600 hover:no-underline"
+            aria-label="Reset pilihan layer"
+            onClick={() => onChange({ layerIds: [] })}
+          >
+            Reset
+          </Button>
+        )}
+        <p className="sr-only" aria-live="polite">
+          {layers.reduce((count, layer) => count + (selectedLayerIds.includes(layer.id) ? layer.count : 0), 0)} layer aktif
+        </p>
+        <p className="sr-only">
+          Titik evakuasi, parameter hujan, rata-rata elevasi, kerawanan, dan tutupan lahan dominan terhubung ke API. Data parameter ditampilkan per kecamatan. Jaringan sungai ditampilkan per area peta.
+        </p>
       </div>
     </div>
   );

@@ -15,13 +15,13 @@ export function WebgisHeader({ mapCanvas = false, onRegionSelect }: { mapCanvas?
     <header className="gis-header" data-canvas={mapCanvas}>
       <Link className="gis-brand" href="/" aria-label="SIBAJAWA, kembali ke beranda"><Image className="gis-brand-logo" src="/images/sibajawa-mark.svg" alt="" width={40} height={40} unoptimized /><span><strong>SIBAJAWA</strong><small>Web GIS Bencana Banjir Jawa Barat</small></span></Link>
       <nav aria-label="Navigasi WebGIS">{webgisNavigation.map((item) => (
-        <Button asChild variant="ghost" key={item.href} className={`gis-nav-link ${pathname === item.href ? "gis-nav-active" : ""}`}>
+        <Button asChild variant="ghost" key={item.href} className={`gis-nav-link text-base! leading-6! max-[639px]:text-sm! max-[639px]:leading-5! ${pathname === item.href ? "gis-nav-active font-medium!" : "font-normal!"}`}>
           <Link href={item.href} aria-current={pathname === item.href ? "page" : undefined}>{item.label}</Link>
         </Button>
       ))}</nav>
       <div className="gis-header-actions">
         <RegionSearch onSelect={onRegionSelect} />
-        <Button asChild variant="outline" className="gis-home-link font-medium! text-base! leading-6!">
+        <Button asChild variant="outline" className="gis-home-link font-medium! text-base! leading-6! max-[639px]:text-sm! max-[639px]:leading-5!">
           <Link href="/">Beranda</Link>
         </Button>
       </div>

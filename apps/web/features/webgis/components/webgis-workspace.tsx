@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState, useReducer, useRef, useSyncExternalStore, type CSSProperties } from "react";
 import { useRegionSelection } from "@/features/regions/region-selection";
 import { WebgisHeader } from "@/components/layout/webgis-header";
-import { IconMap, IconLayoutNavbarCollapse, IconLayoutNavbarCollapseFilled, IconStackFront, IconStack3Filled, IconCalendarWeek, IconCalendarWeekFilled, IconListDetails, IconListDetailsFilled } from "@tabler/icons-react";
+import { IconMap, IconLayoutNavbarCollapse, IconLayoutNavbarCollapseFilled, IconCalendarWeek, IconCalendarWeekFilled, IconListDetails, IconListDetailsFilled, IconRipple, IconStackFront, IconStack3Filled } from "@tabler/icons-react";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { OverviewButton } from "@/components/ui/overview-button";
@@ -27,7 +27,6 @@ import type { SimulationMode, SimulationParams, SimulationScope, SimulationStats
 import type { WorkspaceFilters, WorkspaceProps } from "../types";
 import { RegionSidebar } from "./region-sidebar";
 import { OverviewPanel } from "./overview-panel";
-import { OptionsSidebar } from "./options-sidebar";
 import { LegendSidebar } from "./legend-sidebar";
 import { TimelineSidebar } from "./timeline-sidebar";
 import { MapQuickBar } from "./map-quick-bar";
@@ -42,11 +41,12 @@ const MapLibreWorkspaceMap = dynamic(
 );
 
 const leftTools = [
-  { id: "regions", label: "daerah", icon: IconMap, filledIcon: IconMap },
-  { id: "layers", label: "layer", icon: IconStackFront, filledIcon: IconStack3Filled },
-  { id: "legends", label: "legenda", icon: IconListDetails, filledIcon: IconListDetailsFilled },
-  { id: "timeline", label: "timeline", icon: IconCalendarWeek, filledIcon: IconCalendarWeekFilled },
+  { id: "regions", label: "Daerah", icon: IconMap, filledIcon: IconMap },
+  { id: "legends", label: "Legenda", icon: IconListDetails, filledIcon: IconListDetailsFilled },
+  { id: "timeline", label: "Timeline", icon: IconCalendarWeek, filledIcon: IconCalendarWeekFilled },
 ] as const;
+
+const floatingToolClassName = "pointer-events-auto rounded-2xl px-3 text-sm! max-[539px]:w-12 max-[539px]:p-0 max-[359px]:w-10";
 
 const narrowQuery = "(max-width: 999px)";
 function subscribeToWidth(callback: () => void) {
@@ -127,6 +127,7 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
   const lastTrigger = useRef<HTMLButtonElement | null>(null);
   const overviewPanel = useRef<HTMLDivElement>(null);
   const leftOpen = panels.left !== null;
+  const layersOpen = panels.left === "layers";
   const overviewOpen = panels.overview && (!narrow || !leftOpen);
   const overview = useOverview(data.overview, { ...filters, regionIds: dataRegionIds }, overviewOpen);
   const OverviewIcon = overviewOpen ? IconLayoutNavbarCollapseFilled : IconLayoutNavbarCollapse;
@@ -202,7 +203,7 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
         updateFilters({ regionIds: [region.id] });
         dispatch({ type: "show-overview" });
       }} />
-      <main id="gis-main" style={{ "--sidebar-width": `min(${sidebarWidth}px, 480px, calc(100vw - 48px))` } as CSSProperties} className="gis-layout [--regions-width:var(--sidebar-width)] [--overview-width:456px] relative flex-1 min-h-0 isolate [&[data-left-open=false]]:[--regions-width:0px] [&[data-left-open=true]_.gis-left-toolbar_.gis-panel-slot[data-expanded=false]]:[opacity:0] [&[data-left-open=true]_.gis-left-toolbar_.gis-panel-slot[data-expanded=false]]:pointer-events-none [&[data-overview-open=true]_.gis-overview-trigger]:[transform:translateX(calc(-100%_+_1px))] [&[data-overview-open=true]_.gis-map-settings]:right-[calc(var(--overview-width)_+_16px)] [&[data-overview-open=true]_.gis-map-status]:right-[calc(var(--overview-width)_+_64px)] [&[data-overview-open=true]_.gis-3d-switcher[data-sim-open=true]]:max-[1680px]:hidden min-[1000px]:[&_.gis-map_.leaflet-bottom.leaflet-left]:left-[var(--regions-width)]! min-[1000px]:[&_.gis-map_.maplibregl-ctrl-bottom-left]:left-[var(--regions-width)]! max-[999.01px]:[&[data-overview-open=true]_.gis-3d-switcher]:hidden min-[1000px]:max-[1199.01px]:[--overview-width:380px] max-[999.01px]:[--regions-width:0px] max-[999.01px]:[--overview-width:min(456px,calc(100%_-_56px))] max-[999.01px]:[&[data-left-open=true]_.gis-overview-toggle]:hidden max-[999.01px]:[&[data-overview-open=true]_.gis-left-toolbar]:hidden" data-left-open={leftOpen} data-overview-open={overviewOpen} onKeyDown={(event) => {
+      <main id="gis-main" style={{ "--sidebar-width": `min(${sidebarWidth}px, 480px, calc(100vw - 32px))` } as CSSProperties} className="gis-layout [--regions-width:var(--sidebar-width)] [--overview-width:456px] relative flex-1 min-h-0 isolate [&[data-left-open=false]]:[--regions-width:0px] [&[data-overview-open=true]_.gis-overview-trigger]:[transform:translateX(calc(-100%_+_1px))] [&[data-overview-open=true]_.gis-map-settings]:right-[calc(var(--overview-width)_+_16px)] [&[data-overview-open=true]_.gis-map-status]:right-[calc(var(--overview-width)_+_64px)] [&[data-overview-open=true]_.gis-3d-switcher[data-sim-open=true]]:max-[1680px]:hidden max-[999.01px]:[&[data-overview-open=true]_.gis-3d-switcher]:hidden min-[1000px]:max-[1199.01px]:[--overview-width:380px] max-[999.01px]:[--regions-width:0px] max-[999.01px]:[--overview-width:min(456px,calc(100%_-_56px))] max-[999.01px]:[&[data-left-open=true]_.gis-overview-toggle]:hidden max-[999.01px]:[&[data-overview-open=true]_.gis-left-toolbar]:hidden" data-left-open={leftOpen} data-overview-open={overviewOpen} onKeyDown={(event) => {
         if (event.key === "Escape" && !event.defaultPrevented && (simulationOpen || leftOpen || overviewOpen)) {
           event.preventDefault();
           if (simulationOpen) {
@@ -272,16 +273,6 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
             onSimStatus={setSimStatus}
           />
         )}
-        {!leftOpen && (!narrow || !overviewOpen) && (
-          <MapQuickBar
-            layers={data.layers}
-            selectedLayerIds={filters.layerIds}
-            overviewOpen={overviewOpen}
-            simulationOpen={simulationOpen}
-            onToggleSimulation={toggleSimulation}
-            onChange={updateFilters}
-          />
-        )}
         <HydroSimulationPanel
           open={simulationOpen}
           overviewOpen={overviewOpen}
@@ -324,29 +315,84 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
             setSafeEvacNote(null);
           }}
         />
-        <RegionSidebar onWidthChange={setSidebarWidth} hidden={panels.left !== "regions"} filters={filters} onChange={updateFilters} />
-        <OptionsSidebar
-          mode="layers"
-          hidden={panels.left !== "layers"}
-          data={data}
-          filters={filters}
-          evacuationCategories={evacuationCategories}
-          onEvacuationCategoriesChange={setEvacuationCategories}
-          onChange={updateFilters}
-        />
-        <TimelineSidebar year={data.year} hidden={panels.left !== "timeline"} filters={filters} onChange={updateFilters} />
-        <LegendSidebar layers={data.layers} hidden={panels.left !== "legends"} />
-        <div className="gis-left-toolbar absolute top-4 left-0 flex flex-col gap-4 pointer-events-none [&_.gis-panel-slot]:relative [&_.gis-panel-slot]:z-1 [&_.gis-panel-slot]:pointer-events-auto [&_.gis-panel-slot]:[opacity:1] [&_.gis-panel-slot]:[transform:translateX(0)] [&_.gis-panel-slot]:[transition:transform_var(--gis-slide-duration)_var(--gis-slide-easing),opacity_120ms_ease] [&_.gis-panel-slot[data-expanded=true]]:z-3 [&_.gis-panel-slot[data-expanded=true]]:[transform:translateX(calc(var(--sidebar-width)_-_1px))] max-[999.01px]:gap-2 motion-reduce:[&_.gis-panel-slot]:[transition:none]" role="group" aria-label="Alat peta">{leftTools.map(({ id, label, icon, filledIcon }) => {
-          const expanded = panels.left === id;
-          const Icon = expanded ? filledIcon : icon;
-          return (
-          <div key={id} data-expanded={expanded} className="gis-panel-slot">
-            <Button variant="ghost" size="icon" className="gis-panel-toggle origin-left w-12 h-12 p-4 rounded-[0_16px_16px_0] bg-[white] text-[var(--gis-blue)] max-[999.01px]:w-12 max-[999.01px]:h-12 max-[999.01px]:p-3 hover:bg-white dark:hover:bg-white hover:text-[var(--gis-blue)] focus-visible:ring-0" title={label} inert={leftOpen && panels.left !== id} aria-label={`${panels.left === id ? "Tutup" : "Buka"} panel ${label}`} aria-expanded={panels.left === id} aria-controls={`gis-${id}-panel`} onClick={(event) => toggleLeft(id, event.currentTarget)}><Icon className={`size-6 ${expanded && id === "regions" ? "[&>path:not(:first-of-type)]:stroke-white" : ""}`} {...(expanded && id === "regions" ? { fill: "currentColor" } : {})} stroke={2} aria-hidden="true" /></Button>
+        <div
+          className={`gis-left-toolbar pointer-events-none absolute top-4 left-4 z-3 flex flex-wrap items-center gap-2 ${
+            overviewOpen ? "right-[calc(var(--overview-width)_+_56px)]" : "right-16"
+          }`}
+          role="group"
+          aria-label="Alat peta"
+        >
+          {leftTools.map(({ id, label, icon, filledIcon }) => {
+            const expanded = panels.left === id;
+            const Icon = expanded ? filledIcon : icon;
+            return (
+              <Button
+                key={id}
+                type="button"
+                variant={expanded ? "default" : "outline"}
+                size="lg"
+                className={`${floatingToolClassName} ${expanded ? "border border-primary" : "bg-white"}`}
+                title={label}
+                aria-label={`${expanded ? "Tutup" : "Buka"} panel ${label}`}
+                aria-expanded={expanded}
+                aria-controls={`gis-${id}-panel`}
+                onClick={(event) => toggleLeft(id, event.currentTarget)}
+              >
+                <Icon className={`size-6 ${expanded && id === "regions" ? "[&>path:not(:first-of-type)]:stroke-primary" : ""}`} {...(expanded && id === "regions" ? { fill: "currentColor" } : {})} stroke={2} aria-hidden="true" />
+                <span className="max-[539px]:sr-only">{label}</span>
+              </Button>
+            );
+          })}
+          <Button
+            type="button"
+            variant={simulationOpen ? "default" : "outline"}
+            size="lg"
+            className={`${floatingToolClassName} ${simulationOpen ? "border border-primary" : "bg-white"}`}
+            title="Simulasi"
+            aria-expanded={simulationOpen}
+            aria-controls="gis-hydro-simulation-panel"
+            onClick={toggleSimulation}
+          >
+            <IconRipple className="size-6" aria-hidden="true" />
+            <span className="max-[539px]:sr-only">Simulasi</span>
+          </Button>
+          <div className={`flex min-w-0 flex-1 items-center ${layersOpen ? "min-w-[min(224px,100%)]" : ""}`}>
+            <Button
+              type="button"
+              variant={layersOpen ? "default" : "outline"}
+              size="lg"
+              className={`${floatingToolClassName} relative z-1 ${layersOpen ? "border border-primary" : "bg-white"}`}
+              title="Layer"
+              aria-expanded={layersOpen}
+              aria-controls="gis-layers-panel"
+              onClick={(event) => toggleLeft("layers", event.currentTarget)}
+            >
+              {layersOpen ? <IconStack3Filled className="size-6" aria-hidden="true" /> : <IconStackFront className="size-6" aria-hidden="true" />}
+              <span className="max-[539px]:sr-only">Layer</span>
+            </Button>
+            <div
+              id="gis-layers-panel"
+              hidden={!layersOpen}
+              inert={!layersOpen}
+              className="-ml-4 min-w-0 flex-1 [transform:translateX(0)] [transition:transform_var(--gis-slide-duration)_var(--gis-slide-easing),opacity_var(--gis-slide-duration)_var(--gis-slide-easing),display_var(--gis-slide-duration)_allow-discrete] [&[hidden]]:hidden [&[hidden]]:opacity-0 [&[hidden]]:[transform:translateX(-8px)] starting:[&:not([hidden])]:opacity-0 starting:[&:not([hidden])]:[transform:translateX(-8px)] motion-reduce:[transition:none]"
+            >
+              <MapQuickBar
+                layers={data.layers}
+                selectedLayerIds={filters.layerIds}
+                evacuationCategories={evacuationCategories}
+                onEvacuationCategoriesChange={setEvacuationCategories}
+                onChange={updateFilters}
+              />
+            </div>
           </div>
-        );
-        })}</div>
-        <div className="gis-overview-trigger absolute z-3 top-4 right-0 w-[var(--overview-width)] h-12 pointer-events-none [transform:translateX(0)] [transition:transform_var(--gis-slide-duration)_var(--gis-slide-easing)] max-[999.01px]:h-14 motion-reduce:[transition:none]">
-          <Button variant="ghost" size="icon" className="gis-panel-toggle origin-right z-3 w-12 h-12 p-4 bg-[white] text-[var(--gis-blue)] max-[999.01px]:w-14 max-[999.01px]:h-14 max-[999.01px]:p-3 gis-overview-toggle absolute top-0 right-0 rounded-[16px_0_0_16px] bg-[white] pointer-events-auto hover:bg-white dark:hover:bg-white hover:text-[var(--gis-blue)] focus-visible:ring-0" aria-label={overviewOpen ? "Tutup panel overview" : "Buka panel overview"} aria-expanded={overviewOpen} aria-controls="gis-overview-panel" onClick={(event) => { lastTrigger.current = event.currentTarget; dispatch({ type: "toggle-overview", narrow }); }}><OverviewIcon className={`size-6 ${overviewOpen ? "rotate-90" : "-rotate-90"}`} aria-hidden="true" /></Button>
+        </div>
+        <div className="pointer-events-none absolute inset-x-4 top-18 bottom-9 z-2 [&_.gis-left]:pointer-events-auto [&_.gis-left]:rounded-2xl [&_.gis-left]:border [&_.gis-left]:border-border">
+          <RegionSidebar onWidthChange={setSidebarWidth} hidden={panels.left !== "regions"} filters={filters} onChange={updateFilters} />
+          <TimelineSidebar year={data.year} hidden={panels.left !== "timeline"} filters={filters} onChange={updateFilters} />
+          <LegendSidebar layers={data.layers} hidden={panels.left !== "legends"} />
+        </div>
+        <div className="gis-overview-trigger absolute z-3 top-4 right-0 w-[var(--overview-width)] h-12 pointer-events-none [transform:translateX(0)] [transition:transform_var(--gis-slide-duration)_var(--gis-slide-easing)] motion-reduce:[transition:none]">
+          <Button variant="ghost" size="icon" className="gis-panel-toggle origin-right z-3 w-12 h-12 p-4 bg-[white] text-[var(--gis-blue)] gis-overview-toggle absolute top-0 right-0 rounded-[16px_0_0_16px] bg-[white] pointer-events-auto hover:bg-white dark:hover:bg-white hover:text-[var(--gis-blue)] focus-visible:ring-0" aria-label={overviewOpen ? "Tutup panel overview" : "Buka panel overview"} aria-expanded={overviewOpen} aria-controls="gis-overview-panel" onClick={(event) => { lastTrigger.current = event.currentTarget; dispatch({ type: "toggle-overview", narrow }); }}><OverviewIcon className={`size-6 ${overviewOpen ? "rotate-90" : "-rotate-90"}`} aria-hidden="true" /></Button>
         </div>
         <aside id="gis-overview-panel" hidden={!overviewOpen} className="gis-right [clip-path:inset(0_round_16px_0_0_16px)] [transform:translateX(0)] [transition:transform_var(--gis-slide-duration)_var(--gis-slide-easing),display_var(--gis-slide-duration)_allow-discrete] [&[hidden]]:hidden [&[hidden]]:[transform:translateX(100%)] starting:[&:not([hidden])]:[transform:translateX(100%)] absolute z-2 [inset:0_0_0_auto] w-[var(--overview-width)] border-0 rounded-[16px_0_0_16px] bg-[white] overflow-hidden py-4 pl-4 max-[999.01px]:bottom-6 [--sb-thumb-color:#8EC5FF] [--sb-size:5px] motion-reduce:[transition:none] [&:has(.gis-ai-tab[data-state=active])]:pb-4 [&:has(.gis-ai-tab[data-state=active])_.gis-overview-scroll_>_.gis-tabs]:min-h-full [&:has(.gis-ai-tab[data-state=active])_.gis-overview-scroll_>_.gis-tabs]:min-h-0 [&:has(.gis-ai-tab[data-state=active])_.gis-overview-scroll_>_.gis-data-note]:hidden [&:has(.gis-ai-tab[data-state=active])_.gis-panel-tabs]:shrink-0 [&:has(.gis-ai-tab[data-state=active])_.gis-panel-tabs]:sticky [&:has(.gis-ai-tab[data-state=active])_.gis-panel-tabs]:top-0 [&:has(.gis-ai-tab[data-state=active])_.gis-panel-tabs]:z-10" aria-label="Ringkasan dan asisten">
           <div ref={overviewPanel} className="gis-overview-scroll h-full overflow-y-auto pr-[calc(16px_-_var(--sb-size))] [scrollbar-gutter:stable]">

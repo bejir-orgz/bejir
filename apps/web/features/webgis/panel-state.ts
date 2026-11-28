@@ -1,4 +1,4 @@
-export type LeftPanel = "regions" | "layers" | "legends" | "timeline";
+export type LeftPanel = "regions" | "legends" | "timeline" | "layers";
 
 export interface PanelState {
   left: LeftPanel | null;
