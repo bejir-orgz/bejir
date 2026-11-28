@@ -50,7 +50,8 @@ export async function getRegionSearchTree(): Promise<RegionNode[]> {
   }
   const seen = new Set<number>();
   for (let offset = 0; ; offset += 1000) {
-    const response = await fetchBackend(`/api/v1/geography/villages?include_geometry=false&limit=1000&offset=${offset}`, { next: { revalidate: 3600 } });
+    // The search route caches the assembled tree.
+    const response = await fetchBackend(`/api/v1/geography/villages?include_geometry=false&limit=1000&offset=${offset}`, { cache: "no-store" });
     if (!response.ok) throw new Error("Metadata kelurahan gagal dimuat.");
     const rows: { id: number; name: string; district_id: number }[] = await response.json();
     if (!Array.isArray(rows)) throw new Error("Metadata kelurahan tidak valid.");

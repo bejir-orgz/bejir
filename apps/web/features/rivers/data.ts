@@ -1,3 +1,12 @@
+export type RiverBounds = [west: number, south: number, east: number, north: number];
+
+export function riverDetail(bounds: RiverBounds) {
+  const span = Math.max(bounds[2] - bounds[0], bounds[3] - bounds[1]);
+  if (span > 2) return { limit: 450, simplifyM: 600 };
+  if (span > 0.5) return { limit: 1200, simplifyM: 200 };
+  return { limit: 2500, simplifyM: 75 };
+}
+
 export interface RiverViewportStatus {
   returned: number;
   total_matching: number;
@@ -13,7 +22,7 @@ export function parseRiverRegions(query: URLSearchParams): string[] {
   return [...new Set(ids)];
 }
 
-export function parseRiverBounds(value: string | null): number[] {
+export function parseRiverBounds(value: string | null): RiverBounds {
   const bounds = value?.split(",").map(Number) ?? [];
   if (
     bounds.length !== 4 ||
@@ -27,7 +36,7 @@ export function parseRiverBounds(value: string | null): number[] {
   ) {
     throw new Error("Batas peta tidak valid.");
   }
-  return bounds;
+  return [bounds[0], bounds[1], bounds[2], bounds[3]];
 }
 
 export function riverViewportStatusMessage(data: RiverViewportStatus): { message: string } | undefined {
@@ -41,7 +50,7 @@ export function riverViewportStatusMessage(data: RiverViewportStatus): { message
   // A truncated page arrives longest-first, so the view is the major rivers, not a random slice.
   if (data.truncated) {
     return {
-      message: `Menampilkan ${shown} sungai terpanjang dari ${data.total_matching.toLocaleString("id-ID")} segmen pada area peta. Perbesar peta untuk melihat anak sungai.`,
+      message: `API sungai saat ini memuat ${shown} dari ${data.total_matching.toLocaleString("id-ID")} segmen pada area peta. Perbesar peta untuk melihat lebih banyak segmen.`,
     };
   }
   return data.returned ? undefined : { message: "Tidak ada segmen sungai pada area peta ini." };

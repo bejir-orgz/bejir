@@ -9,7 +9,7 @@ import type {
   MapMouseEvent,
   Popup,
 } from "maplibre-gl";
-import type { Feature, FeatureCollection, Geometry, MultiLineString, MultiPolygon, Polygon } from "geojson";
+import type { Feature, FeatureCollection, Geometry, MultiPolygon, Polygon } from "geojson";
 import {
   IconCompass,
   IconCurrentLocation,
@@ -31,8 +31,9 @@ import { landCoverColor } from "@/features/geography/land-cover-colors";
 import { classColors, classLabels } from "@/features/geography/aggregation";
 import type { EvacuationSite } from "@/features/evacuation/types";
 import { fetchNearestEvacuationSite, formatStraightDistance } from "@/features/evacuation/nearby-fallback";
-import { riverViewportStatusMessage, type RiverViewportStatus } from "@/features/rivers/data";
-import type { RiverProperties } from "@/features/rivers/types";
+import { riverTileMaxZoom, riverTileMinZoom, riverTileTemplate, riverVillageStatus } from "@/features/rivers/tiles";
+import type { RiverMode } from "@/features/rivers/use-river-mode";
+import { riverViewportLoader } from "@/features/rivers/viewport";
 import { requestBackend } from "@/lib/api/client";
 import type { RouteRequest, RouteResponse } from "@/lib/api/schemas";
 import { useRegionSelection } from "@/features/regions/region-selection";
@@ -224,6 +225,7 @@ export function MapLibreWorkspaceMap({
   onThematicStatus,
   onRegionStatus,
   onRiverStatus,
+  riverMode,
   onRouteStatus,
   onSimStatus,
 }: {
@@ -248,10 +250,12 @@ export function MapLibreWorkspaceMap({
   onThematicStatus: (status: { message: string; retry?: () => void } | undefined) => void;
   onRegionStatus: (status: { message: string } | undefined) => void;
   onRiverStatus: (status: { message: string; retry?: () => void } | undefined) => void;
+  riverMode?: RiverMode;
   onRouteStatus: (status: { message: string } | undefined) => void;
   onSimStatus: (status: { message: string; retry?: () => void } | undefined) => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const metadataRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const libertyLayerIdsRef = useRef<string[]>([]);
   const popupRef = useRef<Popup | null>(null);
@@ -347,6 +351,8 @@ export function MapLibreWorkspaceMap({
         };
 
         instance.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-left");
+        const attribution = instance.getContainer().querySelector(".maplibregl-ctrl-attrib");
+        if (attribution) metadataRef.current?.append(attribution);
         popupRef.current = new maplibregl.Popup({
           closeButton: false,
           closeOnClick: false,
@@ -375,7 +381,6 @@ export function MapLibreWorkspaceMap({
             if (!instance.getSource(id)) instance.addSource(id, { type: "geojson", data: emptyCollection });
           };
           addGeoSource(MAPLIBRE_IDS.thematicSource);
-          addGeoSource(MAPLIBRE_IDS.riversSource);
           addGeoSource(MAPLIBRE_IDS.simHitSource);
           addGeoSource(MAPLIBRE_IDS.simOutlineSource);
           addGeoSource(MAPLIBRE_IDS.simPointSource);
@@ -423,19 +428,6 @@ export function MapLibreWorkspaceMap({
                 "line-color": "#475569",
                 "line-width": 0.6,
                 "line-opacity": 0.65,
-              },
-            },
-            belowBuildingsId,
-          );
-          instance.addLayer(
-            {
-              id: MAPLIBRE_IDS.riversLineLayer,
-              type: "line",
-              source: MAPLIBRE_IDS.riversSource,
-              paint: {
-                "line-color": "#0284c7",
-                "line-width": 2,
-                "line-opacity": 0.88,
               },
             },
             belowBuildingsId,
@@ -906,75 +898,89 @@ export function MapLibreWorkspaceMap({
     source.setData({ type: "FeatureCollection", features });
   }, [mapReady, evacuationEnabled, evacuationSites]);
 
-  // 8) Render Rivers per viewport bbox when enabled.
+  const riverTiles = riversEnabled ? riverTileTemplate(regionIds) : null;
+  const riverRegionKey = regionIds.join(",");
   useEffect(() => {
     const map = mapRef.current;
-    if (!mapReady || !map) return;
-    const source = map.getSource(MAPLIBRE_IDS.riversSource);
-    if (!isGeoJsonSource(source)) return;
-    if (!riversEnabled) {
-      source.setData(emptyCollection);
-      return;
+    if (!mapReady || !map || !riversEnabled || riverMode !== "tiles") return;
+    if (!riverTiles) {
+      onRiverStatus(riverVillageStatus);
+      return () => onRiverStatus(undefined);
     }
-    let controller: AbortController | undefined;
-    let closed = false;
-    const scope = regionIds.join(",");
-
-    const loadRivers = () => {
-      controller?.abort();
-      const active = new AbortController();
-      controller = active;
-      const b = map.getBounds();
-      const bbox = [
-        Math.max(-180, b.getWest()),
-        Math.max(-90, b.getSouth()),
-        Math.min(180, b.getEast()),
-        Math.min(90, b.getNorth()),
-      ]
-        .map((n) => n.toFixed(6))
-        .join(",");
-      const query = new URLSearchParams({ bbox });
-      for (const id of scope.split(",").filter(Boolean)) query.append("region", id);
-      onRiverStatus({ message: "Memuat jaringan sungai..." });
-      fetch(`/backend/web/rivers/layers?${query}`, { signal: active.signal })
-        .then(async (res) => {
-          if (!res.ok) throw new Error("Jaringan sungai belum dapat dimuat.");
-          const json: FeatureCollection<MultiLineString, RiverProperties> & RiverViewportStatus = await res.json();
-          if (!closed && !active.signal.aborted) {
-            source.setData({
-              type: "FeatureCollection",
-              features: json.features.map((feature) => ({
-                ...feature,
-                properties: {
-                  ...feature.properties,
-                  tooltip: `${feature.properties.name || "Sungai tanpa nama"} · ${feature.properties.river_type || "Jenis belum tersedia"}`,
-                },
-              })),
-            });
-            onRiverStatus(riverViewportStatusMessage(json));
-          }
-        })
-        .catch((err) => {
-          if (!closed && !active.signal.aborted) {
-            source.setData(emptyCollection);
-            onRiverStatus({
-              message: err instanceof Error ? err.message : "Layer sungai gagal.",
-              retry: () => loadRivers(),
-            });
-          }
-        });
+    const sourceId = MAPLIBRE_IDS.riversSource;
+    const layerId = MAPLIBRE_IDS.riversLineLayer;
+    let failed = false;
+    const clearTiles = () => {
+      if (map.getLayer(layerId)) map.removeLayer(layerId);
+      if (map.getSource(sourceId)) map.removeSource(sourceId);
     };
-
-    loadRivers();
-    map.on("moveend", loadRivers);
+    const loadTiles = () => {
+      failed = false;
+      clearTiles();
+      onRiverStatus({ message: "Memuat jaringan sungai…" });
+      map.addSource(sourceId, {
+        type: "vector",
+        tiles: [window.location.origin + riverTiles],
+        minzoom: riverTileMinZoom,
+        maxzoom: riverTileMaxZoom,
+      });
+      map.addLayer({
+        id: layerId,
+        type: "line",
+        source: sourceId,
+        "source-layer": "rivers",
+        paint: { "line-color": "#0284c7", "line-width": 2, "line-opacity": 0.88 },
+      }, MAPLIBRE_IDS.simHitFillLayer);
+    };
+    const onData = (event: { sourceId?: string; isSourceLoaded?: boolean }) => {
+      if (event.sourceId === sourceId && event.isSourceLoaded && !failed) onRiverStatus(undefined);
+    };
+    const onError = (event: { error: { message: string }; sourceId?: string }) => {
+      if (event.sourceId !== sourceId && !event.error.message.includes("/rivers/tiles/")) return;
+      failed = true;
+      onRiverStatus({ message: "Jaringan sungai belum dapat dimuat.", retry: loadTiles });
+    };
+    map.on("sourcedata", onData);
+    map.on("error", onError);
+    loadTiles();
     return () => {
-      closed = true;
-      controller?.abort();
-      map.off("moveend", loadRivers);
-      source.setData(emptyCollection);
+      map.off("sourcedata", onData);
+      map.off("error", onError);
+      clearTiles();
       onRiverStatus(undefined);
     };
-  }, [mapReady, riversEnabled, regionIds, onRiverStatus]);
+  }, [mapReady, riversEnabled, riverMode, riverTiles, onRiverStatus]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!mapReady || !map || !riversEnabled || riverMode !== "geojson") return;
+    const sourceId = MAPLIBRE_IDS.riversSource;
+    const layerId = MAPLIBRE_IDS.riversLineLayer;
+    map.addSource(sourceId, { type: "geojson", data: emptyCollection });
+    map.addLayer({
+      id: layerId,
+      type: "line",
+      source: sourceId,
+      paint: { "line-color": "#0284c7", "line-width": 2, "line-opacity": 0.88 },
+    }, MAPLIBRE_IDS.simHitFillLayer);
+    const source = map.getSource(sourceId);
+    const loader = riverViewportLoader(riverRegionKey ? riverRegionKey.split(",") : [], (data) => {
+      if (isGeoJsonSource(source)) source.setData({ type: "FeatureCollection", features: data.features });
+    }, onRiverStatus);
+    const load = () => {
+      const bounds = map.getBounds();
+      void loader.load([bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()]);
+    };
+    load();
+    map.on("moveend", load);
+    return () => {
+      loader.abort();
+      map.off("moveend", load);
+      if (map.getLayer(layerId)) map.removeLayer(layerId);
+      if (map.getSource(sourceId)) map.removeSource(sourceId);
+      onRiverStatus(undefined);
+    };
+  }, [mapReady, riversEnabled, riverMode, riverRegionKey, onRiverStatus]);
 
   // 9) Resolve Simulation Target into Raster Mask + Stats.
   const resolvedSim = useMemo<{ region: SelectedSimRegion; geometries: (Polygon | MultiPolygon)[] } | null>(() => {
@@ -1526,7 +1532,9 @@ export function MapLibreWorkspaceMap({
       }
       const hits = map.queryRenderedFeatures(event.point, { layers: queryLayers });
       const first = hits[0];
-      const text = first?.properties && typeof first.properties.tooltip === "string" ? first.properties.tooltip : "";
+      const text = first?.layer.id === MAPLIBRE_IDS.riversLineLayer
+        ? `${first.properties.name || "Sungai tanpa nama"} · ${first.properties.river_type || "Jenis belum tersedia"}`
+        : typeof first?.properties?.tooltip === "string" ? first.properties.tooltip : "";
       if (text) {
         popup.setLngLat(event.lngLat).setText(text).addTo(map);
       } else {
@@ -1645,21 +1653,20 @@ export function MapLibreWorkspaceMap({
         </g>
       </svg>
 
-      {dataStatus || !mapReady ? (
-        <div
-          className="gis-map-status absolute z-1 left-[calc(var(--regions-width,0px)_+_64px)] right-16 bottom-16 flex items-center flex-wrap gap-2 rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-neutral-800 [transition:left_var(--gis-slide-duration)_var(--gis-slide-easing),right_var(--gis-slide-duration)_var(--gis-slide-easing)] motion-reduce:[transition:none]"
-          role="status"
-        >
-          {dataStatus?.message ?? "Memuat peta 3D Jawa Barat..."}
-          {dataStatus?.retry ? (
-            <Button size="sm" variant="outline" className="h-7 rounded-lg text-xs" onClick={dataStatus.retry}>
-              Coba lagi
-            </Button>
+      <div className="gis-map-settings pointer-events-none absolute right-4 bottom-4 left-4 z-2 flex items-end justify-between gap-2 max-sm:flex-wrap [transition:right_var(--gis-slide-duration)_var(--gis-slide-easing)] motion-reduce:[transition:none]">
+        <div className="min-w-0 empty:hidden max-sm:basis-full">
+          {dataStatus || !mapReady ? (
+            <div className="gis-map-status pointer-events-auto flex min-h-9 w-fit max-w-full flex-wrap items-center gap-x-2 gap-y-1 rounded-xl border border-neutral-200 bg-white px-3 py-1.5 text-xs text-neutral-800" role="status">
+              {dataStatus?.message ?? "Memuat peta 3D Jawa Barat..."}
+              {dataStatus?.retry ? (
+                <Button size="sm" variant="outline" className="h-7 rounded-lg text-xs" onClick={dataStatus.retry}>
+                  Coba lagi
+                </Button>
+              ) : null}
+            </div>
           ) : null}
         </div>
-      ) : null}
-
-      <div className="gis-map-settings pointer-events-none absolute right-4 bottom-4 z-2 flex flex-col items-end gap-2 [transition:right_var(--gis-slide-duration)_var(--gis-slide-easing)] motion-reduce:[transition:none]">
+        <div className="absolute right-0 bottom-full mb-2 flex flex-col items-end gap-2">
         {Math.abs(bearing) > 2 && (
           <Button
             type="button"
@@ -1747,9 +1754,13 @@ export function MapLibreWorkspaceMap({
           ))}
         </div>
 
+        </div>
+
+        <div className="ml-auto flex min-w-0 items-end gap-2">
+        <div ref={metadataRef} className="pointer-events-auto min-w-0 max-w-[35vw] text-xs wrap-anywhere [&_.maplibregl-ctrl]:m-0! [&_.maplibregl-ctrl-attrib]:min-h-9 [&_.maplibregl-ctrl-attrib]:content-center [&_.maplibregl-ctrl-attrib]:bg-white [&_.maplibregl-ctrl-attrib]:rounded-xl" />
         <div
           data-sim-open={simulationOpen}
-          className={`gis-3d-switcher pointer-events-auto inline-flex items-center rounded-xl border border-neutral-200 bg-white p-1 ${
+          className={`gis-3d-switcher pointer-events-auto inline-flex shrink-0 items-center rounded-xl border border-neutral-200 bg-white p-1 ${
             simulationOpen ? "max-[1279.01px]:hidden" : ""
           }`}
           role="group"
@@ -1798,6 +1809,7 @@ export function MapLibreWorkspaceMap({
               </button>
             ))}
           </div>
+        </div>
         </div>
       </div>
     </section>

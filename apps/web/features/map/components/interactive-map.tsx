@@ -41,12 +41,10 @@ export function InteractiveMap({
           maxZoom: westJavaBasemap.maxZoom,
           maxBounds: westJavaBasemap.panBounds,
           maxBoundsViscosity: 1,
-          attributionControl: true,
+          attributionControl: false,
         });
         instance.current = map;
         setReadyMap(map);
-        map.attributionControl.setPrefix(false);
-        map.attributionControl.setPosition("bottomleft");
         const tiles = L.tileLayer(westJavaBasemap.tileUrl, {
           attribution: westJavaBasemap.attribution,
           maxZoom: westJavaBasemap.maxZoom,
@@ -111,9 +109,10 @@ export function InteractiveMap({
       />
       {readyMap ? children?.(readyMap) : null}
 
+      <div className="gis-map-status pointer-events-none absolute bottom-4 left-4 right-4 z-1 flex items-end pr-32">
       {dataStatus || status !== "ready" ? (
         <div
-          className="gis-map-status absolute z-1 left-[calc(var(--regions-width,0px)_+_64px)] right-16 bottom-16 flex items-center flex-wrap gap-2 rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-neutral-800 [transition:left_var(--gis-slide-duration)_var(--gis-slide-easing),right_var(--gis-slide-duration)_var(--gis-slide-easing)] motion-reduce:[transition:none]"
+          className="pointer-events-auto flex min-h-9 min-w-0 flex-wrap items-center gap-x-2 gap-y-1 rounded-xl border border-neutral-200 bg-white px-3 py-1.5 text-xs text-neutral-800"
           role="status"
         >
           {dataStatus?.message ??
@@ -138,6 +137,7 @@ export function InteractiveMap({
           ) : null}
         </div>
       ) : null}
+      </div>
 
       <div className="gis-map-settings pointer-events-none absolute right-4 bottom-4 z-2 flex flex-col items-end gap-2 [transition:right_var(--gis-slide-duration)_var(--gis-slide-easing)] motion-reduce:[transition:none]">
         <div
@@ -188,6 +188,7 @@ export function InteractiveMap({
             Coba lagi Terrain / Satelit
           </Button>
         ) : null}
+        <a href="https://www.openstreetmap.org/copyright" className="pointer-events-auto flex min-h-9 shrink-0 items-center rounded-xl border border-neutral-200 bg-white px-2 text-[11px] text-neutral-800" aria-label="Metadata peta OpenStreetMap">© OpenStreetMap</a>
       </div>
     </section>
   );

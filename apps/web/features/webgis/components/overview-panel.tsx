@@ -25,7 +25,7 @@ export function OverviewPanel({ overview }: { overview: WorkspaceData["overview"
           </Card>
         ))}
       </div>
-      <Card className="gis-card border-0 [outline:1px_solid_var(--gis-border)] [outline-offset:-1px] p-4 rounded-2xl [&_h2]:text-[16px] [&_h2]:leading-[24px] [&_h2]:font-medium gis-summary-card min-h-51 [&_p]:mt-2 max-[999.01px]:min-h-0">
+      <Card className="gis-card border-0 [outline:1px_solid_var(--gis-border)] [outline-offset:-1px] p-4 rounded-2xl [&_h2]:text-[16px] [&_h2]:leading-[24px] [&_h2]:font-medium gis-summary-card [&_p]:mt-2">
         <h2>Ringkasan Kondisi</h2>
         <p className="text-neutral-700 leading-relaxed">{overview.summary}</p>
       </Card>

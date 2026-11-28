@@ -1,16 +1,18 @@
 "use client";
 
 import { useState, useSyncExternalStore } from "react";
+import dynamic from "next/dynamic";
 import { IconCalendarWeek } from "@tabler/icons-react";
 import { id } from "date-fns/locale";
 import { format } from "date-fns";
 import type { DateRange } from "react-day-picker";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { CalendarTimeline } from "@/components/ui/calendar-timeline";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { getCurrentTimelineDate, getTimelineMonths } from "../timeline";
 import type { WorkspaceFilters } from "../types";
+
+const CalendarTimeline = dynamic(() => import("@/components/ui/calendar-timeline").then((module) => module.CalendarTimeline));
 
 function subscribeToDateChange(callback: () => void) {
   const timer = window.setInterval(callback, 60_000);

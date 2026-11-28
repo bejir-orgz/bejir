@@ -4,6 +4,8 @@ import assert from "node:assert/strict";
 const { parseRiverBounds, parseRiverRegions, riverViewportStatusMessage } = await import("./data.ts");
 const { riverScope } = await import("./filter.ts");
 const { getRiverSummary } = await import("./api.ts");
+const { riverTileTemplate } = await import("./tiles.ts");
+const { riverViewportLoader } = await import("./viewport.ts");
 
 // Two regencies: 17 has districts 1 and 2, 18 has district 3.
 const catalog = {
@@ -18,7 +20,7 @@ const catalog = {
   ],
 };
 const withCatalog = (handler) => async (input) => {
-  const url = new URL(input);
+  const url = new URL(input, "http://localhost");
   if (url.pathname.endsWith("/geography/catalog")) return Response.json(catalog);
   return handler(url);
 };
@@ -102,10 +104,39 @@ test("map filter inputs and status messages are validated cleanly", () => {
   );
   assert.match(
     riverViewportStatusMessage({ returned: 1000, total_matching: 5000, truncated: true, scope_unsupported: null })?.message ?? "",
-    /sungai terpanjang/,
+    /1.000 dari 5.000 segmen/,
   );
   assert.equal(
     riverViewportStatusMessage({ returned: 120, total_matching: 120, truncated: false, scope_unsupported: null }),
     undefined,
   );
+});
+
+test("tile URLs are stable for a selection and province requests omit region filters", () => {
+  const base = "/backend/web/rivers/tiles/{z}/{x}/{y}";
+  assert.equal(riverTileTemplate([]), base);
+  assert.equal(riverTileTemplate(["17/2", "4", "4"]), `${base}?region=17%2F2&region=4`);
+  assert.equal(riverTileTemplate(["17/2/9"]), null);
+});
+
+test("tile scopes filter whole regencies by their own boundaries and keep district exclusions", async (t) => {
+  t.mock.method(globalThis, "fetch", withCatalog(() => new Response(null, { status: 503 })));
+  assert.deepEqual(await riverScope(["17"], { tiles: true }), { kind: "regencies", query: "regency_id=17" });
+  assert.deepEqual(await riverScope(["17", "!17/1"], { tiles: true }), { kind: "districts", query: "district_id=2" });
+});
+
+test("the GeoJSON path accepts a complete province selection and reuses nearby results", async (t) => {
+  t.mock.method(globalThis, "fetch", withCatalog(() => Response.json({
+    type: "FeatureCollection", features: [], returned: 1, total_matching: 1, truncated: false,
+  })));
+  assert.deepEqual(await riverScope(["17", "18"], { viewport: true }), { kind: "all", query: "" });
+  assert.deepEqual(await riverScope(["17"], { viewport: true }), { kind: "regencies", query: "regency_id=17" });
+
+  const render = t.mock.fn();
+  const loader = riverViewportLoader(["17/2"], render, () => {});
+  await loader.load([106, -8, 109, -5]);
+  await loader.load([106.1, -8, 109.1, -5]);
+  assert.equal(render.mock.callCount(), 1);
+  const request = globalThis.fetch.mock.calls.at(-1).arguments[0];
+  assert.match(request, /^\/backend\/web\/rivers\/layers\?bbox=.*&region=17%2F2$/);
 });

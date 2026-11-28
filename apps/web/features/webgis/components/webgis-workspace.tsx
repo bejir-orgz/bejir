@@ -21,6 +21,7 @@ import { EvacuationRouting } from "@/features/evacuation/evacuation-routing";
 import { BoundaryLayer } from "@/features/regions/boundary-layer";
 import { useOverview } from "../use-overview";
 import { RiverLayer } from "@/features/rivers/river-layer";
+import { useRiverMode } from "@/features/rivers/use-river-mode";
 import { ThematicLayers } from "@/features/geography/thematic-layers";
 import { MapSimulationLayer, type SelectedSimRegion } from "@/features/simulation/map-simulation-layer";
 import type { SimulationMode, SimulationParams, SimulationScope, SimulationStats } from "@/features/simulation/terrain-pack";
@@ -59,7 +60,7 @@ const getServerSnapshot = () => false;
 
 const subscribeNoop = () => () => {};
 const getWebGLSnapshot = () => supportsWebGL();
-const getWebGLServerSnapshot = () => false;
+const getWebGLServerSnapshot = () => null;
 
 function parseInitialSimTarget(regionIds: string[]): {
   regencyId: number;
@@ -109,6 +110,8 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
   ]);
 
   const filters = { ...localFilters, regionIds: mapRegionIds };
+  const riversEnabled = filters.layerIds.includes("rivers");
+  const riverMode = useRiverMode(riversEnabled);
   useEffect(() => {
     if (data.initialFilters.regionIds.length) setMapRegionIds(data.initialFilters.regionIds);
   }, [data.initialFilters.regionIds, setMapRegionIds]);
@@ -191,7 +194,9 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
     setSafeEvacRequestNonce((prev) => prev + 1);
   }
 
-  const activeDataStatus = simStatus ?? regionStatus ?? routeStatus ?? riverStatus ?? thematicStatus ?? evacuation.dataStatus;
+  const activeDataStatus = simStatus ?? regionStatus ?? routeStatus ?? riverStatus ??
+    (riversEnabled && !riverMode ? { message: "Memuat jaringan sungai…" } : undefined) ??
+    thematicStatus ?? evacuation.dataStatus;
   const rawTimePeriod = filters.date
     ? { from: filters.date, to: filters.dateTo || filters.date }
     : overview.period;
@@ -221,14 +226,14 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
         }
       }}>
         <h1 className="sr-only">Map Interaktif Jawa Barat</h1>
-        {!webglAvailable || useClassicMap ? (
+        {webglAvailable === false || useClassicMap ? (
           <InteractiveMap
             dataStatus={activeDataStatus}
             onRetryWebGL={webglAvailable ? () => setUseClassicMap(false) : undefined}
           >
             {(map) => (
               <>
-                <RiverLayer map={map} enabled={filters.layerIds.includes("rivers")} regionIds={filters.regionIds} onStatus={setRiverStatus} />
+                <RiverLayer map={map} mode={riverMode} regionIds={filters.regionIds} onStatus={setRiverStatus} />
                 <ThematicLayers map={map} layerIds={filters.layerIds} regionIds={filters.regionIds} onStatus={setThematicStatus} />
                 <MapSimulationLayer
                   map={map}
@@ -252,8 +257,9 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
               </>
             )}
           </InteractiveMap>
-        ) : (
+        ) : webglAvailable && (
           <MapLibreWorkspaceMap
+            riverMode={riverMode}
             onClassicFallback={() => setUseClassicMap(true)}
             layerIds={filters.layerIds}
             regionIds={filters.regionIds}
@@ -288,7 +294,7 @@ export function WebgisWorkspace({ data, onFiltersChange }: WorkspaceProps) {
           selectedRegion={simRegion}
           stats={simStats}
           safeEvacNote={safeEvacNote}
-          canZoom3d={webglAvailable}
+          canZoom3d={webglAvailable === true}
           onModeChange={(nextMode) => {
             setSimMode(nextMode);
             setSafeEvacNote(null);

@@ -38,7 +38,8 @@ function isPreparedCollection(value: unknown): value is PreparedCollection {
 export async function getDistrictBoundaries(): Promise<PreparedCollection> {
   const [[south, west], [north, east]] = westJavaBasemap.bounds;
   const query = `bbox=${west},${south},${east},${north}&simplify_m=${displayToleranceM3857}&limit=5000`;
-  const response = await fetchBackend(`/api/v1/geography/boundaries?level=district&${query}`, { next: { revalidate: 3600 } });
+  // The assembled thematic collection has its own cache.
+  const response = await fetchBackend(`/api/v1/geography/boundaries?level=district&${query}`, { cache: "no-store" });
   if (!response.ok) throw new Error(`Batas kecamatan HTTP ${response.status}`);
   const data: unknown = await response.json();
   if (!isBoundariesPayload(data) || data.level !== "district") {

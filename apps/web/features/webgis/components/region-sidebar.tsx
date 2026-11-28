@@ -115,7 +115,7 @@ export function RegionSidebar({ filters, onChange, hidden, onWidthChange }: {
       <div dir="ltr">
       <div className="flex items-center justify-between gap-4">
         <h1>Daerah</h1>
-        {!!(filters.regionIds.length || query.trim()) && <Button type="button" variant="link" size="sm" className="text-red-500 no-underline hover:text-red-600 hover:no-underline" aria-label="Reset pilihan daerah" onClick={() => { setQuery(""); setExpandedIds([]); onChange({ regionIds: [] }); }}>Reset</Button>}
+        {filters.regionIds.length > 0 && <Button type="button" variant="link" size="sm" className="text-red-500 no-underline hover:text-red-600 hover:no-underline" aria-label="Reset pilihan daerah" onClick={() => onChange({ regionIds: [] })}>Reset</Button>}
       </div>
       <label className="gis-search flex items-center gap-2 rounded-2xl border border-neutral-300 focus-within:border-blue-500 p-[8px_16px] mt-2 h-[38px] text-neutral-600 transition-colors [&_input]:min-w-0 [&_input]:w-full [&_input]:h-5 [&_input]:p-0 [&_input]:border-0 [&_input]:outline-none [&_input]:shadow-none [&_input]:bg-transparent [&_input]:text-[14px] [&_input]:leading-[20px] [&_input]:text-neutral-900 [&_input::placeholder]:text-neutral-500 [&_input::placeholder]:opacity-100 [&_input]:focus:outline-none [&_input]:focus-visible:ring-0 [&_input]:focus-visible:border-0"><IconSearch className="size-4 shrink-0 text-neutral-500" aria-hidden="true" /><Input id="gis-sidebar-region-query" name="sidebar-region-query" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Cari daerah" aria-label="Cari daerah" /></label>
       <div className="gis-region-scroll mt-4">

@@ -9,6 +9,15 @@ VIEWPORT_SIMPLIFY_M = 100
 
 class RiverService:
     @staticmethod
+    def get_tile(
+        db: Session, *, z: int, x: int, y: int,
+        regency_ids: list[int], district_ids: list[int],
+    ) -> bytes:
+        return RiverRepository.get_tile(
+            db, z=z, x=x, y=y, regency_ids=regency_ids, district_ids=district_ids,
+        )
+
+    @staticmethod
     def get_regency_summary(db: Session) -> list[RiverRegencySummary]:
         return [
             RiverRegencySummary(**row)

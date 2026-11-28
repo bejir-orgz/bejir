@@ -1,6 +1,6 @@
 import json
 
-from sqlalchemy import Select, func, select
+from sqlalchemy import Select, func, select, text
 from sqlalchemy.orm import Session, aliased
 from sqlalchemy.sql.elements import ColumnElement
 
@@ -36,6 +36,49 @@ def _intersecting_river_ids(model, boundary_ids: list[int]) -> Select:
 
 
 class RiverRepository:
+    @staticmethod
+    def get_tile(
+        db: Session, *, z: int, x: int, y: int,
+        regency_ids: list[int], district_ids: list[int],
+    ) -> bytes:
+        # The buffer matches 64 MVT units out of the 4096-unit extent.
+        # Keep the river geometry in EPSG:3857 so the spatial index can filter the tile.
+        statement = text("""
+            WITH tile AS (
+                SELECT ST_TileEnvelope(:z, :x, :y) AS envelope,
+                       ST_TileEnvelope(:z, :x, :y, margin => 0.015625) AS buffered
+            ), scope AS (
+                SELECT ST_Union(ST_Intersection(ST_Transform(region.geom, 3857), tile.buffered)) AS geom
+                FROM tile
+                CROSS JOIN LATERAL (
+                    SELECT geom FROM core.regency
+                    WHERE id = ANY(CAST(:regency_ids AS bigint[]))
+                      AND geom && ST_Transform(tile.buffered, 4326)
+                    UNION ALL
+                    SELECT geom FROM core.districts
+                    WHERE id = ANY(CAST(:district_ids AS bigint[]))
+                      AND geom && ST_Transform(tile.buffered, 4326)
+                ) AS region
+            ), lines AS (
+                SELECT r.id, r.name, r.river_type,
+                       ST_AsMVTGeom(
+                           CASE WHEN :scoped THEN ST_CollectionExtract(ST_Intersection(r.geom, scope.geom), 2)
+                                ELSE r.geom END,
+                           tile.envelope, 4096, 64
+                       ) AS geom
+                FROM tile CROSS JOIN scope
+                JOIN core.rivers r ON r.geom && tile.buffered
+                WHERE NOT :scoped OR ST_Intersects(r.geom, scope.geom)
+            )
+            SELECT ST_AsMVT(lines, 'rivers', 4096, 'geom', 'id')
+            FROM lines WHERE geom IS NOT NULL AND ST_Dimension(geom) = 1
+        """)
+        tile = db.scalar(statement, {
+            "z": z, "x": x, "y": y, "regency_ids": regency_ids,
+            "district_ids": district_ids, "scoped": bool(regency_ids or district_ids),
+        })
+        return bytes(tile) if tile else b""
+
     @staticmethod
     def get_assistant_summary(
         db: Session, *, location_filter: ColumnElement[bool] | None = None,

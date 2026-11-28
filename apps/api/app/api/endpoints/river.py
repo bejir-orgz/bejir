@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, Response
 from sqlalchemy.orm import Session
 
 from app.api.params import parse_bbox
@@ -9,6 +9,26 @@ from app.schemas.geography.river import RiverRegencySummary
 from app.services.geography import RiverService
 
 router = APIRouter()
+
+
+@router.get("/tiles/{z}/{x}/{y}.mvt", response_class=Response, responses={
+    200: {"content": {"application/vnd.mapbox-vector-tile": {}}},
+})
+def get_river_tile(
+    z: Annotated[int, Path(ge=4, le=14)],
+    x: Annotated[int, Path(ge=0)],
+    y: Annotated[int, Path(ge=0)],
+    regency_id: list[Annotated[int, Query(gt=0, le=2147483647)]] = Query(default=[], max_length=27),
+    district_id: list[Annotated[int, Query(gt=0, le=2147483647)]] = Query(default=[], max_length=1000),
+    db: Session = Depends(get_db),
+):
+    """PostGIS vector tile, clipped to the selected West Java administrative areas."""
+    if x >= 1 << z or y >= 1 << z:
+        raise HTTPException(status_code=422, detail="Koordinat tile tidak valid.")
+    return Response(
+        RiverService.get_tile(db, z=z, x=x, y=y, regency_ids=regency_id, district_ids=district_id),
+        media_type="application/vnd.mapbox-vector-tile",
+    )
 
 
 @router.get("/summary", response_model=list[RiverRegencySummary])
