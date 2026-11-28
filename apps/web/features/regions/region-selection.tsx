@@ -8,6 +8,7 @@ import { compactMapScope, regionSelectionIndex, translateRegionSelection } from 
 const RegionSelectionContext = createContext<{
   regionIds: string[]; setRegionIds: (ids: string[]) => void;
   mapRegionIds: string[]; dataRegionIds: string[]; setMapRegionIds: (ids: string[]) => void;
+  toMapIds: (ids: readonly string[]) => string[];
   tree: ReturnType<typeof createRegionFilterTree>;
 } | null>(null);
 
@@ -21,7 +22,8 @@ export function RegionSelectionProvider({ catalog, children }: { catalog: Admini
   const mapRegionIds = useMemo(() => translateRegionSelection(regionIds, pairs, true), [regionIds, pairs]);
   const dataRegionIds = useMemo(() => compactMapScope(mapRegionIds, pairs), [mapRegionIds, pairs]);
   const setMapRegionIds = useCallback((ids: string[]) => setRegionIds(translateRegionSelection(ids, pairs, false)), [pairs]);
-  const value = useMemo(() => ({ regionIds, setRegionIds, mapRegionIds, dataRegionIds, setMapRegionIds, tree }), [regionIds, mapRegionIds, dataRegionIds, setMapRegionIds, tree]);
+  const toMapIds = useCallback((ids: readonly string[]) => translateRegionSelection(ids, pairs, true), [pairs]);
+  const value = useMemo(() => ({ regionIds, setRegionIds, mapRegionIds, dataRegionIds, setMapRegionIds, toMapIds, tree }), [regionIds, mapRegionIds, dataRegionIds, setMapRegionIds, toMapIds, tree]);
   return <RegionSelectionContext.Provider value={value}>{children}</RegionSelectionContext.Provider>;
 }
 

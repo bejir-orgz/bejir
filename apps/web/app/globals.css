@@ -4,6 +4,10 @@
 @layer base {
   * { @apply border-border; }
   body { font-variation-settings: "GRAD" 0, "ROND" 0, "wdth" 100; }
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
 }
 
 :root {
@@ -39,6 +43,9 @@
   --muted-foreground: #737373;
   --border: #d4d4d4;
   --ring: #2b7fff;
+  --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out-strong: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 @theme inline {
@@ -93,9 +100,30 @@ html { scroll-behavior: smooth; }
 
 .site-container { width: min(100% - 32px, 1160px); margin-inline: auto; }
 
+@keyframes gisRiverFlow {
+  from { stroke-dashoffset: 40; }
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes gisRouteFlow {
+  from { stroke-dashoffset: 28; }
+  to { stroke-dashoffset: 0; }
+}
+
+.gis-river-flow {
+  stroke-dasharray: 6 14;
+  animation: gisRiverFlow 2.6s linear infinite;
+  pointer-events: none;
+}
+
+.gis-route-flow {
+  stroke-dasharray: 10 8;
+  animation: gisRouteFlow 1.2s linear infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  *, *::before, *::after { transition-duration: 0s !important; }
+  .gis-river-flow, .gis-route-flow { animation: none !important; stroke-dasharray: none; }
 }
 
 .gis-brand:focus-visible { outline: 2px solid var(--gis-blue); outline-offset: -2px; }

@@ -1,57 +1,137 @@
 "use client";
 import { useEffect } from "react";
-import type { Map as LeafletMap } from "leaflet";
-import type { FeatureCollection, MultiLineString } from "geojson";
-import type { RiverProperties } from "./types";
+import type { Coords, DoneCallback, Map as LeafletMap, TileEvent } from "leaflet";
+import { riverTileMaxZoom, riverTileMinZoom, riverTileTemplate, riverVillageStatus } from "./tiles";
+import type { RiverMode } from "./use-river-mode";
+import { riverViewportLoader } from "./viewport";
 
-type RiverViewport = { returned: number; total_matching: number; truncated: boolean; scope_unsupported: "village" | "too-wide" | null };
-
-function riverStatus(data: RiverViewport): { message: string } | undefined {
-  if (data.scope_unsupported === "village") return { message: "Filter sungai tingkat kelurahan/desa belum tersedia." };
-  if (data.scope_unsupported === "too-wide") return { message: "Pilihan wilayah terlalu luas untuk filter sungai. Pilih lebih sedikit daerah." };
-  const shown = data.returned.toLocaleString("id-ID");
-  // A truncated page arrives longest-first, so the view is the major rivers, not a random slice.
-  if (data.truncated) return { message: `Menampilkan ${shown} sungai terpanjang dari ${data.total_matching.toLocaleString("id-ID")} segmen pada area peta. Perbesar peta untuk melihat anak sungai.` };
-  return data.returned ? undefined : { message: "Tidak ada segmen sungai pada area peta ini." };
-}
-
-export function RiverLayer({ map, enabled, regionIds, onStatus }: { map: LeafletMap; enabled: boolean; regionIds: string[]; onStatus: (status: { message: string; retry?: () => void } | undefined) => void }) {
+export function RiverLayer({
+  map,
+  mode,
+  regionIds,
+  onStatus,
+}: {
+  map: LeafletMap;
+  mode?: RiverMode;
+  regionIds: string[];
+  onStatus: (status: { message: string; retry?: () => void } | undefined) => void;
+}) {
+  const template = mode === "tiles" ? riverTileTemplate(regionIds) : null;
   const scope = regionIds.join(",");
   useEffect(() => {
-    if (!enabled) return;
-    let controller: AbortController | undefined;
-    let remove: (() => void) | undefined;
-    let closed = false;
-    async function load() {
-      controller?.abort();
-      const active = new AbortController(); controller = active;
-      const bounds = map.getBounds();
-      const bbox = [Math.max(-180, bounds.getWest()), Math.max(-90, bounds.getSouth()), Math.min(180, bounds.getEast()), Math.min(90, bounds.getNorth())].map((n) => n.toFixed(6)).join(",");
-      const query = new URLSearchParams({ bbox });
-      for (const id of scope.split(",").filter(Boolean)) query.append("region", id);
-      onStatus({ message: "Memuat jaringan sungai…" });
-      try {
-        const response = await fetch(`/backend/web/rivers/layers?${query}`, { signal: active.signal });
-        if (!response.ok) throw new Error("Jaringan sungai belum dapat dimuat.");
-        const data: FeatureCollection<MultiLineString, RiverProperties> & { returned: number; total_matching: number; truncated: boolean; scope_unsupported: "village" | "too-wide" | null } = await response.json();
-        const L = await import("leaflet");
-        if (closed || active.signal.aborted) return;
-        remove?.();
-        const renderer = L.canvas({ padding: 0.2 }).addTo(map);
-        const layer = L.geoJSON(data, { style: { renderer, color: "#0284c7", weight: 1.5, opacity: 0.85 }, onEachFeature(feature, line) {
-          const text = document.createElement("span");
-          text.textContent = `${feature.properties.name || "Sungai tanpa nama"} · ${feature.properties.river_type || "Jenis belum tersedia"}`;
-          line.bindTooltip(text);
-        } }).addTo(map);
-        remove = () => { layer.remove(); renderer.remove(); };
-        onStatus(riverStatus(data));
-      } catch (error) {
-        if (!closed && !active.signal.aborted) { remove?.(); remove = undefined; onStatus({ message: error instanceof Error ? error.message : "Layer sungai gagal.", retry: () => { void load(); } }); }
-      }
+    if (mode !== "tiles") return;
+    if (!template) {
+      onStatus(riverVillageStatus);
+      return () => onStatus(undefined);
     }
-    void load();
+    let layer: import("leaflet").GridLayer | undefined;
+    let closed = false;
+    let failed = false;
+    const pending = new Map<HTMLElement, AbortController>();
+    const load = async () => {
+      onStatus({ message: "Memuat jaringan sungai…" });
+      const [L, { VectorTile }, { PbfReader }] = await Promise.all([
+        import("leaflet"), import("@mapbox/vector-tile"), import("pbf"),
+      ]);
+      if (closed) return;
+      class RiverTiles extends L.GridLayer {
+        protected createTile({ z, x, y }: Coords, done: DoneCallback) {
+          const canvas = document.createElement("canvas");
+          const size = this.getTileSize();
+          canvas.width = size.x;
+          canvas.height = size.y;
+          const controller = new AbortController();
+          pending.set(canvas, controller);
+          const url = template!.replace("{z}", String(z)).replace("{x}", String(x)).replace("{y}", String(y));
+          void fetch(url, { signal: controller.signal }).then(async (response) => {
+            if (!response.ok) throw new Error("Tile jaringan sungai gagal dimuat.");
+            const bytes = await response.arrayBuffer();
+            if (controller.signal.aborted) return;
+            const tile = new VectorTile(new PbfReader(bytes)).layers.rivers;
+            const context = canvas.getContext("2d");
+            if (tile && context) {
+              const scale = size.x / tile.extent;
+              context.strokeStyle = "#0284c7";
+              context.globalAlpha = 0.85;
+              context.lineWidth = 1.5;
+              context.beginPath();
+              for (let i = 0; i < tile.length; i++) {
+                for (const [first, ...line] of tile.feature(i).loadGeometry()) {
+                  if (!first) continue;
+                  context.moveTo(first.x * scale, first.y * scale);
+                  for (const point of line) context.lineTo(point.x * scale, point.y * scale);
+                }
+              }
+              context.stroke();
+            }
+            done(undefined, canvas);
+          }).catch(() => {
+            if (!controller.signal.aborted) done(new Error("Tile jaringan sungai gagal dimuat."), canvas);
+          }).finally(() => pending.delete(canvas));
+          return canvas;
+        }
+      }
+      layer = new RiverTiles({
+        minZoom: riverTileMinZoom, maxNativeZoom: riverTileMaxZoom,
+        noWrap: true, keepBuffer: 1, updateWhenIdle: true,
+      });
+      layer.on("loading", () => {
+        failed = false;
+        onStatus({ message: "Memuat jaringan sungai…" });
+      });
+      layer.on("load", () => {
+        if (!failed) onStatus(undefined);
+      });
+      layer.on("tileerror", () => {
+        failed = true;
+        onStatus({ message: "Jaringan sungai belum dapat dimuat.", retry: () => layer?.redraw() });
+      });
+      layer.on("tileunload", ({ tile }: TileEvent) => pending.get(tile)?.abort());
+      layer.addTo(map);
+    };
+    void load().catch(() => {
+      if (!closed) onStatus({ message: "Jaringan sungai belum dapat dimuat." });
+    });
+    return () => {
+      closed = true;
+      for (const controller of pending.values()) controller.abort();
+      layer?.remove();
+      onStatus(undefined);
+    };
+  }, [map, mode, template, onStatus]);
+  useEffect(() => {
+    if (mode !== "geojson") return;
+    let remove: (() => void) | undefined;
+    const loader = riverViewportLoader(scope ? scope.split(",") : [], async (data, signal) => {
+      const L = await import("leaflet");
+      if (signal.aborted) return;
+      remove?.();
+      const renderer = L.canvas({ padding: 0.2 }).addTo(map);
+      const layer = L.geoJSON(data, {
+        style: { renderer, color: "#0284c7", weight: 1.5, opacity: 0.85 },
+        onEachFeature(feature, line) {
+          const label = document.createElement("span");
+          label.textContent = `${feature.properties.name || "Sungai tanpa nama"} · ${feature.properties.river_type || "Jenis belum tersedia"}`;
+          line.bindTooltip(label);
+        },
+      }).addTo(map);
+      remove = () => {
+        layer.remove();
+        renderer.remove();
+      };
+    }, onStatus);
+    const load = () => {
+      const b = map.getBounds();
+      void loader.load([b.getWest(), b.getSouth(), b.getEast(), b.getNorth()]);
+    };
+    load();
     map.on("moveend", load);
-    return () => { closed = true; controller?.abort(); map.off("moveend", load); remove?.(); onStatus(undefined); };
-  }, [map, enabled, scope, onStatus]);
+    return () => {
+      loader.abort();
+      map.off("moveend", load);
+      remove?.();
+      onStatus(undefined);
+    };
+  }, [map, mode, scope, onStatus]);
   return null;
 }

@@ -19,5 +19,8 @@ test("approved pixel weighting produces regional means and dominant class with e
   assert.equal(nullableSum([0, 0]), 0);
   assert.equal(nullableSum([1, null]), null);
   assert.throws(() => nullableSum([-1]));
-  assert.deepEqual(susceptibilityDistribution(rows).map((row) => row.value), [0, 1, 0, 1, 0]);
+  assert.deepEqual(
+    susceptibilityDistribution(rows).map((row) => row.value),
+    [0, 1, 0, 1, 0],
+  );
 });

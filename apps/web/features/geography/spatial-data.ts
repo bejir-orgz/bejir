@@ -8,6 +8,9 @@ export interface DistrictParameters {
   n_piksel: number | null;
   luas_km2: number | null;
   mean_elevasi_m: number | null;
+  mean_hand_m?: number | null;
+  mean_slope_pct?: number | null;
+  pct_rawan_v2?: number | null;
   mean_hujan_mm: number | null;
   kelas_dominan_v2: number | null;
   landcover_dominan: string | null;

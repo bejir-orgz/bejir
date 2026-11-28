@@ -10,13 +10,28 @@ const facilityStyles = {
 
 /** Shared presentation for the map overview and analysis dashboard. */
 export function FacilityRows({ facilities }: { facilities: FacilityMetric[] }) {
-  // Four bare zeros read as a broken panel; say the period simply has no record.
   const recorded = facilities.some((facility) => (facility.count ?? 0) > 0);
-  return <>
-    {facilities.map((facility) => {
-      const Icon = facilityStyles[facility.id].icon;
-      return <div key={facility.id} className="gis-facility-row flex items-center justify-between gap-2 [&_strong]:font-semibold max-[639.01px]:text-[12px]"><div className="gis-facility-label flex items-center gap-4 max-[639.01px]:gap-2"><span className="gis-facility-icon flex items-center justify-center w-10 h-10 [flex:0_0_40px] p-2 rounded-lg" style={{ backgroundColor: facilityStyles[facility.id].background, color: facilityStyles[facility.id].color }}><Icon className="size-6 shrink-0" stroke={2} aria-hidden="true" /></span><span>{facility.label}</span></div><strong>{facility.count ?? "—"}</strong></div>;
-    })}
-    {!recorded && <p className="gis-facility-empty text-[12px] leading-[16px] text-neutral-500">Belum ada kerusakan fasilitas yang tercatat untuk periode ini.</p>}
-  </>;
+  return (
+    <>
+      {facilities.map((facility) => {
+        const Icon = facilityStyles[facility.id].icon;
+        return (
+          <div key={facility.id} className="gis-facility-row flex items-center justify-between gap-2 [&_strong]:font-semibold max-[639.01px]:text-[12px]">
+            <div className="gis-facility-label flex items-center gap-4 max-[639.01px]:gap-2">
+              <span className="gis-facility-icon flex items-center justify-center w-10 h-10 [flex:0_0_40px] p-2 rounded-lg" style={{ backgroundColor: facilityStyles[facility.id].background, color: facilityStyles[facility.id].color }}>
+                <Icon className="size-6 shrink-0" stroke={2} aria-hidden="true" />
+              </span>
+              <span>{facility.label}</span>
+            </div>
+            <strong>{facility.count ?? "—"}</strong>
+          </div>
+        );
+      })}
+      {!recorded && (
+        <p className="gis-facility-empty text-[12px] leading-[16px] text-neutral-500">
+          Belum ada kerusakan fasilitas yang tercatat untuk periode ini.
+        </p>
+      )}
+    </>
+  );
 }

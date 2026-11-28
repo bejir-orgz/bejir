@@ -19,8 +19,6 @@ const schemas = contract.components.schemas as Record<string, JsonSchema>;
  */
 function upstreamFailure(path: string, status: number): string | undefined {
   if (path === "/api/v1/assistant/chat" && status === 503) return "Layanan AI sedang tidak tersedia atau kuotanya habis. Coba lagi nanti.";
-  // The routing road network covers only part of the province and refuses the rest in
-  // English. Our own validator already answered 422, so a 400 here is that refusal.
   if (path === "/api/v1/evacuation/routes" && status === 400) return "Belum ada jaringan jalan yang terhubung di titik ini, jadi rute belum bisa dihitung. Coba titik lain.";
   // One broken feature should not read as the whole site being down.
   if (path === "/api/v1/evacuation/routes" && status >= 500) return "Pencarian rute evakuasi sedang bermasalah. Fitur peta yang lain tetap bisa dipakai.";
@@ -68,8 +66,7 @@ export async function proxyBackend(request: Request, path: string): Promise<Resp
       method: request.method,
       headers: { Accept: "application/json", ...(body === undefined ? {} : { "Content-Type": "application/json" }) },
       body: body === undefined ? undefined : JSON.stringify(body),
-      signal: deadline(path, request.signal),
-      cache: "no-store",
+      cache: "no-store", signal: deadline(path, request.signal),
     });
     const replacement = upstreamFailure(path, upstream.status);
     if (replacement) return Response.json({ detail: replacement }, { status: upstream.status });

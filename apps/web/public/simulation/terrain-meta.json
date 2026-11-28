@@ -1,0 +1,28 @@
+{
+  "version": 3,
+  "projection": "EPSG:3857-grid",
+  "width": 768,
+  "height": 615,
+  "bounds": {
+    "west": 106.35,
+    "south": -7.85,
+    "east": 108.86,
+    "north": -5.88
+  },
+  "mercNorth": -0.10280598,
+  "mercSouth": -0.13743901,
+  "cellAreaKm2": 0.12794,
+  "stats": {
+    "validPixels": 289546,
+    "totalBuildings": 8247452,
+    "totalPopulation": 49760195,
+    "minDemM": -4.2,
+    "maxDemM": 3002.1,
+    "maxSlopeDeg": 61.5
+  },
+  "files": {
+    "demHand": "/simulation/terrain-dem-hand.png",
+    "hazardParams": "/simulation/terrain-hazard-params.png",
+    "buildings": "/simulation/terrain-buildings.png"
+  }
+}

@@ -1,16 +1,18 @@
 "use client";
 
 import { useState, useSyncExternalStore } from "react";
+import dynamic from "next/dynamic";
 import { IconCalendarWeek } from "@tabler/icons-react";
 import { id } from "date-fns/locale";
 import { format } from "date-fns";
 import type { DateRange } from "react-day-picker";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { CalendarTimeline } from "@/components/ui/calendar-timeline";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { getCurrentTimelineDate, getTimelineMonths } from "../timeline";
 import type { WorkspaceFilters } from "../types";
+
+const CalendarTimeline = dynamic(() => import("@/components/ui/calendar-timeline").then((module) => module.CalendarTimeline));
 
 function subscribeToDateChange(callback: () => void) {
   const timer = window.setInterval(callback, 60_000);
@@ -61,7 +63,7 @@ export function TimelineSidebar({ year, filters, hidden, onChange }: {
   }
 
   return (
-    <aside id="gis-timeline-panel" hidden={hidden} className="gis-left absolute z-2 [inset:0_auto_0_0] w-[var(--sidebar-width)] border-0 rounded-[0_16px_16px_0] bg-[white] overflow-hidden flex flex-col [clip-path:inset(0_round_0_16px_16px_0)] [transform:translateX(0)] [transition:transform_var(--gis-slide-duration)_var(--gis-slide-easing),display_var(--gis-slide-duration)_allow-discrete] [&[hidden]]:hidden [&[hidden]]:[transform:translateX(-100%)] starting:[&:not([hidden])]:[transform:translateX(-100%)] [&_h1]:text-[24px] [&_h1]:leading-[32px] [&_h1]:font-medium [&_h2]:text-[24px] [&_h2]:leading-[32px] [&_h2]:font-medium [--sb-thumb-color:#8EC5FF] [--sb-size:5px] motion-reduce:[transition:none] gis-timeline-sidebar bottom-0 min-h-0 max-h-[none] py-4 pr-4" aria-label="Timeline">
+    <aside id="gis-timeline-panel" data-hidden={!!hidden} aria-hidden={hidden} inert={hidden} className="gis-left absolute z-2 [inset:0_auto_0_0] w-[var(--sidebar-width)] bg-[white] overflow-hidden flex flex-col [transform:translateY(0)] [transition:transform_var(--gis-slide-duration)_var(--gis-slide-easing),opacity_160ms_ease,visibility_var(--gis-slide-duration)] [&[data-hidden=true]]:invisible [&[data-hidden=true]]:opacity-0 starting:[&[data-hidden=false]]:opacity-0 [&[data-hidden=true]]:[transform:translateY(-4px)] starting:[&[data-hidden=false]]:[transform:translateY(-4px)] [&_h1]:text-[24px] [&_h1]:leading-[32px] [&_h1]:font-medium [&_h2]:text-[24px] [&_h2]:leading-[32px] [&_h2]:font-medium [--sb-thumb-color:#8EC5FF] [--sb-size:5px] motion-reduce:[transition:none] gis-timeline-sidebar bottom-0 min-h-0 max-h-[none] py-4 pr-4" aria-label="Timeline">
       <div className="gis-sidebar-scroll min-h-0 overflow-y-auto pl-[calc(16px_-_var(--sb-size))] [scrollbar-gutter:stable] [direction:rtl]">
       <div dir="ltr">
         <div className="flex items-center justify-between gap-4">

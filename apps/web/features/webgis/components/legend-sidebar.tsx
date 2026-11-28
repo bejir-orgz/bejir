@@ -7,7 +7,7 @@ const relativeLabels = ["Minimum", "25% rentang", "50% rentang", "75% rentang", 
 export function LegendSidebar({ layers, hidden }: { layers: WorkspaceData["layers"]; hidden: boolean }) {
   const legends = layers.filter((layer) => ["rainfall", "evacuation", "rivers", "dem", "susceptibility", "land-cover"].includes(layer.id));
   return (
-    <aside id="gis-legends-panel" hidden={hidden} aria-label="Legenda peta" className="gis-left gis-legend-sidebar absolute z-2 [inset:0_auto_0_0] w-[var(--sidebar-width)] rounded-[0_16px_16px_0] bg-white py-4 pr-4 overflow-hidden flex flex-col text-[14px] leading-5 [clip-path:inset(0_round_0_16px_16px_0)] [transform:translateX(0)] [transition:transform_var(--gis-slide-duration)_var(--gis-slide-easing),display_var(--gis-slide-duration)_allow-discrete] [&[hidden]]:hidden [&[hidden]]:[transform:translateX(-100%)] starting:[&:not([hidden])]:[transform:translateX(-100%)] [--sb-thumb-color:#8EC5FF] [--sb-size:5px] motion-reduce:[transition:none]">
+    <aside id="gis-legends-panel" data-hidden={!!hidden} aria-hidden={hidden} inert={hidden} aria-label="Legenda peta" className="gis-left gis-legend-sidebar absolute z-2 [inset:0_auto_0_0] w-[var(--sidebar-width)] bg-white py-4 pr-4 overflow-hidden flex flex-col text-[14px] leading-5 [transform:translateY(0)] [transition:transform_var(--gis-slide-duration)_var(--gis-slide-easing),opacity_160ms_ease,visibility_var(--gis-slide-duration)] [&[data-hidden=true]]:invisible [&[data-hidden=true]]:opacity-0 starting:[&[data-hidden=false]]:opacity-0 [&[data-hidden=true]]:[transform:translateY(-4px)] starting:[&[data-hidden=false]]:[transform:translateY(-4px)] [--sb-thumb-color:#8EC5FF] [--sb-size:5px] motion-reduce:[transition:none]">
       <div className="gis-sidebar-scroll min-h-0 overflow-y-auto pl-[calc(16px_-_var(--sb-size))] [scrollbar-gutter:stable] [direction:rtl]">
       <div dir="ltr">
         <h2 className="text-[24px] leading-8 font-medium">Legenda</h2>
@@ -18,7 +18,7 @@ export function LegendSidebar({ layers, hidden }: { layers: WorkspaceData["layer
                 {layer.id === "rivers" || layer.id === "evacuation" ?
                   <div className="grid grid-cols-[36px_minmax(0,1fr)] items-center gap-3">
                     {layer.id === "rivers" ? <><span aria-hidden="true" className="h-0.5 w-full bg-[#0284c7]" /><span>Segmen sungai</span></>
-                      : <><span aria-hidden="true" className="size-2.5 justify-self-center rounded-full border border-[#2563eb] bg-white" /><span>Titik evakuasi</span></>}
+                      : <><span aria-hidden="true" className="size-2.5 justify-self-center rounded-full border-2 border-[#15803d] bg-white" /><span>Titik evakuasi (Kesehatan, Pendidikan, Ibadah, Umum)</span></>}
                   </div>
                   : layer.id === "land-cover" ? <ul className="m-0 flex list-none flex-col gap-2 p-0">
                     {Object.entries(landCoverColors).map(([label, color]) => <li key={label} className="grid grid-cols-[36px_minmax(0,1fr)] items-center gap-3"><span aria-hidden="true" className="h-2 w-full rounded-sm" style={{ backgroundColor: color }} /><span>{label}</span></li>)}
