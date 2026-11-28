@@ -18,6 +18,9 @@ export function EvacuationRouting({
 }) {
   useEffect(() => {
     if (!enabled) return;
+    const container = map.getContainer();
+    const prevCursor = container.style.cursor;
+    container.style.cursor = "crosshair";
     let controller: AbortController | undefined;
     let removeRoute: (() => void) | undefined;
     let closed = false;
@@ -154,6 +157,7 @@ export function EvacuationRouting({
     map.on("click", findRoute);
     return () => {
       closed = true;
+      container.style.cursor = prevCursor;
       controller?.abort();
       map.off("click", findRoute);
       removeRoute?.();

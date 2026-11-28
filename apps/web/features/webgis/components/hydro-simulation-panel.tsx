@@ -1,15 +1,17 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import {
   IconBuildingSkyscraper,
   IconPlayerPause,
   IconPlayerPlay,
   IconRoute,
-  IconX,
+  IconSearch,
 } from "@tabler/icons-react";
 import { useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { useRegionSelection } from "@/features/regions/region-selection";
 import type { SelectedSimRegion } from "@/features/simulation/map-simulation-layer";
 import {
@@ -56,7 +58,6 @@ function formatCompactPopulation(count: number): string {
 
 export function HydroSimulationPanel({
   open,
-  overviewOpen,
   mode,
   scope,
   params,
@@ -73,10 +74,8 @@ export function HydroSimulationPanel({
   onFindSafeEvac,
   onPickExample,
   onResetRegion,
-  onClose,
 }: {
   open: boolean;
-  overviewOpen: boolean;
   mode: SimulationMode;
   scope: SimulationScope;
   params: SimulationParams;
@@ -93,14 +92,47 @@ export function HydroSimulationPanel({
   onFindSafeEvac: () => void;
   onPickExample: (regencyId: number, districtId: number | null) => void;
   onResetRegion: () => void;
-  onClose: () => void;
 }) {
   const reduced = useReducedMotion();
   const { tree, toMapIds } = useRegionSelection();
+  const [regionQuery, setRegionQuery] = useState("");
+  const [searchFocused, setSearchFocused] = useState(false);
 
-  if (!open) return null;
-
-  const regencyNodes = tree.flatMap((root) => (root.children?.length ? root.children : [root]));
+  const regencyNodes = useMemo(
+    () => tree.flatMap((root) => (root.children?.length ? root.children : [root])),
+    [tree],
+  );
+  const searchableRegions = useMemo(() => {
+    const items: { key: string; label: string; parentLabel?: string; regencyId: number; districtId: number | null }[] = [];
+    for (const regency of regencyNodes) {
+      const regencyMapped = toMapIds([regency.id])[0] ?? "";
+      const regencyId = Number(regencyMapped.split("/")[0]);
+      if (!Number.isSafeInteger(regencyId) || regencyId <= 0) continue;
+      items.push({ key: `r-${regencyId}`, label: regency.name, regencyId, districtId: null });
+      for (const district of regency.children ?? []) {
+        const districtMapped = toMapIds([district.id])[0] ?? "";
+        const [, dStr] = districtMapped.split("/");
+        const districtId = Number(dStr);
+        if (Number.isSafeInteger(districtId) && districtId > 0) {
+          items.push({
+            key: `d-${regencyId}-${districtId}`,
+            label: district.name,
+            parentLabel: regency.name,
+            regencyId,
+            districtId,
+          });
+        }
+      }
+    }
+    return items;
+  }, [regencyNodes, toMapIds]);
+  const trimmedQuery = regionQuery.trim().toLowerCase();
+  const regionMatches = useMemo(
+    () => (trimmedQuery
+      ? searchableRegions.filter((item) => item.label.toLowerCase().includes(trimmedQuery) || item.parentLabel?.toLowerCase().includes(trimmedQuery)).slice(0, 8)
+      : []),
+    [searchableRegions, trimmedQuery],
+  );
   const quickRegionExamples = quickRegionTemplates
     .map((tpl) => {
       const found = regencyNodes.find((node) => node.name.toLowerCase() === tpl.match);
@@ -133,12 +165,13 @@ export function HydroSimulationPanel({
       aria-modal="false"
       aria-labelledby="gis-sim-title"
       aria-describedby="gis-sim-description"
-      className={`gis-sim-panel @container absolute inset-x-3 bottom-4 z-4 mx-auto flex max-h-[72dvh] max-w-[580px] flex-col gap-4 overflow-y-auto overscroll-contain rounded-2xl border border-border bg-card p-4 text-card-foreground [--sb-size:5px] [--sb-thumb-color:#8EC5FF] transition-[opacity,right] duration-200 starting:opacity-0 motion-reduce:transition-none max-[999.01px]:bottom-3 ${
-        overviewOpen
-          ? "min-[1000px]:left-16 min-[1000px]:right-[calc(var(--overview-width)+58px)]"
-          : "min-[1000px]:left-16 min-[1000px]:right-16 min-[1280px]:max-[1439.01px]:bottom-16"
-      }`}
+      data-hidden={!open}
+      aria-hidden={!open}
+      inert={!open}
+      className="gis-sim-panel @container absolute z-4 flex flex-col overflow-hidden rounded-2xl border border-border bg-card py-4 pr-4 text-card-foreground [--sb-size:5px] [--sb-thumb-color:#8EC5FF] [transform:translateY(0)] [transition:transform_var(--gis-slide-duration)_var(--gis-slide-easing),opacity_160ms_ease,visibility_var(--gis-slide-duration)] [&[data-hidden=true]]:invisible [&[data-hidden=true]]:opacity-0 starting:[&[data-hidden=false]]:opacity-0 [&[data-hidden=true]]:[transform:translateY(-4px)] starting:[&[data-hidden=false]]:[transform:translateY(-4px)] motion-reduce:[transition:none] min-[1000px]:top-18 min-[1000px]:left-4 min-[1000px]:w-[min(392px,calc(100vw-32px))] min-[1000px]:max-h-[calc(100%-108px)] max-[999.01px]:inset-x-3 max-[999.01px]:bottom-3 max-[999.01px]:mx-auto max-[999.01px]:max-h-[68dvh] max-[999.01px]:max-w-[580px]"
     >
+      <div className="min-h-0 overflow-y-auto overscroll-contain pl-[calc(16px_-_var(--sb-size))] [scrollbar-gutter:stable] [direction:rtl]">
+      <div dir="ltr" className="flex flex-col gap-4">
       <header className="grid grid-cols-[1fr_auto] items-center gap-x-4 gap-y-1">
         <h2 id="gis-sim-title" className="text-xl font-medium">
           Simulasi Peta
@@ -174,21 +207,63 @@ export function HydroSimulationPanel({
               Reset
             </Button>
           )}
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            className="text-neutral-600"
-            aria-label="Tutup panel simulasi peta"
-            onClick={onClose}
-          >
-            <IconX className="size-4" aria-hidden="true" />
-          </Button>
         </div>
         <p id="gis-sim-description" className="col-span-full text-xs text-neutral-600">
           Model edukatif berbasis elevasi dan lereng. Hasil berupa estimasi.
         </p>
       </header>
+
+      <div
+        className="relative"
+        onBlur={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget)) setSearchFocused(false);
+        }}
+      >
+        <label className="flex h-[38px] items-center gap-2 rounded-2xl border border-neutral-300 px-4 py-2 text-neutral-600 transition-colors focus-within:border-blue-500 [&_input]:h-5 [&_input]:w-full [&_input]:min-w-0 [&_input]:border-0 [&_input]:bg-transparent [&_input]:p-0 [&_input]:text-sm [&_input]:text-neutral-900 [&_input]:shadow-none [&_input]:outline-none [&_input::placeholder]:text-neutral-500 [&_input::placeholder]:opacity-100 [&_input]:focus-visible:ring-0">
+          <IconSearch className="size-4 shrink-0 text-neutral-500" aria-hidden="true" />
+          <Input
+            id="gis-sim-region-query"
+            name="sim-region-query"
+            value={regionQuery}
+            placeholder="Pilih atau cari wilayah simulasi"
+            aria-label="Pilih atau cari wilayah simulasi"
+            onFocus={() => setSearchFocused(true)}
+            onChange={(event) => {
+              setRegionQuery(event.target.value);
+              setSearchFocused(true);
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "Escape") setSearchFocused(false);
+            }}
+          />
+        </label>
+        {searchFocused && trimmedQuery && (
+          <div className="mt-1.5 flex max-h-48 flex-col overflow-y-auto rounded-xl border border-neutral-200 bg-white p-1" role="listbox" aria-label="Hasil pencarian wilayah simulasi">
+            {regionMatches.length === 0 ? (
+              <p className="px-3 py-2 text-xs text-neutral-500" role="status">Wilayah tidak ditemukan.</p>
+            ) : (
+              regionMatches.map((item) => (
+                <button
+                  key={item.key}
+                  type="button"
+                  role="option"
+                  aria-selected={false}
+                  onClick={() => {
+                    onScopeChange(item.districtId !== null ? "district" : "regency");
+                    onPickExample(item.regencyId, item.districtId);
+                    setRegionQuery("");
+                    setSearchFocused(false);
+                  }}
+                  className="cursor-pointer rounded-lg px-3 py-1.5 text-left text-xs text-neutral-900 hover:bg-blue-50 hover:text-blue-700"
+                >
+                  <span className="block font-medium">{item.label}</span>
+                  {item.parentLabel && <span className="block text-[11px] text-neutral-500">{item.parentLabel}</span>}
+                </button>
+              ))
+            )}
+          </div>
+        )}
+      </div>
 
       <div className="grid gap-3 @min-[450px]:grid-cols-2">
         <fieldset className="min-w-0">
@@ -444,6 +519,8 @@ export function HydroSimulationPanel({
           )}
         </div>
       )}
+      </div>
+      </div>
     </section>
   );
 }

@@ -1382,7 +1382,7 @@ export function MapLibreWorkspaceMap({
 
     const canvasEl = map.getCanvas();
     const prevCursor = canvasEl.style.cursor;
-    if (simulationOpen) canvasEl.style.cursor = "crosshair";
+    if (simulationOpen || evacuationEnabled) canvasEl.style.cursor = "crosshair";
 
     let routeController: AbortController | undefined;
     const clearRoute = () => {
